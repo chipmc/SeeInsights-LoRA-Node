@@ -1,0 +1,25 @@
+{
+    "files.associations": {
+        "*.tcc": "cpp",
+        "cstddef": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "random": "cpp",
+        "cmath": "cpp",
+        "bitset": "cpp",
+        "optional": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "system_error": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp"
+    },
+    "cmake.sourceDirectory": "/Users/chipmc/Documents/Maker/PlatformIO/SeeInsights-LoRA-Node/.pio/libdeps/adafruit_feather_m0/Adafruit BusIO"
+}
