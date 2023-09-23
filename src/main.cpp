@@ -58,16 +58,28 @@ void setup()
 
   delay(2000);
 
+  Serial.println("Starting up...!");
+  // Log.begin(LOG_LEVEL_SILENT, &Serial);
+  Log.begin(LOG_LEVEL_TRACE, &Serial);
+
+
   Wire.begin(); //Establish Wire.begin for I2C communication
 
   gpio.setup();
 
-  LED.setup(gpio.PB_LT);
-  LED.pwm(20); // Turn on the status LED but at a dim level
 
-  Serial.println("Starting up...");
-  // Log.begin(LOG_LEVEL_SILENT, &Serial);
-  Log.begin(LOG_LEVEL_TRACE, &Serial);
+  delay(2000);
+  Log.infoln("Testing the LED");
+  LED.setup(gpio.PB_LT);
+  // LED.pwm(20); // Turn on the status LED but at a dim level
+  digitalWrite(gpio.PB_LT, HIGH); // Turn on the status LED but at a dim level
+  // LED.on();
+  delay(5000);
+  LED.off();
+  digitalWrite(gpio.PB_LT, LOW); // Turn on the status LED but at a dim level
+  delay(1000);
+
+
 
   Log.infoln("PROGRAM: See Insights LoRa Node!" CR);
   Log.info("Starting up..." CR);

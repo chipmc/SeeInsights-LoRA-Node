@@ -3,6 +3,10 @@
 		{
 			"name": "SeeInsights-LoRA-Node",
 			"path": "."
+		},
+		{
+			"name": "Basic Board Test",
+			"path": "../Basic Board Test"
 		}
 	],
 	"settings": {

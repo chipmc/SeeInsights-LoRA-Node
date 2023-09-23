@@ -120,8 +120,8 @@ public:
     static const uint8_t DIP6           = 1;
     static const uint8_t CE             = 26;
     static const uint8_t IRQ            = 8;
-    static const uint8_t PB_LT          = 13;
-    static const uint8_t ONE_WIRE_BUS   = 5;
+    static const uint8_t PB_LT          = D05;
+    static const uint8_t ONE_WIRE_BUS   = 9;
 
 };
 #endif  /* __PINOUT_H */

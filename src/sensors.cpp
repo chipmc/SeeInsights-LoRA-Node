@@ -23,7 +23,7 @@ sensors::~sensors() {
 void sensors::setup() {
 
   Log.traceln("");
-  Log.traceln("************************* SENSORS **************************");
+  Log.traceln("************************* SENSORS+ **************************");
 
   Log.infoln("MAX17048 Initialization");
   if (!maxlipo.begin()) {
