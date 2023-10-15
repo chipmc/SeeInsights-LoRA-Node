@@ -20,14 +20,15 @@
 
 //Include program structure
 #include "pinout.h"
-#include "config.h"
 #include "timing.h"
 #include "stsLED.h"
-#include "sensors.h"
+#include "take_measurements.h"
+#include "MyData.h"
 
-#define IRQ_Invalid 0
-#define IRQ_AB1805 1
+//#define IRQ_Invalid 0
+//#define IRQ_AB1805 1
 
+const uint8_t firmwareRelease = 0;
 
 /*************************************************************************************/
 //                        Define the finite state machine:
@@ -53,33 +54,19 @@ void setup()
 {
   //Establish Serial connection if connected for debugging
   Serial.begin(9600);
-  while (!Serial && !Serial.available()) {};
-  randomSeed(analogRead(0));
-
-  delay(2000);
+  delay(5000);
 
   Serial.println("Starting up...!");
   // Log.begin(LOG_LEVEL_SILENT, &Serial);
   Log.begin(LOG_LEVEL_TRACE, &Serial);
 
-
   Wire.begin(); //Establish Wire.begin for I2C communication
 
   gpio.setup();
 
-
-  delay(2000);
-  Log.infoln("Testing the LED");
-  LED.setup(gpio.PB_LT);
-  // LED.pwm(20); // Turn on the status LED but at a dim level
-  digitalWrite(gpio.PB_LT, HIGH); // Turn on the status LED but at a dim level
-  // LED.on();
-  delay(5000);
-  LED.off();
-  digitalWrite(gpio.PB_LT, LOW); // Turn on the status LED but at a dim level
-  delay(1000);
-
-
+  sysStatusData::instance().setup();
+  currentStatusData::instance().setup();
+  sysStatus.firmwareRelease = firmwareRelease;
 
   Log.infoln("PROGRAM: See Insights LoRa Node!" CR);
   Log.info("Starting up..." CR);
@@ -93,8 +80,7 @@ void setup()
   // LowPower.attachInterruptWakeup(gpio.RFM95_DIO0, wakeUp_RFM95_DIO0, RISING);
 
   //Initialize each class used in this program
-  cfg.setup();
-  sns.setup();
+  take_measurements::instance().setup();
   tm.setup();
 
 }
@@ -107,7 +93,7 @@ void loop()
 
   tm.loop();          // Pet the hardware watchdog
   LED.loop();         // Update the Status LED
-  sns.loop();         // Update the sensors
+  take_measurements::instance().loop();
 
 }
 

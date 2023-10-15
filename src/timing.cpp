@@ -1,5 +1,4 @@
 #include "timing.h"
-#include "config.h"
 
 AB1805 ab1805(Wire); // Class instance for the the AB1805 RTC
 
@@ -24,8 +23,7 @@ void timing::setup() {
   Log.traceln("");
   Log.traceln("************************* TIMERS **************************");
   // ab1805.resetConfig();
-  ab1805.withFOUT(gpio.IRQ).setup();
-  ab1805.setPPMAdj(cfg.PPM_Adj); 
+  ab1805.withFOUT(gpio.WAKE).setup();
   ab1805.setWDT(ab1805.WATCHDOG_MAX_SECONDS);
   // ab1805.setRtcFromTime(1694699857+60);  // Set the time - This will come from the LoRA Gateway
   ab1805.getRtcAsTime(time_cv,hundrths_cv);
@@ -60,6 +58,15 @@ bool timing::setTime(){
  // Need to fill this in once I have the clock working
 
   return true;
+}
+
+time_t timing::getTime() {
+
+  time_t time_seconds;
+  uint8_t hundredths;
+  ab1805.getRtcAsTime(time_seconds, hundredths);
+
+  return time_seconds;
 }
 
 

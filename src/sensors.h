@@ -18,8 +18,7 @@
 //Include standard header files from libraries:
 #include <arduino.h>
 #include <ArduinoLog.h>
-#include "Adafruit_MAX1704X.h"
-#include "Adafruit_SHT31.h"                 // Class instance for SHT31-D temperature and humidity sensor
+
 
 //Include application specific header files
 #include "pinout.h"
@@ -59,13 +58,6 @@ public:
      */
     void loop();
 
-    /**
-     * @readBatteryVoltage() returns the battery voltage in Voles
-    */
-    int16_t readBattery();
-
-
-
 protected:
     /**
      * @brief The constructor is protected because the class is a singleton
@@ -104,20 +96,8 @@ protected:
      */
     inline void softDelay(uint32_t t);
 
-    /**
-     * @brief select which I2C sensor we want to read from before we read it
-     * 
-     * @param i the selector of which one to read from (0-7)
-     * 
-     */
-    void muxSel(uint8_t i);
-
 protected:
-    const uint8_t   ABPAddress      = 0x38;
-    const float     OUTPUT_MIN      = 1638.4;       // 1638 counts (10% of 2^14 counts or 0x0666)
-    const float     OUTPUT_MAX      = 14745.6;      // 14745 counts (90% of 2^14 counts or 0x3999)
-    const float     ABPPRESSURE_MIN = 0;       // min is 0 psi
-    const float     ABPPRESSURE_MAX = 15.0;    // max is 15 psi
+
 
 };
 #endif  /* __SENSORS_H */

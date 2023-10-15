@@ -74,6 +74,11 @@ public:
     bool setTime();
 
     /**
+     * @brief - Get the time in UNITX Time format - GMT
+    */
+   time_t getTime();
+
+    /**
      * @brief set an interrupt for a future time based on an event type
      * 
      * @details This is used to set a specific interrupt type at an event in the future

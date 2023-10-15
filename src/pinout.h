@@ -102,26 +102,57 @@ public:
     static const uint8_t RFM95_RST      = 3;
     static const uint8_t RFM95_INT      = 2;
     static const uint8_t RFM95_DIO0     = A5;
-
     // //Define pins for the Sensors:
-    static const uint8_t TankPower      = A1;
-    static const uint8_t TankPin        = A2;
-    static const uint8_t VacPwr         = A3;
-    static const uint8_t VacSel         = A4;
-    static const uint8_t deepRst        = A5;
-    static const uint8_t VBATPIN        = A7;
-    static const uint8_t Relay1         = 6;
-    static const uint8_t Relay2         = 7;
-    static const uint8_t DIP1           = 12;
-    static const uint8_t DIP2           = 10;
-    static const uint8_t DIP3           = 14;
-    static const uint8_t DIP4           = 11;
-    static const uint8_t DIP5           = 0;
-    static const uint8_t DIP6           = 1;
-    static const uint8_t CE             = 26;
-    static const uint8_t IRQ            = 8;
-    static const uint8_t PB_LT          = D05;
-    static const uint8_t ONE_WIRE_BUS   = 9;
+    // Analog Pins
+    // A0
+    // A1
+    // A2  
+    // A3      
+    static const uint8_t BATTINT        = A4;
+    // Analog pin A5 is used by the RFM95
+    // Analog pin A6 / D8 / WAKE / PA06
+    // Analog pin A7 / D9 / PA07
+    // Analog pin A8 - A10 are not broken out
+    static const uint8_t A11            = 25;        // This needs to be validated PB03 - Mislabeled on board as A6
+
+    // Digital Pins
+    static const uint8_t RX             = 0;
+    static const uint8_t TX             = 1;
+    // Digital pins 2-4 are used by the RFM95
+    static const uint8_t STATUS         = 5;
+    static const uint8_t D6             = 6;
+    static const uint8_t D7             = 7;
+    static const uint8_t WAKE           = 8;
+    static const uint8_t D9             = 9;
+    static const uint8_t D10            = 10;
+    static const uint8_t USER_SW        = 11;
+    static const uint8_t D12            = 12;
+    static const uint8_t D13            = 13;
+    // Digital pins 14 is also PA02 which is A0
+    // Digital pin 15 is also PA03 which is A1
+    // Digital pin 16 is also PA09 which is A2
+    // Digital pin 17 is also PA04 which is A3
+    // Digital pin 18 is also PA05 which is A4
+    // Digital pin 19 is also PA02 which is A5
+    // SDA            = 20;
+    // SCL            = 21;
+    // MISO           = 22;
+    // MOSI           = 23;
+    // SCK            = 24;
+    // ???            = 25;
+    static const uint8_t CE             = 26; // PB27
+    static const uint8_t D14            = 27; // D14 / PA28 - Need to figure this one out
+    // ???            = 28;
+    // ???            = 29;
+    static const uint8_t Test1          = 30; // PB22
+    static const uint8_t Test2          = 31; // PB23
+
+
+    // These pins are used directly by the SAMD21
+    // SWCLK / PA30 - Debugging - NA
+    // SWDIO / PA31 - Debugging - NA
+    // D+ / PA24 - NA
+    // D- / PA25 - NA
 
 };
 #endif  /* __PINOUT_H */
