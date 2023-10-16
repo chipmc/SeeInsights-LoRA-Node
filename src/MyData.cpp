@@ -1,8 +1,7 @@
 #include "MyData.h"
 
 //Define necassary subclasses used within this singleton class:
-JC_EEPROM EEPROM(JC_EEPROM::kbits_2, 1, 8); // Class instance for EEPROM  - device size, number of devices, page size
-
+ExternalEEPROM myMem;
 
 // *******************  SysStatus Storage Object **********************
 //
@@ -26,28 +25,34 @@ sysStatusData::sysStatusData() {
 sysStatusData::~sysStatusData() {
 }
 
+
 void sysStatusData::setup() {
-    Log.traceln("Initializing EEPROM");
-    if (EEPROM.begin(JC_EEPROM::twiClock100kHz) != 0 ) {
-        Log.errorln("There was an issue with EEPROM");
+    //The memory specs can be set before begin() to skip the auto-detection delay and write wear
+    //24XX02 - 2048 bit / 256 bytes - 1 address byte, 8 byte page size
+ //   myMem.setAddressBytes(1);
+
+    myMem.setPageSizeBytes(8);
+    myMem.setMemorySizeBytes(256);
+    if (myMem.begin() == false)
+    {
+        Serial.println("No memory detected. Freezing.");
+        while (1);
     }
-    sysStatus.structuresVersion = EEPROM.read(0);
-    if (sysStatus.structuresVersion != STRUCTURES_VERSION) {
-        Log.infoln("Invalid structure number %D - resetting system values", sysStatus.structuresVersion);
+    Log.infoln("Memory detected!");
+    Log.infoln("Mem size in bytes: %i ", myMem.length());
+
+    uint8_t versionNumber;
+    myMem.get(0,versionNumber);
+
+    if (versionNumber != STRUCTURES_VERSION) {
+        Log.infoln("Structure changed from %i to %i",versionNumber,STRUCTURES_VERSION);
         sysStatusData::initialize();
     }
     else {
-        Log.traceln("Valid structure number, loading from EEPROM");
-        writeStatus = EEPROM.read(10,reinterpret_cast<uint8_t*>(&sysStatus),sizeof(sysStatus));
-        if (writeStatus != 0) Log.infoln("EEPROM write error %d",writeStatus);
-        Log.infoln("System valies loaded, node number %D and magic number %D reporing every %D minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
-        // Likely need to add an error handler here if this happens often
+        myMem.get(10, sysStatus);
+        Log.infoln("Loading system values, node number %i and magic number %i reporing every %i minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
     }
 
-    Log.infoln("Quick test - storing 4 in slot 01");
-    EEPROM.write(1,4);
-    Log.infoln("The value retrieved is %D",EEPROM.read(01));
-    
 }
 
 void sysStatusData::loop() {
@@ -92,10 +97,9 @@ void sysStatusData::initialize() {
     sysStatus.alertTimestampNode = 0;
     sysStatus.openHours = true;
 
-    Log.infoln("Saving new system values, node number %D and magic number %D reporing every %D minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
-    writeStatus = EEPROM.write(10,reinterpret_cast<uint8_t*>(&sysStatus),sizeof(sysStatus));
-    if (writeStatus != 0) Log.infoln("EEPROM write error %d",writeStatus);
-    // Likely need to add an error handler here if this happens often
+    Log.infoln("Saving new system values, node number %i and magic number %i reporing every %i minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
+    myMem.put(0,sysStatus.structuresVersion);
+    myMem.put(10,sysStatus);
 
 }
 
@@ -141,10 +145,7 @@ void currentStatusData::resetEverything() {                             // The d
   current.hourlyCount = 0;
   current.lastSampleTime = 0;
 
-  writeStatus = EEPROM.write(50,reinterpret_cast<uint8_t*>(&current),sizeof(current));
-  if (writeStatus != 0) Log.infoln("EEPROM write error %d",writeStatus);
-  // Likely need to add an error handler here if this happens often
-
+  myMem.put(50,current);
 }
 
 bool currentStatusData::validate(size_t dataSize) {
@@ -163,7 +164,7 @@ bool currentStatusData::validate(size_t dataSize) {
 void currentStatusData::initialize() {
  
     Log.infoln("Loading current values from EEPROM");
-    EEPROM.read(50,reinterpret_cast<uint8_t*>(&current),sizeof(current));
+    myMem.get(50,current);
     if (current.hourlyCount > current.dailyCount || current.successCount > current.messageCount) {
         Log.infoln("Current values not right - resetting");
         currentStatusData::resetEverything();
@@ -172,11 +173,8 @@ void currentStatusData::initialize() {
 }
 
 void storeCurrentData() {
-
     Log.infoln("Storing current data to EEPROM");
-    writeStatus = EEPROM.write(50,reinterpret_cast<uint8_t*>(&current),sizeof(current));
-    if (writeStatus != 0) Log.infoln("EEPROM write error %d",writeStatus);
-    // Likely need to add an error handler here if this happens often
+    myMem.put(50,current);
 }
 
 

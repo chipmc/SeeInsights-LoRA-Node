@@ -44,9 +44,10 @@ Current Data
 //Include standard header files from libraries:
 #include <arduino.h>
 #include <ArduinoLog.h>
-#include <JC_EEPROM.h>
+#include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 0.0
+
+#define STRUCTURES_VERSION 1
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
