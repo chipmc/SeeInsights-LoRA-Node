@@ -19,19 +19,22 @@ Overhead
 	00              uint8_t        structureVersion     Varialble that changes when the structure is updated
     02-09           Reserved
 System Data
-    10              uint16_t       nodeNumber           Assigned by the gateway on joining the network
-    12              uint16_t       magicNumber          Number that validates nodes on a network (all share this number)
-	14      	    uint8_t        firmwareRelease      Version of the device firmware (integer - aligned to particle product firmware)
-	15	            uint8_t        resetCount           Reset count of device (0-256)
-	16              time_t         lastConnection       last time we successfully connected to Particle
-    20              uint16_t       frequencyMinutes     How many minute between reports to the gateway
-	22              uint8_t        alertCodeNode        Alert code from node
-	23              time_t         alertTimestampNode   Timestamp of alert
-	27      	    uint8_t        sensorType           PIR sensor, car counter, others - this value is changed by the Gateway
-	28              bool           openHours;			Are we collecting data or is it outside open hours?
-    29-49           Reserved
+    10              bool           changed              Flag indicating that the data has changed and needs to be saved
+    11              uint16_t       nodeNumber           Assigned by the gateway on joining the network
+    13              uint16_t       deviceID             Unique identifier for this device
+    15              uint16_t       magicNumber          Number that validates nodes on a network (all share this number)
+	17      	    uint8_t        firmwareRelease      Version of the device firmware (integer - aligned to particle product firmware)
+	18	            uint8_t        resetCount           Reset count of device (0-256)
+	19              time_t         lastConnection       last time we successfully connected to Particle
+    23              uint16_t       frequencyMinutes     How many minute between reports to the gateway
+	25              uint8_t        alertCodeNode        Alert code from node
+	26              time_t         alertTimestampNode   Timestamp of alert
+	30      	    uint8_t        sensorType           PIR sensor, car counter, others - this value is changed by the Gateway
+	31              bool           openHours;			Are we collecting data or is it outside open hours?
+    32-49           Reserved
 Current Data
-	50              uint8_t        messageCount         What message are we on
+	50              bool           changed              Flag indicating that the data has changed and needs to be saved
+    51              uint8_t        messageCount         What message are we on
 	51              uint8_t        successCount	        How many messages are delivered successfully
     52              time_t         lastSampleTime       Timestamp of last data collection for sensors or last count for counters
 	56              uint16_t       hourlyCount          Current Hourly Count
@@ -47,12 +50,14 @@ Current Data
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
 
-#define STRUCTURES_VERSION 1
+#define STRUCTURES_VERSION 2
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
-#define current currentStatusData::instance().currentData
-#define sysStatus sysStatusData::instance().sysData
+#define currentData currentStatusData::instance()
+#define sysData sysStatusData::instance()
+#define sysStatus sysStatusData::instance().sysStatusStruct
+#define current currentStatusData::instance().currentStruct
 
 /**
  * This class is a singleton; you do not create one as a global, on the stack, or with new.
@@ -117,7 +122,9 @@ public:
 
 	struct SystemDataStructure
 	{
-		uint16_t nodeNumber;                              // Assigned by the gateway on joining the network
+		bool changed;                                     // Had the data been changed since saving
+        uint16_t nodeNumber;                              // Assigned by the gateway on joining the network
+        uint16_t deviceID;                                // Unique identifier for the device
 		uint8_t structuresVersion;                        // Version of the data structures (system and data)
 		uint16_t magicNumber;							  // A way to identify nodes and gateways so they can trust each other
 		uint8_t firmwareRelease;                          // Version of the device firmware (integer - aligned to particle product firmware)
@@ -129,7 +136,7 @@ public:
 		uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
 		bool openHours;									  // Are we collecting data or is it outside open hours?
 	};
-	SystemDataStructure sysData;
+	SystemDataStructure sysStatusStruct;
 
 	//Members here are internal only and therefore protected
 protected:
@@ -231,7 +238,8 @@ public:
 
 	struct CurrentDataStructure
 	{
-		float internalTempC;                              // Enclosure temperature in degrees C
+		bool changed;                                     // Flag indicating data changed since last save
+        float internalTempC;                              // Enclosure temperature in degrees C
         float internalHumidity;                           // Enclosure humidity in percent
 		float stateOfCharge;                              // Battery charge level
 		uint8_t batteryState;                             // Stores the current battery state (charging, discharging, etc)
@@ -244,7 +252,7 @@ public:
 		uint16_t dailyCount;                              // Current Daily Count
 		// OK to add more fields here 
 	};
-	CurrentDataStructure currentData;
+	CurrentDataStructure currentStruct;
 
 
 		//Members here are internal only and therefore protected
@@ -277,9 +285,5 @@ protected:
      * The object pointer to this class is stored here. It's NULL at system boot.
      */
     static currentStatusData *_instance;
-
-    //Since these variables are only used internally - They can be private. 
-	static const uint32_t CURRENT_DATA_MAGIC = 0x20a99e80;
-	static const uint16_t CURRENT_DATA_VERSION = 3;
 };
 #endif  /* __MYDATA_H */

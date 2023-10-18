@@ -23,14 +23,12 @@ take_measurements::~take_measurements() {
 }
 
 void take_measurements::setup() {
-  Log.infoln("SHT31-D Initialization");
   if (! sht31.begin(0x44)) {   // Set to 0x45 for alternate i2c addr
     Log.infoln("SHT31 initialization failed");
     // Likely need to do some error handling here
   }
   else Log.infoln("SHT31-D initializated with i2c address 0x44");
 
-  Log.infoln("MAX17048 Initialization");
   if (!maxlipo.begin()) {
     Log.infoln("MAX17048 initialization failed!");
   }

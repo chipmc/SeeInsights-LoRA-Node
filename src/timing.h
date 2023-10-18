@@ -71,7 +71,7 @@ public:
     /**
      * @brief set the time based on the value we recieved from the LoRa Gateway
      */
-    bool setTime();
+    bool setTime(time_t UnixTime, uint8_t hundredths);
 
     /**
      * @brief - Get the time in UNITX Time format - GMT

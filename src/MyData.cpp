@@ -56,7 +56,14 @@ void sysStatusData::setup() {
 }
 
 void sysStatusData::loop() {
- // Loop code here
+    static unsigned long lastChecked = 0;
+    if (millis() - lastChecked > 500) {                // Check for data changes every second while awake
+        lastChecked = millis();
+        if (sysStatus.changed) {
+            sysStatus.changed = false;
+            sysStatusData::storeSysData();
+        }
+    }
 }
 
 bool sysStatusData::validate(size_t dataSize) {
@@ -88,6 +95,7 @@ void sysStatusData::initialize() {
 
     Log.infoln("Loading system defaults");              // Letting us know that defaults are being loaded
     sysStatus.nodeNumber = 11;
+    sysStatus.deviceID = 2100;
     sysStatus.structuresVersion = STRUCTURES_VERSION;
     sysStatus.magicNumber = 27617;
     sysStatus.firmwareRelease = 255;                   // This value is set in the main program
@@ -104,7 +112,8 @@ void sysStatusData::initialize() {
 }
 
 void sysStatusData::storeSysData() {
-
+    Log.infoln("sysStatus data changed, writing to EEPROM");
+    myMem.put(10,sysStatus);
 }
 
 // *****************  Current Status Storage Object *******************
@@ -129,11 +138,20 @@ currentStatusData::~currentStatusData() {
 }
 
 void currentStatusData::setup() {
-  // Setup code here
+  // Assume that the system setup has already run
+  currentStatusData::initialize();
+
 }
 
 void currentStatusData::loop() {
-  // Loop code here
+    static unsigned long lastChecked = 0;
+    if (millis() - lastChecked > 500) {                // Check for data changes every second while awake
+        lastChecked = millis();
+        if (current.changed) {
+            current.changed = false;
+            currentStatusData::storeCurrentData();
+        }
+    }
 }
 
 void currentStatusData::resetEverything() {                             // The device is waking up in a new day or is a new install
@@ -162,17 +180,17 @@ bool currentStatusData::validate(size_t dataSize) {
 }
 
 void currentStatusData::initialize() {
- 
-    Log.infoln("Loading current values from EEPROM");
+
     myMem.get(50,current);
     if (current.hourlyCount > current.dailyCount || current.successCount > current.messageCount) {
         Log.infoln("Current values not right - resetting");
         currentStatusData::resetEverything();
     }
+    Log.infoln("Loading current values, hourly %i and daily %i", current.hourlyCount, current.dailyCount);
 
 }
 
-void storeCurrentData() {
+void currentStatusData::storeCurrentData() {
     Log.infoln("Storing current data to EEPROM");
     myMem.put(50,current);
 }

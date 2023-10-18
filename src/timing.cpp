@@ -19,19 +19,12 @@ timing::~timing() {
 }
 
 void timing::setup() {
-
-  Log.traceln("");
-  Log.traceln("************************* TIMERS **************************");
   // ab1805.resetConfig();
   ab1805.withFOUT(gpio.WAKE).setup();
   ab1805.setWDT(ab1805.WATCHDOG_MAX_SECONDS);
   // ab1805.setRtcFromTime(1694699857+60);  // Set the time - This will come from the LoRA Gateway
   ab1805.getRtcAsTime(time_cv,hundrths_cv);
-
   Log.infoln("AB1805 Initialized with Unix time of: %l", time_cv);
-
-  Log.traceln("");
-  Log.traceln("************************* TIMERS END**************************");
 }
 
 void timing::loop() {
@@ -53,10 +46,9 @@ void timing::loop() {
 /*******************************************************************************
  * Method Name: setTime()
  *******************************************************************************/
-bool timing::setTime(){
+bool timing::setTime(time_t UnixTime, uint8_t hundredths){
  
- // Need to fill this in once I have the clock working
-
+  ab1805.setRtcFromTime(UnixTime,hundredths);
   return true;
 }
 
@@ -70,11 +62,13 @@ time_t timing::getTime() {
 }
 
 
+
 /*******************************************************************************
  * Method Name: update()
  *******************************************************************************/
 bool timing::update(){
  // Need to fill this in once I have the clock working
+
     return true;
 }
 

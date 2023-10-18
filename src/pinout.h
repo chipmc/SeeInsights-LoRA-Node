@@ -124,10 +124,10 @@ public:
     static const uint8_t D7             = 7;
     static const uint8_t WAKE           = 8;
     static const uint8_t D9             = 9;
-    static const uint8_t D10            = 10;
+    static const uint8_t EN             = 10;   // PIR Sensor on Digital - Not Enable - D10
     static const uint8_t USER_SW        = 11;
-    static const uint8_t D12            = 12;
-    static const uint8_t D13            = 13;
+    static const uint8_t LED_PWR        = 12;   // PIR Sensor on Digital - LED-PWR - D12
+    static const uint8_t INT            = 13;   // PIR Sensor on Digital - INT - D13
     // Digital pins 14 is also PA02 which is A0
     // Digital pin 15 is also PA03 which is A1
     // Digital pin 16 is also PA09 which is A2
