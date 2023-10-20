@@ -62,14 +62,14 @@ buf[29] sensorType				            // Identifies sensor type to Gateway
 #include <ArduinoLog.h>
 
 // Additional libraries
-#include <RHMesh.h>
 #include <RH_RF95.h>						        // https://docs.particle.io/reference/device-os/libraries/r/RH_RF95/
+#include <RHMesh.h>
+#include <RHEncryptedDriver.h>
+#include <Speck.h>
 #include "pinout.h"
 #include "MyData.h"
 #include "timing.h"
 #include "stsLED.h"
-
-extern uint16_t __system_product_version;
 
 #define LoRA LoRA_Functions::instance()
 
@@ -204,6 +204,13 @@ protected:
      * The object pointer to this class is stored here. It's NULL at system boot.
      */
     static LoRA_Functions *_instance;
+
+public:
+    // In this implementation - we have one gateway numde number 0 and up to 10 nodes with node numbers 1-10
+    // Node numbers greater than 10 initiate a join request
+    const uint8_t GATEWAY_ADDRESS = 0;
+    // const double RF95_FREQ = 915.0;				 	// Frequency - ISM
+    const double RF95_FREQ = 926.84;				// Center frequency for the omni-directional antenna I am using
 
 };
 #endif  /* __LORA_FUNCTIONS_H */

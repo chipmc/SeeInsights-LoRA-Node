@@ -1,6 +1,10 @@
 #include "LoRA_Functions.h"
 
-// Singleton instantiation - from template
+RH_RF95 rf95(gpio.RFM95_CS, gpio.RFM95_INT);  	// Class instance for the RFM95 radio driver
+Speck myCipher;                             	// Class instance for Speck block ciphering
+RHEncryptedDriver driver(rf95, myCipher);   	// Class instance for Encrypted RFM95 driver
+RHMesh manager(driver, LoRA.GATEWAY_ADDRESS);        // Class instance to manage message delivery and receipt, using the driver declared above
+
 LoRA_Functions *LoRA_Functions::_instance;
 
 // [static]
@@ -21,22 +25,13 @@ LoRA_Functions::~LoRA_Functions() {
 // ************************************************************************
 // *****                      LoRA Setup                              *****
 // ************************************************************************
-// In this implementation - we have one gateway numde number 0 and up to 10 nodes with node numbers 1-10
-// Node numbers greater than 10 initiate a join request
-const uint8_t GATEWAY_ADDRESS = 0;
-// const double RF95_FREQ = 915.0;				 	// Frequency - ISM
-const double RF95_FREQ = 926.84;				// Center frequency for the omni-directional antenna I am using
+
 
 // Define the message flags
 typedef enum { NULL_STATE, JOIN_REQ, JOIN_ACK, DATA_RPT, DATA_ACK, ALERT_RPT, ALERT_ACK} LoRA_State;
 char loraStateNames[7][16] = {"Null", "Join Req", "Join Ack", "Data Report", "Data Ack", "Alert Rpt", "Alert Ack"};
 static LoRA_State lora_state = NULL_STATE;
 
-// Singleton instance of the radio driver
-RH_RF95 driver(gpio.RFM95_CS, gpio.RFM95_INT);
-
-// Class to manage message delivery and receipt, using the driver declared above
-RHMesh manager(driver, GATEWAY_ADDRESS);
 
 // Mesh has much greater memory requirements, and you may need to limit the
 // max message length to prevent wierd crashes
@@ -53,6 +48,9 @@ uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];               // Related to max message si
 bool LoRA_Functions::setup(bool gatewayID) {
     // Set up the Radio Module
 	LoRA_Functions::initializeRadio();
+
+	manager.setTimeout(120); // Set to 120
+	manager.setRetries(2); // Set to 2	
 
 	Log.infoln("in LoRA setup - node number %d",sysStatus.nodeNumber);
 
@@ -105,12 +103,12 @@ bool  LoRA_Functions::initializeRadio() {  			// Set up the Radio Module
 		Log.infoln("init failed");					// Defaults after init are 434.0MHz, 0.05MHz AFC pull-in, modulation FSK_Rb2_4Fd36
 		return false;
 	}
-	driver.setFrequency(RF95_FREQ);					// Frequency is typically 868.0 or 915.0 in the Americas, or 433.0 in the EU - Are there more settings possible here?
-	driver.setTxPower(23, false);                   // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then you can set transmitter powers from 5 to 23 dBm (13dBm default).  PA_BOOST?
+	rf95.setFrequency(RF95_FREQ);					// Frequency is typically 868.0 or 915.0 in the Americas, or 433.0 in the EU - Are there more settings possible here?
+	rf95.setTxPower(23, false);                   // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then you can set transmitter powers from 5 to 23 dBm (13dBm default).  PA_BOOST?
 
-	driver.setModemConfig(RH_RF95::Bw125Cr45Sf2048);
+	rf95.setModemConfig(RH_RF95::Bw125Cr45Sf2048);
 	//driver.setModemConfig(RH_RF95::Bw125Cr48Sf4096);	// This optimized the radio for long range - https://www.airspayce.com/mikem/arduino/RadioHead/classRH__RF95.html
-	driver.setLowDatarate();						// https://www.airspayce.com/mikem/arduino/RadioHead/classRH__RF95.html#a8e2df6a6d2cb192b13bd572a7005da67
+	rf95.setLowDatarate();						// https://www.airspayce.com/mikem/arduino/RadioHead/classRH__RF95.html#a8e2df6a6d2cb192b13bd572a7005da67
 	manager.setTimeout(1000);						// 200mSec is the default - may need to extend once we play with other settings on the modem - https://www.airspayce.com/mikem/arduino/RadioHead/classRHReliableDatagram.html
 return true;
 }
@@ -133,7 +131,7 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 			return false;
 		} 
 		lora_state = (LoRA_State)messageFlag;
-		Log.infoln("Received from node %d with RSSI / SNR of %d / %d - a %s message with %d hops", from, driver.lastRssi(), driver.lastSNR(), loraStateNames[lora_state], hops);
+		Log.infoln("Received from node %d with RSSI / SNR of %d / %d - a %s message with %d hops", from, driver.lastRssi(), rf95.lastSNR(), loraStateNames[lora_state], hops);
 
 		tm.setTime(((buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8) | buf[5]),0);  // Set time based on response from gateway
 		sysStatus.frequencyMinutes = (buf[6] << 8 | buf[7]);			// Frequency of reporting set by Gateway
@@ -198,7 +196,7 @@ bool LoRA_Functions::composeDataReportNode() {
 		// Now wait for a reply from the ultimate server 
 		current.successCount = current.successCount + 1;
 		current.RSSI = driver.lastRssi();				// Set these here - will send on next data report
-		current.SNR = driver.lastSNR();
+		current.SNR = rf95.lastSNR();
 		Log.infoln("Node %d data report delivered - success rate %4.2f and  RSSI/SNR of %d / %d ",sysStatus.nodeNumber,successPercent,current.RSSI, current.SNR);
 		LED.off();
 		return true;
@@ -276,7 +274,7 @@ bool LoRA_Functions::composeJoinRequesttNode() {
 
 	if (result == RH_ROUTER_ERROR_NONE) {					// It has been reliably delivered to the next node.
 		current.RSSI = driver.lastRssi();				// Set these here - will send on next data report
-		current.SNR = driver.lastSNR();
+		current.SNR = rf95.lastSNR();
 		Log.infoln("Join request sent to gateway successfully RSSI/SNR of %d / %d ",current.RSSI, current.SNR);
 		return true;
 	}
