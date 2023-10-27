@@ -38,10 +38,9 @@ buf[17-18] SNR                              // From the Node's perspective
 
 // Format of a join request
 /*
-buf[0-1] magicNumber;                       // Magic Number
+buf[0 - 1] magicNumber;                      // Magic Number
 buf[2 - 3] nodeID                            // nodeID for verification
-buf[4- 28] Particle deviceID;               // deviceID is unique to the device
-buf[29] sensorType				            // Identifies sensor type to Gateway
+buf[4] sensorType				             // Identifies sensor type to Gateway
 */
 
 // Format for a join acknowledgement
@@ -166,13 +165,6 @@ public:
      * @return false 
      */
     bool receiveAcknowledmentJoinRequestNode();    // Node - received join request asknowledgement
-    /**
-     * @brief computes a two digit checksum based on the Particle deviceID
-     * 
-     * @param str - a 24 character hex number string
-     * @return int - a value from 0 to 360 based on the character string
-     */
-    int stringCheckSum(String str);
 
 
 protected:
@@ -210,7 +202,7 @@ public:
     // Node numbers greater than 10 initiate a join request
     const uint8_t GATEWAY_ADDRESS = 0;
     // const double RF95_FREQ = 915.0;				 	// Frequency - ISM
-    const double RF95_FREQ = 926.84;				// Center frequency for the omni-directional antenna I am using
+    const int RF95_FREQ = 92684;				        // Center frequency for the omni-directional antenna I am using - x100 for Jeff's Fork of RFM9X
 
 };
 #endif  /* __LORA_FUNCTIONS_H */

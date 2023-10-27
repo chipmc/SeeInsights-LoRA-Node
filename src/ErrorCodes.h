@@ -1,0 +1,10 @@
+#ifndef ERROR_CODES_H
+#define ERROR_CODES_H
+
+#define RESULT_OK 0
+#define PERSON_TOO_FAST -2
+#define SENSOR_TIMEOUT_ERROR -3
+#define SENSOR_INITIALIZATION_ERROR -4
+#define SENSOR_BUFFRER_NOT_FULL -5
+
+#endif

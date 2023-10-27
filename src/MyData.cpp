@@ -35,7 +35,7 @@ void sysStatusData::setup() {
     myMem.setMemorySizeBytes(256);
     if (myMem.begin() == false)
     {
-        Serial.println("No memory detected. Freezing.");
+        Log.infoln("No memory detected. Freezing.");
         while (1);
     }
     Log.infoln("Memory detected!");
@@ -50,19 +50,20 @@ void sysStatusData::setup() {
     }
     else {
         myMem.get(10, sysStatus);
-        Log.infoln("Loading system values, node number %i and magic number %i reporing every %i minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
-    }
+     }
+    sysStatusData::printSysData();
 
 }
 
 void sysStatusData::loop() {
     static unsigned long lastChecked = 0;
-    if (millis() - lastChecked > 500) {                // Check for data changes every second while awake
+    if (millis() - lastChecked > 10000) {                // Check for data changes every second while awake
         lastChecked = millis();
-        if (sysStatus.changed) {
-            sysStatus.changed = false;
-            sysStatusData::storeSysData();
-        }
+
+       if (sysStatusData::sysDataChanged) {
+           sysStatusData::storeSysData();
+           sysStatusData::sysDataChanged = false;
+       }
     }
 }
 
@@ -100,20 +101,37 @@ void sysStatusData::initialize() {
     sysStatus.magicNumber = 27617;
     sysStatus.firmwareRelease = 255;                   // This value is set in the main program
     sysStatus.resetCount = 0;
-    sysStatus.frequencyMinutes = 60;
+    sysStatus.frequencyMinutes = 1;
     sysStatus.alertCodeNode=1;
     sysStatus.alertTimestampNode = 0;
     sysStatus.openHours = true;
 
     Log.infoln("Saving new system values, node number %i and magic number %i reporing every %i minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
     myMem.put(0,sysStatus.structuresVersion);
-    myMem.put(10,sysStatus);
+    sysStatusData::storeSysData();
+
+    sysStatusData::printSysData();
 
 }
 
 void sysStatusData::storeSysData() {
     Log.infoln("sysStatus data changed, writing to EEPROM");
     myMem.put(10,sysStatus);
+}
+
+void sysStatusData::printSysData() {
+    Log.infoln("System Data");
+    Log.infoln("Magic Number: %d", sysStatus.magicNumber);
+    Log.infoln("Node Number: %d", sysStatus.nodeNumber);
+    Log.infoln("Device ID: %d", sysStatus.deviceID);
+    Log.infoln("Structures Version: %d", sysStatus.structuresVersion);
+    Log.infoln("Firmware Release: %d", sysStatus.firmwareRelease);
+    Log.infoln("Reset Count: %d", sysStatus.resetCount);
+    Log.infoln("Frequency Minutes: %d", sysStatus.frequencyMinutes);
+    Log.infoln("Alert Code Node: %d", sysStatus.alertCodeNode);
+    Log.infoln("Alert Timestamp Node: %u", sysStatus.alertTimestampNode);
+    Log.infoln("Open Hours: %t", sysStatus.openHours);
+    Log.infoln("sensorType: %d", sysStatus.sensorType);
 }
 
 // *****************  Current Status Storage Object *******************
@@ -141,16 +159,21 @@ void currentStatusData::setup() {
   // Assume that the system setup has already run
   currentStatusData::initialize();
 
+  currentStatusData::printCurrentData();
+
 }
 
 void currentStatusData::loop() {
     static unsigned long lastChecked = 0;
-    if (millis() - lastChecked > 500) {                // Check for data changes every second while awake
+
+    if (millis() - lastChecked > 10000) {                // Check for data changes every second while awake
         lastChecked = millis();
-        if (current.changed) {
-            current.changed = false;
-            currentStatusData::storeCurrentData();
-        }
+
+       if (currentStatusData::currentDataChanged) {
+           currentStatusData::storeCurrentData();
+           currentStatusData::currentDataChanged = false;
+       }
+
     }
 }
 
@@ -163,7 +186,7 @@ void currentStatusData::resetEverything() {                             // The d
   current.hourlyCount = 0;
   current.lastSampleTime = 0;
 
-  myMem.put(50,current);
+  currentData.storeCurrentData();
 }
 
 bool currentStatusData::validate(size_t dataSize) {
@@ -175,13 +198,13 @@ bool currentStatusData::validate(size_t dataSize) {
             valid = false;
         }*/
     }
-    Log.info("current data is %s",(valid) ? "valid": "not valid");
+    Log.infoln("current data is %s",(valid) ? "valid": "not valid");
     return valid;
 }
 
 void currentStatusData::initialize() {
 
-    myMem.get(50,current);
+    myMem.get(90,current);
     if (current.hourlyCount > current.dailyCount || current.successCount > current.messageCount) {
         Log.infoln("Current values not right - resetting");
         currentStatusData::resetEverything();
@@ -192,7 +215,16 @@ void currentStatusData::initialize() {
 
 void currentStatusData::storeCurrentData() {
     Log.infoln("Storing current data to EEPROM");
-    myMem.put(50,current);
+    myMem.put(90,current);
+}
+
+void currentStatusData::printCurrentData() {
+    Log.infoln("Current Data");
+    Log.infoln("Hourly Count: %i", current.hourlyCount);
+    Log.infoln("Daily Count: %i", current.dailyCount);
+    Log.infoln("Last Sample Time: %i", current.lastSampleTime);
+    Log.infoln("Message Count: %i", current.messageCount);
+    Log.infoln("Success Count: %i", current.successCount);
 }
 
 

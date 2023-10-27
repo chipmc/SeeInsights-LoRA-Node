@@ -19,26 +19,30 @@ Overhead
 	00              uint8_t        structureVersion     Varialble that changes when the structure is updated
     02-09           Reserved
 System Data
-    10              bool           changed              Flag indicating that the data has changed and needs to be saved
-    11              uint16_t       nodeNumber           Assigned by the gateway on joining the network
-    13              uint16_t       deviceID             Unique identifier for this device
-    15              uint16_t       magicNumber          Number that validates nodes on a network (all share this number)
-	17      	    uint8_t        firmwareRelease      Version of the device firmware (integer - aligned to particle product firmware)
-	18	            uint8_t        resetCount           Reset count of device (0-256)
-	19              time_t         lastConnection       last time we successfully connected to Particle
-    23              uint16_t       frequencyMinutes     How many minute between reports to the gateway
-	25              uint8_t        alertCodeNode        Alert code from node
-	26              time_t         alertTimestampNode   Timestamp of alert
-	30      	    uint8_t        sensorType           PIR sensor, car counter, others - this value is changed by the Gateway
-	31              bool           openHours;			Are we collecting data or is it outside open hours?
-    32-49           Reserved
+    10              uint16_t       nodeNumber           Assigned by the gateway on joining the network
+    14              uint16_t       deviceID             Unique identifier for this device
+    18              uint16_t       magicNumber          Number that validates nodes on a network (all share this number)
+	22      	    uint8_t        firmwareRelease      Version of the device firmware (integer - aligned to particle product firmware)
+	26	            uint8_t        resetCount           Reset count of device (0-256)
+	30              time_t         lastConnection       last time we successfully connected to Particle
+    34              uint16_t       frequencyMinutes     How many minute between reports to the gateway
+	38              uint8_t        alertCodeNode        Alert code from node
+	42              time_t         alertTimestampNode   Timestamp of alert
+	46      	    uint8_t        sensorType           PIR sensor, car counter, others - this value is changed by the Gateway
+	50              bool           openHours			Are we collecting data or is it outside open hours?
+    31-49           Reserved
 Current Data
-	50              bool           changed              Flag indicating that the data has changed and needs to be saved
-    51              uint8_t        messageCount         What message are we on
-	51              uint8_t        successCount	        How many messages are delivered successfully
-    52              time_t         lastSampleTime       Timestamp of last data collection for sensors or last count for counters
-	56              uint16_t       hourlyCount          Current Hourly Count
-	58              uint16_t       dailyCount           Current Daily Count
+    90              float          internalTempC;       Enclosure temperature in degrees C
+    94              float          internalHumidity     Enclosure humidity in percent
+	98      	    float          stateOfCharge        Battery charge level
+	102          	uint8_t        batteryState         Stores the current battery state (charging, discharging, etc)
+	103             int16_t        RSSI                 Latest signal strength value (updated adter ack and sent to gateway on next data report)
+	105	            int16_t        SNR				    Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
+    105             uint8_t        messageCount         What message are we on
+	106             uint8_t        successCount	        How many messages are delivered successfully
+    107             time_t         lastSampleTime       Timestamp of last data collection for sensors or last count for counters
+	110             uint16_t       hourlyCount          Current Hourly Count
+	113             uint16_t       dailyCount           Current Daily Count
 */
 
 #ifndef __MYDATA_H
@@ -48,7 +52,6 @@ Current Data
 #include <arduino.h>
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
-
 
 #define STRUCTURES_VERSION 2
 
@@ -117,12 +120,16 @@ public:
      * @brief Stores the system data to EEPROM to facilitate recover after a power cycle or reset
      * 
     */
-   void storeSysData();
+    void storeSysData();
+
+    /**
+     * @brief Prints system data in a readable format for Serial Montitor
+    */
+    void printSysData();
 
 
 	struct SystemDataStructure
 	{
-		bool changed;                                     // Had the data been changed since saving
         uint16_t nodeNumber;                              // Assigned by the gateway on joining the network
         uint16_t deviceID;                                // Unique identifier for the device
 		uint8_t structuresVersion;                        // Version of the data structures (system and data)
@@ -137,6 +144,9 @@ public:
 		bool openHours;									  // Are we collecting data or is it outside open hours?
 	};
 	SystemDataStructure sysStatusStruct;
+
+public:
+    bool sysDataChanged = false;
 
 	//Members here are internal only and therefore protected
 protected:
@@ -234,11 +244,15 @@ public:
      * 
      * We will need to trigger this with a flag when any of the relevant values change.
     */
-   void storeCurrentData();
+    void storeCurrentData();
+
+    /**
+     * @brief Prints current data in a readable format for Serial Montitor
+    */  
+    void printCurrentData();
 
 	struct CurrentDataStructure
 	{
-		bool changed;                                     // Flag indicating data changed since last save
         float internalTempC;                              // Enclosure temperature in degrees C
         float internalHumidity;                           // Enclosure humidity in percent
 		float stateOfCharge;                              // Battery charge level
@@ -254,8 +268,10 @@ public:
 	};
 	CurrentDataStructure currentStruct;
 
+public:
+    bool currentDataChanged = false;
 
-		//Members here are internal only and therefore protected
+	//Members here are internal only and therefore protected
 protected:
     /**
      * @brief The constructor is protected because the class is a singleton

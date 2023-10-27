@@ -28,7 +28,7 @@ void timing::setup() {
 }
 
 void timing::loop() {
-    static uint32_t lastTime = 0;
+    // static uint32_t lastTime = 0;
 
     // Put your code to run during the application thread loop here
     ab1805.loop(); 
@@ -79,6 +79,10 @@ void timing::interruptAtEvent(uint8_t eventType){
   
  // Need to fill this in once I have the clock working
 
+}
+
+void timing::interruptAtTime(time_t UnixTime, uint8_t hundredths){
+  ab1805.interruptAtTime(UnixTime,hundredths);
 }
 
 void timing::clearRepeatingInterrupt(){

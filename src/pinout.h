@@ -120,14 +120,14 @@ public:
     static const uint8_t TX             = 1;
     // Digital pins 2-4 are used by the RFM95
     static const uint8_t STATUS         = 5;
-    static const uint8_t D6             = 6;
-    static const uint8_t D7             = 7;
+    static const uint8_t I2C_EN            = 6;     // Enable ping for i2c sensors
+    static const uint8_t I2C_INT        = 7;        // i2c sensors INT PIN
     static const uint8_t WAKE           = 8;
     static const uint8_t D9             = 9;
-    static const uint8_t EN             = 10;   // PIR Sensor on Digital - Not Enable - D10
+    static const uint8_t EN             = 10;       // PIR Sensor on Digital - Not Enable - D10
     static const uint8_t USER_SW        = 11;
-    static const uint8_t LED_PWR        = 12;   // PIR Sensor on Digital - LED-PWR - D12
-    static const uint8_t INT            = 13;   // PIR Sensor on Digital - INT - D13
+    static const uint8_t LED_PWR        = 12;       // PIR Sensor on Digital - LED-PWR - D12
+    static const uint8_t INT            = 13;       // PIR Sensor on Digital - INT - D13
     // Digital pins 14 is also PA02 which is A0
     // Digital pin 15 is also PA03 which is A1
     // Digital pin 16 is also PA09 which is A2
@@ -144,7 +144,7 @@ public:
     static const uint8_t D14            = 27; // D14 / PA28 - Need to figure this one out
     // ???            = 28;
     // ???            = 29;
-    static const uint8_t Test1          = 30; // PB22
+    static const uint8_t Test1          = 30; // PB22 - Now connected to !CHG for charge detection
     static const uint8_t Test2          = 31; // PB23
 
 

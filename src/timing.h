@@ -23,7 +23,7 @@
 #include "pinout.h"
 
 //Macros(#define) to swap out during pre-processing (use sparingly)
-#define tm timing::instance()
+#define timeFunctions timing::instance()
 #define eventFlag_curDvcRpt 0
 #define eventFlag_rptEnd 1
 #define eventFlag_nxtRptStrt 2
@@ -91,13 +91,17 @@ public:
      */
     void interruptAtEvent(uint8_t eventType);
 
-
     /**
      * @brief Clear any repeating interrupt
      * 
      * @details This is used to clear any repeating interrupts that are present.
      */
     void clearRepeatingInterrupt();
+
+    /**
+     * @brief Set an interrupt at a specific time
+    */
+    void interruptAtTime(time_t UnixTime, uint8_t hundredths);
 
     /**
      * @brief set the time based on the value we recieved from the LoRa Gateway
@@ -122,7 +126,7 @@ public:
     /**
      * @brief deep Sleep the processor using the AB1805 for ultra low power
      */
-    void deepPowerDown(uint16_t seconds);
+    void deepPowerDown(uint16_t seconds=30);
 
 
 

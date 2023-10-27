@@ -23,6 +23,11 @@
 #include "MyData.h"
 #include "stsLED.h"
 #include "timing.h"
+#include "ErrorCodes.h"
+#include "TofSensor.h"
+#include "PeopleCounter.h"
+
+#define measure take_measurements::instance()
 
 class take_measurements {
 public:
@@ -49,7 +54,7 @@ public:
      * 
      * You typically use pinout::instance().loop();
      */
-    void loop();
+    bool loop();
 
     /**
      * @brief This code collects basic data from the default sensors - temperature, humidity, battery and charge level
