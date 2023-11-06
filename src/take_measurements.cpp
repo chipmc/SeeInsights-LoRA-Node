@@ -47,22 +47,20 @@ void take_measurements::setup() {
 }
 
 bool take_measurements::loop() {
-  if (TofSensor::instance().loop()) {         // If there is new data from the sensor
+  if (TofSensor::instance().loop()) {                          // If there is new data from the sensor
     if (PeopleCounter::instance().loop()) return true;         // Then check to see if we need to update the counts
   }
   return false;
 }
 
 bool take_measurements::takeMeasurements() { 
-
-    // Temperature and humidity inside the enclosure
-    take_measurements::getTemperatureHumidity();
-
-    take_measurements::batteryState();
-
-    take_measurements::isItSafeToCharge();
-
-    return 1;
+    bool returnResult = false;
+      
+      if (!take_measurements::getTemperatureHumidity()) returnResult = false;  // Temperature and humidity inside the enclosure
+      if (!take_measurements::batteryState()) returnResult = false;// Using the Fuel guage
+      if (!take_measurements::isItSafeToCharge()) returnResult = false; // This will be a safety check - Thermister on charge controller should manage
+      currentData.currentDataChanged = true; // This is a flag that will be used to indicate that the data has changed and needs to be saved
+    return returnResult;
 
 }
 

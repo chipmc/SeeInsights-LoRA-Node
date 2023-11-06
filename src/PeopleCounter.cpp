@@ -8,8 +8,6 @@
 
 #include "PeopleCounter.h"
 
-
-static int occupancyCount = 0;      // How many folks in the room or (if there is more than one door) - net occupancy through this door
 static int occupancyLimit = DEFAULT_PEOPLE_LIMIT;
 
 PeopleCounter *PeopleCounter::_instance;
@@ -34,10 +32,11 @@ void PeopleCounter::setup() {
 bool PeopleCounter::loop(){                // This function is only called if there is a change in occupancy state
     static int oldOccupancyState = 0;       // Need to remember these for past state path
     static bool atTheThreshold = false;
-    int oldOccupancyCount = occupancyCount;
+    int oldOccupancyCount = current.hourlyCount;
 
-    switch (TofSensor::instance().getOccupancyState()) {
+    current.occupancyState = TofSensor::instance().getOccupancyState();
 
+    switch (current.occupancyState) {
       case 0:                               // No occupancy detected
         oldOccupancyState = 0;
         atTheThreshold = false;
@@ -48,8 +47,7 @@ bool PeopleCounter::loop(){                // This function is only called if th
           atTheThreshold = false;
           if (oldOccupancyState == 2) {
             current.dailyCount++;
-            occupancyCount++; 
-            current.hourlyCount = occupancyCount;
+            current.hourlyCount++;
           }
         }
         oldOccupancyState = 1;
@@ -59,9 +57,8 @@ bool PeopleCounter::loop(){                // This function is only called if th
         if (atTheThreshold) {
           atTheThreshold = false;
           if (oldOccupancyState == 1) {
-            if (occupancyCount > 0) {
-              occupancyCount--;
-              current.hourlyCount = occupancyCount;
+            if (current.hourlyCount > 0) {
+              current.hourlyCount--;
             }
           }
         }
@@ -80,12 +77,14 @@ bool PeopleCounter::loop(){                // This function is only called if th
     }
 
    #if TENFOOTDISPLAY
-    if (oldOccupancyCount != occupancyCount) {
-      printBigNumbers(occupancyCount);
+    if (oldOccupancyCount != current.hourlyCount) {
+      currentData.currentDataChanged = true;
+      printBigNumbers(current.hourlyCount);
       return true;
     }
    #else
     if (oldOccupancyCount != occupancyCount) {
+      currentData.currentDataChanged = true;
       Log.infoln("Occupancy %s %i",(occupancyCount > oldOccupancyCount) ? "increased to" : "decreased to", occupancyCount);
       return true;
     }
@@ -93,14 +92,8 @@ bool PeopleCounter::loop(){                // This function is only called if th
    return false;
 }
 
-int PeopleCounter::getCount(){
-  Log.infoln("Occupancy count is %d",occupancyCount);
-  return occupancyCount;
-}
-
 void PeopleCounter::setCount(int value){
-  occupancyCount = value;
-  current.hourlyCount = occupancyCount;
+  current.hourlyCount = value;
 }
 
 int PeopleCounter::getLimit(){
@@ -110,6 +103,7 @@ int PeopleCounter::getLimit(){
 void PeopleCounter::setLimit(int value){
   occupancyLimit = value;
 }
+
 
 void PeopleCounter::printBigNumbers(int number) {
   Log.infoln("  ");

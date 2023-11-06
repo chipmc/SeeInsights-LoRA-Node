@@ -24,7 +24,6 @@
 #include "stsLED.h"
 #include "timing.h"
 #include "ErrorCodes.h"
-#include "TofSensor.h"
 #include "PeopleCounter.h"
 
 #define measure take_measurements::instance()

@@ -15,7 +15,6 @@
 #include "SparkFun_VL53L1X.h" //Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
 #include "ErrorCodes.h"
 #include "TofSensorConfig.h"
-#include "PeopleCounterConfig.h"
 
 /**
  * This class is a singleton; you do not create one as a global, on the stack, or with new.

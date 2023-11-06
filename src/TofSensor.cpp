@@ -77,9 +77,9 @@ bool TofSensor::performCalibration() {
   zoneBaselines[1] = zoneBaselines[1]/NUM_CALIBRATION_LOOPS;
 
   if (occupancyState != 0){
-    Log.infoln("Target zone not clear - will wait ten seconds and try again");
+    Log.infoln("Target zone not clear - will wait ten seconds and try again");  // Is this correct?
     delay(10000);
-    TofSensor::loop();
+    TofSensor::loop();  // why go here if the device has not been cleared?
     if (occupancyState != 0) return false;
   }
   Log.infoln("Target zone is clear with zone1 at %ikcps/SPAD and zone2 at %ikcps/SPAD",zoneBaselines[0],zoneBaselines[1]);
@@ -103,6 +103,10 @@ int TofSensor::loop(){                         // This function will update the 
     while(!myTofSensor.checkForDataReady()) {
       if (millis() - startedRanging > SENSOR_TIMEOUT) {
         Log.infoln("Sensor Timed out");
+        myTofSensor.sensorOff();
+        delay(10);
+        myTofSensor.sensorOn();
+        TofSensor::setup();
         return SENSOR_TIMEOUT_ERROR;
       }
     }

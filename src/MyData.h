@@ -264,6 +264,7 @@ public:
         time_t lastSampleTime;                            // Timestamp of last data collection for sensors or last count for counters
 		uint16_t hourlyCount;                             // Current Hourly Count
 		uint16_t dailyCount;                              // Current Daily Count
+        uint8_t occupancyState;                           // Allows us to monitor occupancy state across functions
 		// OK to add more fields here 
 	};
 	CurrentDataStructure currentStruct;

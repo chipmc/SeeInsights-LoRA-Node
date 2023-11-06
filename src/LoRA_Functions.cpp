@@ -106,7 +106,8 @@ bool  LoRA_Functions::initializeRadio() {  			// Set up the Radio Module
 	driver.setFrequency(RF95_FREQ);					// Frequency is typically 868.0 or 915.0 in the Americas, or 433.0 in the EU - Are there more settings possible here?
 	driver.setTxPower(23, false);                   // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then you can set transmitter powers from 5 to 23 dBm (13dBm default).  PA_BOOST?
 
-	driver.setModemConfig(RH_RF95::Bw125Cr45Sf2048);
+	driver.setModemConfig(RH_RF95::Bw500Cr45Sf128);	 // Optimized for fast transmission and short range - MAFC
+	// driver.setModemConfig(RH_RF95::Bw125Cr45Sf2048); // This is the value used in the park 
 	//driver.setModemConfig(RH_RF95::Bw125Cr48Sf4096);	// This optimized the radio for long range - https://www.airspayce.com/mikem/arduino/RadioHead/classRH__RF95.html
 	driver.setLowDatarate();						// https://www.airspayce.com/mikem/arduino/RadioHead/classRH__RF95.html#a8e2df6a6d2cb192b13bd572a7005da67
 	manager.setTimeout(1000);						// 200mSec is the default - may need to extend once we play with other settings on the modem - https://www.airspayce.com/mikem/arduino/RadioHead/classRHReliableDatagram.html
@@ -243,13 +244,6 @@ bool LoRA_Functions::receiveAcknowledmentDataReportNode() {
 	else sysStatus.openHours = true;
 
 	Log.infoln("Data report acknowledged %s alert for message %d park is %s and alert code is %d", (sysStatus.alertCodeNode) ? "with":"without", buf[11], (buf[10] ==1) ? "open":"closed", sysStatus.alertCodeNode);
-	
-	// blinkBlue.setActive(true);
-	// Reactivate blinking
-	unsigned long strength = (unsigned long)(map(current.RSSI,-10,-140,3000,100));
-	strength = constrain(strength,100UL,3000UL);
-    delay(strength);
-    // blinkBlue.setActive(false);
 
 	return true;
 }
@@ -304,12 +298,6 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 
 	manager.setThisAddress(sysStatus.nodeNumber);
 	sysStatus.alertCodeNode = 0;									// Need to clear so we don't get in a retry cycle
-
-    // blinkOrange.setActive(true);
-	unsigned long strength = (unsigned long)(map(current.RSSI,-10,-140,3000,100));
-	strength = constrain(strength,100UL,3000UL);
-    delay(strength);
-    // blinkOrange.setActive(false);
 
 	return true;
 }

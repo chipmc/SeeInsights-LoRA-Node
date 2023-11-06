@@ -47,10 +47,21 @@ public:
      */
     bool loop();
 
-    int getCount();
-    int getLimit();
-    void setCount(int value);
+    /**
+     * @brief allows us to set a limit on the number of folks allowed in a room
+    */
     void setLimit(int value);
+
+    /**
+     * @brief Gives us a chance to see if a limit has been set for a room
+    */
+    int getLimit();
+
+    /**
+     * @brief - Manually override the occupancy number
+    */
+    void setCount(int value);
+
 
 protected:
     /**

@@ -51,13 +51,13 @@ void sysStatusData::setup() {
     else {
         myMem.get(10, sysStatus);
      }
-    sysStatusData::printSysData();
+    // sysStatusData::printSysData();
 
 }
 
 void sysStatusData::loop() {
     static unsigned long lastChecked = 0;
-    if (millis() - lastChecked > 10000) {                // Check for data changes every second while awake
+    if (millis() - lastChecked > 10000) {                // Check for data changes every ten seconds while awake
         lastChecked = millis();
 
        if (sysStatusData::sysDataChanged) {
@@ -159,26 +159,16 @@ void currentStatusData::setup() {
   // Assume that the system setup has already run
   currentStatusData::initialize();
 
-  currentStatusData::printCurrentData();
+  // currentStatusData::printCurrentData();
 
 }
 
 void currentStatusData::loop() {
-    static unsigned long lastChecked = 0;
-
-    if (millis() - lastChecked > 10000) {                // Check for data changes every second while awake
-        lastChecked = millis();
-
-       if (currentStatusData::currentDataChanged) {
-           currentStatusData::storeCurrentData();
-           currentStatusData::currentDataChanged = false;
-       }
-
-    }
 }
 
 void currentStatusData::resetEverything() {                             // The device is waking up in a new day or is a new install
 
+  current.occupancyState = 0;
   current.messageCount = 0;
   current.successCount = 0;
   sysStatus.resetCount = 0;                                          // Reset the reset count as well
@@ -215,6 +205,7 @@ void currentStatusData::initialize() {
 
 void currentStatusData::storeCurrentData() {
     Log.infoln("Storing current data to EEPROM");
+    currentData.currentDataChanged = false;
     myMem.put(90,current);
 }
 
