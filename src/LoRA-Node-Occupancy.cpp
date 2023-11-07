@@ -220,7 +220,6 @@ void loop()
 				}
 				Log.infoln("Received a message in %lmSec", millis() - listeningStarted);
 				sysData.sysDataChanged = true;													// We have received a message - need to update the system data
-				currentData.currentDataChanged = true;											// We have received a message - need to update the current data
 				state = IDLE_STATE;
 			}
 			else if (millis() - listeningStarted > 5000L) {
@@ -361,7 +360,8 @@ void loop()
 	}
 
 	if (current.occupancyState) {
-		sensorDetect = true;
+		delay(1);
+		if (current.occupancyState) sensorDetect = true;		// Reduce noise
 	} 
 
 	// Update the vairous classes
