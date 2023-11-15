@@ -11,6 +11,16 @@
 // Releases and descriptions
 // v0 - Initial release based on Jeff Skarda's node code and my Lora Particle Node v12
 // v1 - Changed from early prototype to room occupancy counting - Works but can't sleep until we implement the PIR sensor = Changed LoRA settings to short range.
+// v2 - Added PIR sensor and sleep mode - works but needs to be tuned for power consumption
+
+/*
+Wish List:
+1) Better error handling on startup - memory or TOF initialization errors
+2) Need to collect all relevant settings into one configuration header file
+3) Improve the "noisyness" of the TOF sensor
+4) Make sure we are achieving low power on shutdown / sleep
+5) Perhaps we need to count and report the number of wakeup events
+*/
 
 // Defines 
 #define NODENUMBEROFFSET 10000UL					// By how much do we off set each node by node number
@@ -23,7 +33,7 @@
 
 // Global timing settings
 #define OCCUPANCY_LATENCY 1000UL					// How long do we keep pinging after the last time we saw someone in the door
-#define TRANSMIT_LATENCY 60UL						// How long do we wait after the last time we sent a message to send another
+#define TRANSMIT_LATENCY 60UL						// How long do we wait after the last time we sent a message to send another=
 
 //Include Libraries:
 #include <arduino.h>
@@ -39,7 +49,7 @@
 #include "MyData.h"
 #include "LoRA_Functions.h"
 
-const uint8_t firmwareRelease = 1;
+const uint8_t firmwareRelease = 2;
 
 // Instandaitate the classes
 
@@ -90,7 +100,7 @@ void setup()
   // Need to set up the User Button pressed action here
 
   LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
-  // LowPower.attachInterruptWakeup(gpio.INT, sensorISR, RISING);
+  LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
   LowPower.attachInterruptWakeup(gpio.USER_SW, userSwitchISR, FALLING);
   LowPower.attachInterruptWakeup(gpio.WAKE, wakeUp_Timer, FALLING); 
   // DIO0 is an extra interrupt output from the radio. Currently not used. Could be used for LoRaWAN and/or CAD sleep in the future. 
@@ -107,7 +117,6 @@ void setup()
 		Log.infoln("Node number indicated unconfigured node of %d setting alert code to %d", sysStatus.nodeNumber, sysStatus.alertCodeNode);
 	}
 
-	//if (state == INITIALIZATION_STATE) state = SLEEPING_STATE;               	// Sleep unless otherwise from above code
   if (state == INITIALIZATION_STATE) state = IDLE_STATE;
   // Log.infoln("Startup complete for the Node with alert code %d and last connect %s", sysStatus.alertCodeNode, Time.format(sysStatus.lastConnection), "%T").c_str());
   Log.infoln("Startup complete for the Node with alert code %d", sysStatus.alertCodeNode);
@@ -119,21 +128,29 @@ void setup()
 void loop()
 { 
 	switch (state) {
+
 		case IDLE_STATE: {													// Unlike most sketches - nodes spend most time in sleep and only transit IDLE once or twice each period
-			if (state != oldState) publishStateTransition();              	// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
+			static unsigned long keepAwake = 0;
+			if (state != oldState) {
+				keepAwake = millis();
+				publishStateTransition();              	// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
+			}
 			if (currentData.currentDataChanged && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
 				state = LoRA_TRANSMISSION_STATE;							// Go to transmit state
 				Log.infoln("Current data changed - going to transmit");
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;		// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;						// Someone is in the door stoart pinging
-			// else state = SLEEPING_STATE;									// If nothing else, go back to sleep - disabled until we get the PIR sensor
+			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;			// If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {
 			unsigned long wakeInSeconds, wakeBoundary;
 			time_t time;
 			IRQ_Reason = IRQ_Invalid;
+
+
+			if (digitalRead(gpio.INT)) break;											// If the sensor is still high, we need to stay awake
 
 			publishStateTransition();              							// Publish state transition
 			// How long to sleep
@@ -156,8 +173,9 @@ void loop()
 
 			timeFunctions.stopWDT();  												      // No watchdogs interrupting our slumber
 			timeFunctions.interruptAtTime(time, 0);                 					  // Set the interrupt for the next event
-			LowPower.deepSleep(timeFunctions.WDT_MaxSleepDuration);
-				timeFunctions.resumeWDT();                                             // Wakey Wakey - WDT can resume
+			// LowPower.sleep(timeFunctions.WDT_MaxSleepDuration);
+			LowPower.sleep();
+			timeFunctions.resumeWDT();                                             		 // Wakey Wakey - WDT can resume
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
 				state = IDLE_STATE;
@@ -171,7 +189,8 @@ void loop()
 				state = LoRA_LISTENING_STATE;
 			}
 				else if (IRQ_Reason == IRQ_Sensor) {
-				Log.infoln("Woke up for Sensor"); 	// Stay in Sleep state
+				Log.infoln("Woke up for Sensor"); 											// Interrupt from the PIR Sensor
+				state = ACTIVE_PING;
 			}
 			else if (IRQ_Reason == IRQ_UserSwitch) {
 				Log.infoln("Woke up for User Switch");
@@ -192,11 +211,14 @@ void loop()
 			if (state != oldState) {
 				lastOccupancy = millis();
 				publishStateTransition();
-				Log.infoln("Active Ping with count of %d and OccupancyState of %d", current.hourlyCount, current.occupancyState);
+				Log.infoln("Active Ping with interrupt %s count of %d and OccupancyState of %d", (IRQ_Reason == 5) ? "PIR" : "Occupancy State", current.hourlyCount, current.occupancyState);
 			}
 
 			if (millis() - lastOccupancy > OCCUPANCY_LATENCY) {							// It has been too long since we know there was someone in the door
-				if (current.occupancyState) lastOccupancy = millis();					// If the door is occupied - set the flag for another period
+				if (current.occupancyState) {
+					lastOccupancy = millis();					// If the door is occupied - set the flag for another period
+					// Log.info("Occupancy State = %d", current.occupancyState);
+				}
 				else {																	// If not, then we need to leave the active state
 					sensorDetect = false;												// Clear the sensor flag						
 					state = IDLE_STATE;													// If not, we will go back to IDLE_STATE
@@ -224,8 +246,7 @@ void loop()
 			}
 			else if (millis() - listeningStarted > 5000L) {
 				Log.infoln("Listened for 5 seconds - going back to sleep");
-				// state = SLEEPING_STATE;
-				state = IDLE_STATE;		// Need to do this until we get the interrupt working.
+				state = IDLE_STATE;																// Go back to IDLE state - no response
 			}
 
 		} break;
@@ -237,6 +258,7 @@ void loop()
 			publishStateTransition();                   						// Let everyone know we are changing state
 			sysStatus.lastConnection = timeFunctions.getTime();					// Prevents cyclical Transmits
 			measure.takeMeasurements();											// Taking measurements now should allow for accurate battery measurements
+			currentData.currentDataChanged = false;								// We have new data to send - clear so we don't get stuck in a loop
 			LoRA_Functions::instance().clearBuffer();
 			// Based on Alert code, determine what message to send
 			if (sysStatus.alertCodeNode == 0) result = LoRA_Functions::instance().composeDataReportNode();
@@ -286,17 +308,19 @@ void loop()
 		} break;
 
 		case ERROR_STATE: {													// Where we go if things are not quite right
-			if (state != oldState) publishStateTransition();                // We will apply the back-offs before sending to ERROR state - so if we are here we will take action
+			if (state != oldState) {
+				publishStateTransition();                // We will apply the back-offs before sending to ERROR state - so if we are here we will take action
+			}
 
 			switch (sysStatus.alertCodeNode) {
 			case 1:															// Case 1 is an unconfigured node - needs to send join request
 				sysStatus.nodeNumber = 11;
 				Log.infoln("LoRA Radio initialized as an unconfigured node %i and a deviceID of %i", sysStatus.nodeNumber, sysStatus.deviceID);
-				state = LoRA_LISTENING_STATE;							// Sends the alert and clears alert code
+				state = LoRA_TRANSMISSION_STATE;							// Sends the alert and clears alert code
 			break;
 			case 2:															// Case 2 is for Time not synced
 				Log.infoln("Alert 2- Time is not valid going to join again");
-				state = LoRA_LISTENING_STATE;							// Sends the alert and clears alert code
+				state = LoRA_TRANSMISSION_STATE;							// Sends the alert and clears alert code
 			break;
 			case 3: {														// Case 3 is generic - power cycle device to recover from errors
 				static unsigned long enteredState = millis();
@@ -304,7 +328,7 @@ void loop()
 					Log.infoln("Alert 3 - Resetting device");
 					sysStatus.alertCodeNode = 0;							// Need to clear so we don't get in a retry cycle
 					sysStatus.alertTimestampNode = timeFunctions.getTime();
-			sysData.storeSysData();         // All this is required as we are done trainsiting loop
+					sysData.storeSysData();         // All this is required as we are done trainsiting loop
 					delay(2000);
 					timeFunctions.deepPowerDown();
 				}
@@ -343,11 +367,11 @@ void loop()
 				state = IDLE_STATE;
 			break;
 			}
-		}
+		} break;
 		case INITIALIZATION_STATE: 
 			// Should not get here
 			state = IDLE_STATE;
-			break;
+		break;
 	}
 
 	// Housekeeping
@@ -358,11 +382,6 @@ void loop()
 		Log.infoln("Detected button press");
 		state = LoRA_TRANSMISSION_STATE;
 	}
-
-	if (current.occupancyState) {
-		delay(1);
-		if (current.occupancyState) sensorDetect = true;		// Reduce noise
-	} 
 
 	// Update the vairous classes
 	timeFunctions.loop();          	// Pet the hardware watchdog
@@ -385,6 +404,7 @@ void publishStateTransition(void)
 		if (!timeFunctions.isRTCSet()) snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s with invalid time", stateNames[oldState],stateNames[state]);
 		else snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s", stateNames[oldState],stateNames[state]);
 	}
+	else if (sysStatus.alertCodeNode != 0) snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s with alert code %d", stateNames[oldState],stateNames[state], sysStatus.alertCodeNode);
 	else snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s", stateNames[oldState],stateNames[state]);
 	oldState = state;
 	Log.infoln(stateTransitionString);
@@ -405,19 +425,8 @@ void wakeUp_Timer() {
     // Something more here?
 }
 
-// To be eliminated
-void transmitDelayTimerISR() {
-	state = LoRA_TRANSMISSION_STATE;										// Time for our node to transmit
-}
-
-// To be eliminated
-void listeningDurationTimerISR() {
-	LoRA_Functions::instance().sleepLoRaRadio();							// Done with the radio - shut it off
-	state = SLEEPING_STATE;													// Go back to sleep
-}
-
 void userSwitchISR() {
-	userSwitchDectected = true;
+  userSwitchDectected = true;
   IRQ_Reason = IRQ_UserSwitch;
 }
 

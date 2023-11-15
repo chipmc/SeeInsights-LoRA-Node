@@ -120,7 +120,7 @@ public:
     static const uint8_t TX             = 1;
     // Digital pins 2-4 are used by the RFM95
     static const uint8_t STATUS         = 5;
-    static const uint8_t I2C_EN            = 6;     // Enable ping for i2c sensors
+    static const uint8_t I2C_EN         = 6;        // Enable ping for i2c sensors
     static const uint8_t I2C_INT        = 7;        // i2c sensors INT PIN
     static const uint8_t WAKE           = 8;
     static const uint8_t D9             = 9;

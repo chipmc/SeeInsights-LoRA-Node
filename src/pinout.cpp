@@ -22,13 +22,8 @@ void pinout::setup() {
   pinMode(RFM95_CS,OUTPUT);
   pinMode(RFM95_DIO0,INPUT_PULLUP);
   pinMode(RFM95_RST, OUTPUT);
-  pinMode(EN,OUTPUT);
-  digitalWrite(EN,LOW);
-  pinMode(LED_PWR,OUTPUT);
-  digitalWrite(LED_PWR,LOW);
-  pinMode(INT,INPUT);
   pinMode(WAKE, INPUT_PULLUP);
-  pinMode(I2C_INT,INPUT);
+  pinMode(I2C_INT,INPUT_PULLDOWN);
   pinMode(I2C_EN,OUTPUT);              // Not sure if we can use this - messes with Boron i2c bus
   digitalWrite(I2C_EN, LOW);           // Turns on the module
   

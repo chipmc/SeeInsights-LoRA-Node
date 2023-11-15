@@ -62,6 +62,8 @@ Current Data
 #define sysStatus sysStatusData::instance().sysStatusStruct
 #define current currentStatusData::instance().currentStruct
 
+#define UNIQUE_DEVICE_ID 2100UL						// This is the unique device ID for this device - used to generate the node number
+
 /**
  * This class is a singleton; you do not create one as a global, on the stack, or with new.
  * 

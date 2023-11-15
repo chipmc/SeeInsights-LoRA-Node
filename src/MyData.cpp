@@ -96,7 +96,7 @@ void sysStatusData::initialize() {
 
     Log.infoln("Loading system defaults");              // Letting us know that defaults are being loaded
     sysStatus.nodeNumber = 11;
-    sysStatus.deviceID = 2100;
+    sysStatus.deviceID = UNIQUE_DEVICE_ID;
     sysStatus.structuresVersion = STRUCTURES_VERSION;
     sysStatus.magicNumber = 27617;
     sysStatus.firmwareRelease = 255;                   // This value is set in the main program
