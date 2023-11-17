@@ -2,12 +2,10 @@
 #define TOFSENSOR_CONFIG_H
 
 /***   Mounting Parameters   ***/
-#define PERSON_THRESHOLD 20             // This counts folks of normal height walking through the door
-#define NUM_CALIBRATION_LOOPS 100           // How many samples do we buffer for each zone - minimum is 2
-
+#define NUM_OCCUPANCY_CALIBRATION_LOOPS 30                   // How many samples to take during occupancy calibration.
 
 /***   Debugging   ***/
-#define DEBUG_COUNTER 0
+#define DEBUG_COUNTER 1
 #define SENSOR_TIMEOUT 500
 
 // Detection zone dimensions and optical centers
@@ -15,10 +13,8 @@
 #define ROWS_OF_SPADS    6                         // This is the depth (Through the door - when sensor mounted on the inside doorframe)
 
 // Will focus on the SPAD array of 6 rows and 8 columns
-#define FRONT_ZONE_CENTER     159
-#define BACK_ZONE_CENTER      239
-
-
+#define FRONT_ZONE_CENTER     167
+#define BACK_ZONE_CENTER      231
 
 /** The TofSensor has a receiver array consisting of 16X16 Single Photon Diodes. 
  *  By default, all of them are used but you can reduce the receiver to a region of interest (ROI).

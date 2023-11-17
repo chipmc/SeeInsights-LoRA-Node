@@ -47,8 +47,8 @@ void take_measurements::setup() {
 }
 
 bool take_measurements::loop() {
-  if (TofSensor::instance().loop()) {                          // If there is new data from the sensor
-    if (PeopleCounter::instance().loop()) return true;         // Then check to see if we need to update the counts
+  if (TofSensor::instance().loop()) {             // If there is new data from the sensor ...
+    return PeopleCounter::instance().loop();                 // ... then check to see if we need to update the counts.
   }
   return false;
 }

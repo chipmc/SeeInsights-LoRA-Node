@@ -91,8 +91,9 @@ void setup()
   gpio.setup();
   LED.setup(gpio.STATUS);
   LED.on();
-  timeFunctions.setup();
   sysData.setup();
+  delay(100);
+  timeFunctions.setup();
   currentData.setup();
   sysStatus.firmwareRelease = firmwareRelease;
   measure.setup();
@@ -100,7 +101,7 @@ void setup()
   // Need to set up the User Button pressed action here
 
   LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
-  LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
+//   LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
   LowPower.attachInterruptWakeup(gpio.USER_SW, userSwitchISR, FALLING);
   LowPower.attachInterruptWakeup(gpio.WAKE, wakeUp_Timer, FALLING); 
   // DIO0 is an extra interrupt output from the radio. Currently not used. Could be used for LoRaWAN and/or CAD sleep in the future. 
@@ -141,14 +142,13 @@ void loop()
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;		// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;						// Someone is in the door stoart pinging
-			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;			// If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
+			// else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;			// If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {
 			unsigned long wakeInSeconds, wakeBoundary;
 			time_t time;
 			IRQ_Reason = IRQ_Invalid;
-
 
 			if (digitalRead(gpio.INT)) break;											// If the sensor is still high, we need to stay awake
 
@@ -188,7 +188,7 @@ void loop()
 				Log.infoln("Woke up for RF95 IRQ");
 				state = LoRA_LISTENING_STATE;
 			}
-				else if (IRQ_Reason == IRQ_Sensor) {
+			else if (IRQ_Reason == IRQ_Sensor) {
 				Log.infoln("Woke up for Sensor"); 											// Interrupt from the PIR Sensor
 				state = ACTIVE_PING;
 			}
@@ -209,6 +209,7 @@ void loop()
 			static unsigned long lastOccupancy = 0;
 
 			if (state != oldState) {
+				detachInterrupt(gpio.I2C_INT);
 				lastOccupancy = millis();
 				publishStateTransition();
 				Log.infoln("Active Ping with interrupt %s count of %d and OccupancyState of %d", (IRQ_Reason == 5) ? "PIR" : "Occupancy State", current.hourlyCount, current.occupancyState);
@@ -220,7 +221,9 @@ void loop()
 					// Log.info("Occupancy State = %d", current.occupancyState);
 				}
 				else {																	// If not, then we need to leave the active state
-					sensorDetect = false;												// Clear the sensor flag						
+					sensorDetect = false;												// Clear the sensor flag	
+					detachInterrupt(gpio.I2C_INT);
+					LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);					
 					state = IDLE_STATE;													// If not, we will go back to IDLE_STATE
 				}
 			}
