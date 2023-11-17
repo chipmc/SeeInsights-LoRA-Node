@@ -101,7 +101,7 @@ void setup()
   // Need to set up the User Button pressed action here
 
   LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
-//   LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
+  LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
   LowPower.attachInterruptWakeup(gpio.USER_SW, userSwitchISR, FALLING);
   LowPower.attachInterruptWakeup(gpio.WAKE, wakeUp_Timer, FALLING); 
   // DIO0 is an extra interrupt output from the radio. Currently not used. Could be used for LoRaWAN and/or CAD sleep in the future. 
