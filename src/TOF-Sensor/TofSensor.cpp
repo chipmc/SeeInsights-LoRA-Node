@@ -56,9 +56,9 @@ bool TofSensor::setup(){
   else Log.infoln("Sensor init successfully");
   
   // Here is where we set the device properties
-  myTofSensor.setSigmaThreshold(45);        // Default is 45 - this will make it harder to get a valid result - Range 1 - 16383
-  myTofSensor.setSignalThreshold(1500);     // Default is 1500 raising value makes it harder to get a valid results- Range 1-16383
-  myTofSensor.setTimingBudgetInMs(20);      // Was 20mSec
+  myTofSensor.setSigmaThreshold(45);                // Default is 45 - this will make it harder to get a valid result - Range 1 - 16383
+  myTofSensor.setSignalThreshold(1500);             // Default is 1500 raising value makes it harder to get a valid results- Range 1-16383
+  myTofSensor.setTimingBudgetInMs(20);              // Was 20mSec
 
   while (TofSensor::measure() == SENSOR_BUFFRER_NOT_FULL) {delay(10);}; // Wait for the buffer to fill up
   Log.infoln("Calibrating TOF Sensor");
@@ -67,24 +67,25 @@ bool TofSensor::setup(){
   else {
     Log.infoln("Initial calibration failed - wait 10 secs and reset");
     delay(10000);
-    sysStatus.alertCodeNode = 3;
+    sysStatus.alertCodeNode = 3;                    // Set a reset alert code and return false
+    return false;
   }
 
-  // myTofSensor.setDistanceModeShort();                     // Once initialized, we are focused on the top half of the door
-
+  // myTofSensor.setDistanceModeShort();            // Once initialized, we are focused on the top half of the door
+ 
   return true;
 }
 
 bool TofSensor::performOccupancyCalibration() {
   int clear = 1;
   TofSensor::measure();
-  occupancyBaselines[0][0] = lastSignal[0];     // Assign the first reading as max AND min for each zone
+  occupancyBaselines[0][0] = lastSignal[0];         // Assign the first reading as max AND min for each zone
   occupancyBaselines[0][1] = lastSignal[0];
-  occupancyBaselines[1][0] = lastSignal[1] + 5; // little bit of leeway for the upper range to help with calibration
+  occupancyBaselines[1][0] = lastSignal[1] + 5;     // little bit of leeway for the upper range to help with calibration
   occupancyBaselines[1][1] = lastSignal[1] + 5;
-  for (int i=0; i<NUM_OCCUPANCY_CALIBRATION_LOOPS; i++) {   // Loop through a set number of times ... 
+  for (int i=0; i<NUM_OCCUPANCY_CALIBRATION_LOOPS; i++) {                                                         // Loop through a set number of times ... 
     TofSensor::loop();
-    if(zoneSignalPerSpad[0][0] < occupancyBaselines[0][0]) occupancyBaselines[0][0] = zoneSignalPerSpad[0][0];    // ... and update the min and max readings each time
+    if(zoneSignalPerSpad[0][0] < occupancyBaselines[0][0]) occupancyBaselines[0][0] = zoneSignalPerSpad[0][0];    // ... and update the respective min and max ranges each time
     if(zoneSignalPerSpad[1][0] < occupancyBaselines[1][0]) occupancyBaselines[1][0] = zoneSignalPerSpad[1][0];
     if(zoneSignalPerSpad[0][1] > occupancyBaselines[0][1]) occupancyBaselines[0][1] = zoneSignalPerSpad[0][1];
     if(zoneSignalPerSpad[1][1] > occupancyBaselines[1][1]) occupancyBaselines[1][1] = zoneSignalPerSpad[1][1];
@@ -157,31 +158,31 @@ int TofSensor::loop(){                         // This function will update the 
 }
 
 int TofSensor::measure(){
-  ready = 0;
+  ready = 0;                                                                           
   unsigned long startedRanging;
-  for (byte samples = 0; samples < 4; samples++){
-    int zone = samples % 2;
+  for (byte samples = 0; samples < 4; samples++){                                        // Take 4 samples...
+    int zone = samples % 2;                                                              // ... 2 for each zone.    
     myTofSensor.stopRanging();
     myTofSensor.clearInterrupt();
-    myTofSensor.setROI(ROWS_OF_SPADS,COLUMNS_OF_SPADS,occupancyOpticalCenters[zone]);
+    myTofSensor.setROI(ROWS_OF_SPADS,COLUMNS_OF_SPADS,occupancyOpticalCenters[zone]);    // Set the Region of Interest for the two zones
     delay(1);
     myTofSensor.startRanging();
     startedRanging = millis();
-    while(!myTofSensor.checkForDataReady()) {
+    while(!myTofSensor.checkForDataReady()) {                                            // Time out if something is wrong with the sensor
       if (millis() - startedRanging > SENSOR_TIMEOUT) {
         Log.infoln("Sensor Timed out");
         return SENSOR_TIMEOUT_ERROR;
       }
     }
-    lastSignal[zone] = myTofSensor.getSignalPerSpad();
-    lastAmbient[zone] = myTofSensor.getAmbientPerSpad();
-    zoneSignalPerSpad[zone][samples < 2 ? 0 : 1] = lastSignal[zone];
-    // if(zoneSignalPerSpad[zone][samples < 2 ? 0 : 1] == 65535 || zoneSignalPerSpad[zone][samples < 2 ? 0 : 1] == 0){
-    //   samples--;
-    //   continue;
-    // }
+    lastSignal[zone] = myTofSensor.getSignalPerSpad();                                   // Retrieve the average signal of a SPAD in the region of interest for this zone.
+    // lastAmbient[zone] = myTofSensor.getAmbientPerSpad();                              // Retrieve the average ambient signal of a SPAD in the region of interest for this zone. (unused)
+    zoneSignalPerSpad[zone][samples < 2 ? 0 : 1] = lastSignal[zone];                     // Set the measured signal strength to the zoneSignalPerSpad array. Again, 2 measurements for each zone per measure() call.
+    if(zoneSignalPerSpad[zone][samples < 2 ? 0 : 1] == 65535){                           // If the reading suggests a data transfer or memory issue ...
+      samples--;                                                                         // ... ignore this reading ...
+      continue;                                                                          // ... and try again.
+    }
     #if DEBUG_COUNTER
-     if(samples >= 2){
+     if(samples >= 2){                                                                   // Log both zones' measurement tuples for this loop.
       zone == 0 ? Log.infoln("{1st=%ikbps/SPAD, 2nd=%ikbps/SPAD}", zoneSignalPerSpad[zone][0], zoneSignalPerSpad[zone][1]) : Log.infoln("                                    {1st=%ikbps/SPAD, 2nd=%ikbps/SPAD}", zoneSignalPerSpad[zone][0], zoneSignalPerSpad[zone][1]);
      }
     #endif
@@ -189,7 +190,7 @@ int TofSensor::measure(){
   return(++ready);
 }
 
-// int TofSensor::detect(){
+// int TofSensor::detect(){                                                              // Take a measurement in the detection zone (unused)
 //   ready = 0;
 //   unsigned long startedRanging;
 //   myTofSensor.stopRanging();

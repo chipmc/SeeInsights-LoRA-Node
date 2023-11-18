@@ -166,7 +166,7 @@ void currentStatusData::setup() {
 void currentStatusData::loop() {
 }
 
-void currentStatusData::resetEverything() {                             // The device is waking up in a new day or is a new install
+void currentStatusData::resetEverything() {                          // The device is waking up in a new day or is a new install
 
   current.occupancyState = 0;
   current.messageCount = 0;

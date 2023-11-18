@@ -17,7 +17,7 @@ StackArray <int> tempStack;
 
 static int occupancyLimit = DEFAULT_PEOPLE_LIMIT;
 
-int magicalStateMap[4] = {3, 2, 1, 0};     // Define impossible state transitions (Ex. newOccupancyState cannot equal impossibilityMap[lastOccupancyState])
+int impossibleStateTransition[4] = {3, 2, 1, 0};                  // Define impossible state transitions (Ex. newOccupancyState cannot equal impossibilityMap[lastOccupancyState])
 
 PeopleCounter *PeopleCounter::_instance;
 
@@ -50,22 +50,22 @@ bool PeopleCounter::loop(){
   if(current.occupancyState != stateStack.peek()){
     switch(stateStack.count()){
       case 0:                         
-        stateStack.push(0);       // First value MUST be a 0
+        stateStack.push(0);                                       // First value MUST be a 0
         #if PEOPLECOUNTER_DEBUG
           Log.infoln("[Line 55]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), current.occupancyState);
         #endif                                           
         break;
       case 1:
-        stateStack.push(current.occupancyState);                         // Push to the stack without checking for impossibilities
+        stateStack.push(current.occupancyState);                  // Push to the stack without checking for impossibilities
         #if PEOPLECOUNTER_DEBUG
           Log.infoln("[Line 61]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), current.occupancyState);
         #endif
         break;                                                           
-      case 2:
-      case 3:                                                           // When the stateStack has 2 or 3 items, we must identify impossible patterns and fix them.
-        applyMagicalStateMapCorrections(current.occupancyState);
-        #if PEOPLECOUNTER_DEBUG
-          switch (stateStack.count()){
+      case 2:                                                     // When the stateStack has 2 or 3 items, we must identify impossible patterns and fix them - or backtrack.
+      case 3:                                                               // [0, 1] <-- 2 becomes [0, 1, 3, 2],  [0, 2] <-- 1 becomes [0, 2, 3, 1],
+        applyImpossibleStateTransitionCorrections(current.occupancyState);  // [0, 3] <-- 2 becomes [0, 1, 3, 2],  [0, 3] <-- 1 becomes [0, 2, 3, 1], 
+        #if PEOPLECOUNTER_DEBUG                                             // [0, x, 3] <-- x becomes [0, x],     [0, 3, x] <-- 3 becomes [0, 3],     [0, x, 3] <-- 0 becomes [0].  
+          switch (stateStack.count()){                                      // Anything not in need of corrections is added to the stack as normal.
             case 1:
               Log.infoln("[Line 70]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), current.occupancyState);
               break;
@@ -82,9 +82,9 @@ bool PeopleCounter::loop(){
         #endif
         break;
       case 4:
-        if(current.occupancyState != 0 && current.occupancyState != magicalStateMap[stateStack.peek()]){  // If the final occupancy state is NOT 0 ...
-          while(stateStack.peek() != current.occupancyState){                        // ... until the top of the stack is equal to the new occupancy state ...
-            stateStack.pop();                                                        // ... remove the top of the stack.
+        if(current.occupancyState != 0 && current.occupancyState != impossibleStateTransition[stateStack.peek()]){  // If the final occupancy state is NOT 0 AND is not impossible, backtrack ...
+            while(stateStack.peek() != current.occupancyState){                                                     // ... until the top of the stack is equal to the new occupancy state ...
+              stateStack.pop();                                                                                     // ... we remove the top of the stack.
           }
           #if PEOPLECOUNTER_DEBUG
             switch (stateStack.count()){
@@ -102,21 +102,21 @@ bool PeopleCounter::loop(){
                 break;
             }
           #endif        
-        } else {                                                        // If the new occupancy state is 0 ...
-          (current.occupancyState == magicalStateMap[stateStack.peek()]) ? stateStack.push(0) : stateStack.push(current.occupancyState);  // ... push the final state.
+        } else {                                                  // If the new occupancy state is 0 ...
+          (current.occupancyState == impossibleStateTransition[stateStack.peek()]) ? stateStack.push(0) : stateStack.push(current.occupancyState);  // ... push the final state.
         }
         break;
     }
   }
   
-  if(stateStack.count() == 5){                                        // If the stack is finished ...
-    char states[56];                                                          // ... turn it into a string by popping all values off the stack...
+  if(stateStack.count() == 5){                                    // If the stack is finished ...
+    char states[56];                                              // ... turn it into a string by popping all values off the stack...
       #if PEOPLECOUNTER_DEBUG
         Log.infoln("[Line 115]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), current.occupancyState);
       #endif 
       snprintf(states, sizeof(states), "%i%i%i%i%i", stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop());   
       if(strcmp(states, "01320")){
-        if(!MOUNTED_INSIDE){                                          // ... if the sequence (backwards) matches the increment sequence then increment the count.
+        if(!MOUNTED_INSIDE){                                      // ... and if the sequence (backwards) matches the increment sequence then increment the count.
           current.dailyCount++;
           current.hourlyCount++;
           currentData.currentDataChanged = true;
@@ -129,7 +129,7 @@ bool PeopleCounter::loop(){
         }       
         return true;                    
       } else if(strcmp(states, "02310")) {
-        if(!MOUNTED_INSIDE){                                          // ... if the sequence (backwards) matches the decrement sequence then decrement the count.
+        if(!MOUNTED_INSIDE){                                      // ... and if the sequence (backwards) matches the decrement sequence then decrement the count.
           if(current.hourlyCount > 0 || SINGLE_ENTRANCE){
             current.dailyCount--;
             current.hourlyCount--;
@@ -142,7 +142,7 @@ bool PeopleCounter::loop(){
         }
         return true;
       } else {
-        Log.infoln("ERROR: Algorithm somehow produced states: %s", states);           // ... if the sequence does not match the decrement or increment sequence, do nothing.
+        Log.infoln("ERROR: Algorithm somehow produced states: %s", states);     // ... if the sequence does not match the decrement or increment sequence, do nothing.
       }
   }
   #if TENFOOTDISPLAY
@@ -172,31 +172,31 @@ void PeopleCounter::setLimit(int value){
   occupancyLimit = value;
 }
 
-void PeopleCounter::applyMagicalStateMapCorrections(int newOccupancyState){
+void PeopleCounter::applyImpossibleStateTransitionCorrections(int newOccupancyState){
   int needsCleanup = 0;
   tempStack.push(newOccupancyState);                              // Push the new occupancyState to the tempStack
   while(stateStack.count() > 1){                                  // Go through the stack containing prior states
     int currentState = stateStack.pop();                               
     int stateAfter = tempStack.peek();
     int stateBefore = stateStack.peek();
-    if(stateBefore == stateAfter){                                          // If the state before current is equal to the state after current ...
-      stateStack.push(currentState);                             // put current back
+    if(stateBefore == stateAfter){                                // If the state before current is equal to the state after current ...
+      stateStack.push(currentState);                              // ... put current back
       needsCleanup = 1;
       break;
     }
-    if(magicalStateMap[stateBefore] == currentState){                       // If the transition from before --> current is impossible, we must have failed to detect the person at some point ...
+    if(impossibleStateTransition[stateBefore] == currentState){          // If the transition from stateBefore --> the new state is impossible, we must have failed to detect the person at some point ...
       tempStack.push(currentState);                                            // ... so push current ...
-      int missedState = magicalStateMap[stateAfter];                               // ... consult the magical state map to determine what state was missed ...
-      tempStack.push(missedState);                                                // ... then push that.
-    } else if(magicalStateMap[currentState] == stateAfter) {                // If the transition from current --> after is impossible, we must have failed to detect the person at some point ...
-      int missedState = magicalStateMap[stateBefore];                          // ... so consult the magical state map to determine what state was missed ...
-      tempStack.push(missedState);                                            // ... push the missing state ...
-      tempStack.push(currentState);                                                    // ... then push current.
-    } else {                                                      // If the transition from before --> current AND from current --> after are possible ...
-      tempStack.push(currentState);                                            // ... push current.
+      int missedState = impossibleStateTransition[stateAfter];                       // ... consult the impossible/magical transition map to determine what state was missed ...
+      tempStack.push(missedState);                                                          // ... and push that missing state into the stack to correct the sequence.
+    } else if(impossibleStateTransition[currentState] == stateAfter) {   // If the transition from the new state --> after is impossible, we must have failed to detect the person at some point ...
+      int missedState = impossibleStateTransition[stateBefore];                // ... so consult the impossible/magical transition state map to determine what state was missed ...
+      tempStack.push(missedState);                                                   // ... push that missing state into the stack to correct the sequence. ...
+      tempStack.push(currentState);                                                         // ... then push the new state.
+    } else {                                                             // If the transition from stateBefore --> the new state AND from the new state --> stateAfter are both possible ...
+      tempStack.push(currentState);                                            // ... push the new state to the stack as normal.
     }
   }
-  while(!tempStack.isEmpty()){                                    // move everything in the tempStack back to the permanent stack
+  while(!tempStack.isEmpty()){                                    // Move everything in the tempStack back to the permanent stack
     stateStack.push(tempStack.pop());
   } 
   if(needsCleanup) { 
@@ -207,7 +207,7 @@ void PeopleCounter::applyMagicalStateMapCorrections(int newOccupancyState){
 }
 
 void PeopleCounter::printBigNumbers(int number) {
- StackArray <int> bigNumberStack;         // for printing big numbers
+ StackArray <int> bigNumberStack;                                 // For printing big numbers
   Log.infoln("  ");
   int currentNumber = number;
   while(currentNumber % 10 != currentNumber) {

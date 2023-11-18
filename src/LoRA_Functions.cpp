@@ -1,9 +1,9 @@
 #include "LoRA_Functions.h"
 
 RH_RF95 driver(gpio.RFM95_CS, gpio.RFM95_INT);  	// Class instance for the RFM95 radio driver
-// Speck myCipher;                             	// Class instance for Speck block ciphering
-// RHEncryptedDriver driver(rf95, myCipher);   	// Class instance for Encrypted RFM95 driver
-RHMesh manager(driver, LoRA.GATEWAY_ADDRESS);        // Class instance to manage message delivery and receipt, using the driver declared above
+// Speck myCipher;                             	       // Class instance for Speck block ciphering
+// RHEncryptedDriver driver(rf95, myCipher);   	       // Class instance for Encrypted RFM95 driver
+RHMesh manager(driver, LoRA.GATEWAY_ADDRESS);       // Class instance to manage message delivery and receipt, using the driver declared above
 
 LoRA_Functions *LoRA_Functions::_instance;
 

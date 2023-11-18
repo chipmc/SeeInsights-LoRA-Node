@@ -2,15 +2,15 @@
 #define TOFSENSOR_CONFIG_H
 
 /***   Mounting Parameters   ***/
-#define NUM_OCCUPANCY_CALIBRATION_LOOPS 30                   // How many samples to take during occupancy calibration.
+#define NUM_OCCUPANCY_CALIBRATION_LOOPS 30   // How many samples to take during occupancy calibration.
 
 /***   Debugging   ***/
-#define DEBUG_COUNTER 1
+#define DEBUG_COUNTER 1                      // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
 #define SENSOR_TIMEOUT 500
 
 // Detection zone dimensions and optical centers
-#define COLUMNS_OF_SPADS 8                         // This is the width (accross the door with the sensor long axis perpendicular to the threshold) of the active SPADS
-#define ROWS_OF_SPADS    6                         // This is the depth (Through the door - when sensor mounted on the inside doorframe)
+#define COLUMNS_OF_SPADS 8                   // This is the width (accross the door with the sensor long axis perpendicular to the threshold) of the active SPADS
+#define ROWS_OF_SPADS    6                   // This is the depth (Through the door - when sensor mounted on the inside doorframe)
 
 // Will focus on the SPAD array of 6 rows and 8 columns
 #define FRONT_ZONE_CENTER     167

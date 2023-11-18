@@ -93,7 +93,7 @@ protected:
      * @brief Algorithm that makes sense of nonsensical state transitions by filling in the
      *        gaps to help the stack make sense again. 
     */
-    void applyMagicalStateMapCorrections(int newOccupancyState);
+    void applyImpossibleStateTransitionCorrections(int newOccupancyState);
 
     int count = 0;
     int limit = DEFAULT_PEOPLE_LIMIT;
