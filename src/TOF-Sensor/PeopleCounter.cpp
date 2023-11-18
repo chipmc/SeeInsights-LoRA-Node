@@ -41,69 +41,65 @@ void PeopleCounter::setup() {
 
 bool PeopleCounter::loop(){
   int oldOccupancyCount = current.hourlyCount;
-  current.occupancyState = TofSensor::instance().getOccupancyState();
-
-  #if OCCUPANCYSTATE_DEBUG
-      if (current.occupancyState != stateStack.peek()) printBigNumbers(current.occupancyState);
-  #endif
+  int newOccupancyState = TofSensor::instance().getOccupancyState();
   
-  if(current.occupancyState != stateStack.peek()){
+  if(newOccupancyState != stateStack.peek()){
     switch(stateStack.count()){
       case 0:                         
         stateStack.push(0);                                       // First value MUST be a 0
         #if PEOPLECOUNTER_DEBUG
-          Log.infoln("[Line 55]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), current.occupancyState);
+          Log.infoln("[Line 55]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
         #endif                                           
         break;
       case 1:
-        stateStack.push(current.occupancyState);                  // Push to the stack without checking for impossibilities
+        stateStack.push(newOccupancyState);                  // Push to the stack without checking for impossibilities
         #if PEOPLECOUNTER_DEBUG
-          Log.infoln("[Line 61]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), current.occupancyState);
+          Log.infoln("[Line 61]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
         #endif
         break;                                                           
       case 2:                                                     // When the stateStack has 2 or 3 items, we must identify impossible patterns and fix them - or backtrack.
       case 3:                                                               // [0, 1] <-- 2 becomes [0, 1, 3, 2],  [0, 2] <-- 1 becomes [0, 2, 3, 1],
-        applyImpossibleStateTransitionCorrections(current.occupancyState);  // [0, 3] <-- 2 becomes [0, 1, 3, 2],  [0, 3] <-- 1 becomes [0, 2, 3, 1], 
+        applyImpossibleStateTransitionCorrections(newOccupancyState);  // [0, 3] <-- 2 becomes [0, 1, 3, 2],  [0, 3] <-- 1 becomes [0, 2, 3, 1], 
         #if PEOPLECOUNTER_DEBUG                                             // [0, x, 3] <-- x becomes [0, x],     [0, 3, x] <-- 3 becomes [0, 3],     [0, x, 3] <-- 0 becomes [0].  
           switch (stateStack.count()){                                      // Anything not in need of corrections is added to the stack as normal.
             case 1:
-              Log.infoln("[Line 70]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), current.occupancyState);
+              Log.infoln("[Line 70]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
               break;
             case 2:
-              Log.infoln("[Line 73]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), current.occupancyState);
+              Log.infoln("[Line 73]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
               break;
             case 3:
-              Log.infoln("[Line 76]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), current.occupancyState);
+              Log.infoln("[Line 76]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), newOccupancyState);
               break;
             case 4:
-              Log.infoln("[Line 79]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), current.occupancyState);
+              Log.infoln("[Line 79]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), newOccupancyState);
               break;
           }
         #endif
         break;
       case 4:
-        if(current.occupancyState != 0 && current.occupancyState != impossibleStateTransition[stateStack.peek()]){  // If the final occupancy state is NOT 0 AND is not impossible, backtrack ...
-            while(stateStack.peek() != current.occupancyState){                                                     // ... until the top of the stack is equal to the new occupancy state ...
+        if(newOccupancyState != 0 && newOccupancyState != impossibleStateTransition[stateStack.peek()]){  // If the final occupancy state is NOT 0 AND is not impossible, backtrack ...
+            while(stateStack.peek() != newOccupancyState){                                                     // ... until the top of the stack is equal to the new occupancy state ...
               stateStack.pop();                                                                                     // ... we remove the top of the stack.
           }
           #if PEOPLECOUNTER_DEBUG
             switch (stateStack.count()){
               case 1:
-                Log.infoln("[Line 92]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), current.occupancyState);
+                Log.infoln("[Line 92]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
                 break;
               case 2:
-                Log.infoln("[Line 95]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), current.occupancyState);
+                Log.infoln("[Line 95]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
                 break;
               case 3:
-                Log.infoln("[Line 98]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), current.occupancyState);
+                Log.infoln("[Line 98]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), newOccupancyState);
                 break;
               case 4:
-                Log.infoln("[Line 101]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), current.occupancyState);
+                Log.infoln("[Line 101]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), newOccupancyState);
                 break;
             }
           #endif        
         } else {                                                  // If the new occupancy state is 0 ...
-          (current.occupancyState == impossibleStateTransition[stateStack.peek()]) ? stateStack.push(0) : stateStack.push(current.occupancyState);  // ... push the final state.
+          (newOccupancyState == impossibleStateTransition[stateStack.peek()]) ? stateStack.push(0) : stateStack.push(newOccupancyState);  // ... push the final state.
         }
         break;
     }
@@ -112,7 +108,7 @@ bool PeopleCounter::loop(){
   if(stateStack.count() == 5){                                    // If the stack is finished ...
     char states[56];                                              // ... turn it into a string by popping all values off the stack...
       #if PEOPLECOUNTER_DEBUG
-        Log.infoln("[Line 115]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), current.occupancyState);
+        Log.infoln("[Line 115]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), newOccupancyState);
       #endif 
       snprintf(states, sizeof(states), "%i%i%i%i%i", stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop());   
       if(strcmp(states, "01320")){
@@ -145,6 +141,10 @@ bool PeopleCounter::loop(){
         Log.infoln("ERROR: Algorithm somehow produced states: %s", states);     // ... if the sequence does not match the decrement or increment sequence, do nothing.
       }
   }
+  #if OCCUPANCYSTATE_DEBUG
+      if (current.occupancyState != stateStack.peek() && current.occupancyState != 255) printBigNumbers(current.occupancyState);
+  #endif
+  current.occupancyState = stateStack.peek();                                   // set the current occupancyState to the topmost value on the stack. (post correction)
   #if TENFOOTDISPLAY
       if (oldOccupancyCount != current.hourlyCount) printBigNumbers(current.hourlyCount);
   #else

@@ -217,21 +217,22 @@ void loop()
 				Log.infoln("Active Ping with interrupt %s count of %d and OccupancyState of %d", (IRQ_Reason == 5) ? "PIR" : "Occupancy State", current.hourlyCount, current.occupancyState);
 			}
 
-			measure.loop();
-
 			if (millis() - lastOccupancy > OCCUPANCY_LATENCY) {									// It has been too long since we know there was someone in the door
+				
 				if (current.occupancyState) {
 					lastOccupancy = millis();													// If the door is occupied - set the flag for another period
 					// Log.info("Occupancy State = %d", current.occupancyState);
 				}
 				else {																			// If not, then we need to leave the active state
-					sensorDetect = false;														// Clear the sensor flag	
-					detachInterrupt(gpio.I2C_INT);
 					Log.infoln("Interrupt Detached (second time)");
-					LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);		
-					Log.infoln("Interrupt Reattached");			
 					state = IDLE_STATE;															// If not, we will go back to IDLE_STATE
+					LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);		
+					Log.infoln("Interrupt Reattached");
+					sensorDetect = false;														// ... and clear the sensor flag
+					current.occupancyState = 0;
 				}
+			} else {
+				measure.loop();
 			}
 		}  break;
 
