@@ -12,6 +12,7 @@
 // v0 - Initial release based on Jeff Skarda's node code and my Lora Particle Node v12
 // v1 - Changed from early prototype to room occupancy counting - Works but can't sleep until we implement the PIR sensor = Changed LoRA settings to short range.
 // v2 - Added PIR sensor and sleep mode - works but needs to be tuned for power consumption
+// v3 - Moved to the new occupancy module.
 
 /*
 Wish List:
@@ -79,7 +80,7 @@ void setup()
 {
   Wire.begin(); //Establish Wire.begin for I2C communication
   //Establish Serial connection if connected for debugging
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(5000);
 
   // Log.begin(LOG_LEVEL_SILENT, &Serial);
@@ -91,8 +92,9 @@ void setup()
   gpio.setup();
   LED.setup(gpio.STATUS);
   LED.on();
-  timeFunctions.setup();
   sysData.setup();
+  delay(100);
+  timeFunctions.setup();
   currentData.setup();
   sysStatus.firmwareRelease = firmwareRelease;
   measure.setup();
