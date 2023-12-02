@@ -29,6 +29,9 @@ int lastAmbient[2] = {0, 0};                        // The most recent Ambient (
 int occupancyState = 0;                             // The current occupancy state (occupied or not, zone 1 (ones) and zone 2 (twos))
 int ready = 0;                                      // "ready" flag
 
+int numberOfRetries = 0;                            // If the device retries three times in a row, we will reset with a sysStatus.alertCodeNode = 3
+
+
 TofSensor *TofSensor::_instance;
 
 // [static]
@@ -48,24 +51,32 @@ TofSensor::~TofSensor() {
 SFEVL53L1X myTofSensor;
 
 bool TofSensor::setup(){
-  if(myTofSensor.begin() != 0){
-    Log.infoln("Sensor error reset in 10 seconds");
+  while(myTofSensor.begin() != 0){
+    if(numberOfRetries == 3){                      // if 3 retries, return false
+      sysStatus.alertCodeNode = 3;  
+      return false;
+    }else {
+      sysStatus.alertCodeNode = 3;
+    }
+    Log.infoln("Sensor did not initialize - retry in 10 seconds");
     delay(10000);
-    sysStatus.alertCodeNode = 3;
+    numberOfRetries++;
   }
-  else Log.infoln("Sensor init successfully");
+
+  Log.infoln("Sensor init successfully");
   
   // Here is where we set the device properties
   myTofSensor.setSigmaThreshold(45);                // Default is 45 - this will make it harder to get a valid result - Range 1 - 16383
   myTofSensor.setSignalThreshold(1500);             // Default is 1500 raising value makes it harder to get a valid results- Range 1-16383
   myTofSensor.setTimingBudgetInMs(20);              // Was 20mSec
-
-  while (TofSensor::measure() == SENSOR_BUFFRER_NOT_FULL) {delay(10);}; // Wait for the buffer to fill up
+  
   Log.infoln("Calibrating TOF Sensor");
 
+  while (TofSensor::measure() == SENSOR_BUFFRER_NOT_FULL) {delay(10);}; // Wait for the buffer to fill up
+  
   if (TofSensor::performOccupancyCalibration()) Log.infoln("Calibration Complete");
   else {
-    Log.infoln("Initial calibration failed - wait 10 secs and reset");
+    Log.infoln("Initial calibration failed - waiting 10 seconds and resetting");
     delay(10000);
     sysStatus.alertCodeNode = 3;                    // Set a reset alert code and return false
     return false;
@@ -77,15 +88,28 @@ bool TofSensor::setup(){
 }
 
 bool TofSensor::performOccupancyCalibration() {
-  int clear = 1;
-  TofSensor::measure();
+  if(TofSensor::measure() == SENSOR_TIMEOUT_ERROR){
+    return false;
+  }
   occupancyBaselines[0][0] = lastSignal[0];         // Assign the first reading as max AND min for each zone
   occupancyBaselines[0][1] = lastSignal[0];
   occupancyBaselines[1][0] = lastSignal[1] + 5;     // little bit of leeway for the upper range to help with calibration
   occupancyBaselines[1][1] = lastSignal[1] + 5;
-  for (int i=0; i<NUM_OCCUPANCY_CALIBRATION_LOOPS; i++) {                                                         // Loop through a set number of times ... 
-    TofSensor::loop();
-    if(zoneSignalPerSpad[0][0] < occupancyBaselines[0][0]) occupancyBaselines[0][0] = zoneSignalPerSpad[0][0];    // ... and update the respective min and max ranges each time
+  for (int i=0; i<NUM_OCCUPANCY_CALIBRATION_LOOPS; i++) {                     // Loop through a set number of times ... 
+    if(TofSensor::loop() == SENSOR_TIMEOUT_ERROR){
+      return false;
+    }  
+    if(zoneSignalPerSpad[0][0] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD          // ... if any measurements exceed the retry threshold while calibrating, reset the baseline values and retry
+        || zoneSignalPerSpad[1][0] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD 
+        || zoneSignalPerSpad[0][1] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD 
+        || zoneSignalPerSpad[1][1] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD)
+    {
+      Log.infoln("Occupancy zone not clear - try again");
+      occupancyBaselines = {{0, 0}, {0, 0}};
+      delay(20);
+      TofSensor::performOccupancyCalibration();
+    }
+    if(zoneSignalPerSpad[0][0] > occupancyBaselines[0][0]) occupancyBaselines[0][0] = zoneSignalPerSpad[0][0];    // ... and update the respective min and max ranges each time
     if(zoneSignalPerSpad[1][0] < occupancyBaselines[1][0]) occupancyBaselines[1][0] = zoneSignalPerSpad[1][0];
     if(zoneSignalPerSpad[0][1] > occupancyBaselines[0][1]) occupancyBaselines[0][1] = zoneSignalPerSpad[0][1];
     if(zoneSignalPerSpad[1][1] > occupancyBaselines[1][1]) occupancyBaselines[1][1] = zoneSignalPerSpad[1][1];
@@ -94,13 +118,7 @@ bool TofSensor::performOccupancyCalibration() {
   if(occupancyBaselines[0][0] < 5) occupancyBaselines[0][0] = 5;   // Make sure we have a bit of room at the bottom of the range for black hair
   if(occupancyBaselines[1][0] < 5) occupancyBaselines[1][0] = 5;
 
-  if(!clear){
-      Log.infoln("Occupancy zone not clear - try again");
-      delay(20);
-      TofSensor::performOccupancyCalibration();
-  } else {
-    Log.infoln("Target zone is clear with zone1 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD} and zone2 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD}",occupancyBaselines[0][0],occupancyBaselines[0][1],occupancyBaselines[1][0],occupancyBaselines[1][1]);
-  }
+  Log.infoln("Target zone is clear with zone1 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD} and zone2 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD}",occupancyBaselines[0][0],occupancyBaselines[0][1],occupancyBaselines[1][0],occupancyBaselines[1][1]);
   return true;
 }
 
@@ -143,12 +161,13 @@ int TofSensor::loop(){                         // This function will update the 
     if (result == SENSOR_TIMEOUT_ERROR){
       sysStatus.alertCodeNode = 3;
       return result;
-    }
-    occupancyState += ((zoneSignalPerSpad[0][0] > (occupancyBaselines[0][1]) && zoneSignalPerSpad[0][1] > (occupancyBaselines[0][1]))
-                      || (zoneSignalPerSpad[0][0] <= (occupancyBaselines[0][0]) && zoneSignalPerSpad[0][1] <= (occupancyBaselines[0][0]))) ? 1 : 0;
+    } else {
+      occupancyState += ((zoneSignalPerSpad[0][0] > (occupancyBaselines[0][1]) && zoneSignalPerSpad[0][1] > (occupancyBaselines[0][1]))
+                        || (zoneSignalPerSpad[0][0] <= (occupancyBaselines[0][0]) && zoneSignalPerSpad[0][1] <= (occupancyBaselines[0][0]))) ? 1 : 0;
     
-    occupancyState += ((zoneSignalPerSpad[1][0] > (occupancyBaselines[1][1]) && zoneSignalPerSpad[1][1] > (occupancyBaselines[1][1]))
-                      || (zoneSignalPerSpad[1][0] <= (occupancyBaselines[1][0]) && zoneSignalPerSpad[1][1] <= (occupancyBaselines[1][0]))) ? 2 : 0;
+      occupancyState += ((zoneSignalPerSpad[1][0] > (occupancyBaselines[1][1]) && zoneSignalPerSpad[1][1] > (occupancyBaselines[1][1]))
+                        || (zoneSignalPerSpad[1][0] <= (occupancyBaselines[1][0]) && zoneSignalPerSpad[1][1] <= (occupancyBaselines[1][0]))) ? 2 : 0;
+    }
     // #if DEBUG_COUNTER
     //   Log.infoln("[OCCUPANCY CHECK] Zone1:{1st=%ikbps/SPAD, 2nd=%ikbps/SPAD} Zone2:{1st=%ikbps/SPAD, 2nd=%ikbps/SPAD} - Occupancy State %i\n", zoneSignalPerSpad[0][0], zoneSignalPerSpad[0][1], zoneSignalPerSpad[1][0], zoneSignalPerSpad[1][1], occupancyState);
     //   delay(100);
@@ -170,7 +189,8 @@ int TofSensor::measure(){
     startedRanging = millis();
     while(!myTofSensor.checkForDataReady()) {                                            // Time out if something is wrong with the sensor
       if (millis() - startedRanging > SENSOR_TIMEOUT) {
-        Log.infoln("Sensor Timed out");
+        Log.infoln("Sensor timed out - retrying in 10 seconds");
+        delay(10000);
         return SENSOR_TIMEOUT_ERROR;
       }
     }
