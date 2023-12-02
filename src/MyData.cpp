@@ -169,6 +169,8 @@ void currentStatusData::loop() {
 void currentStatusData::resetEverything() {                          // The device is waking up in a new day or is a new install
 
   current.occupancyState = 0;
+  current.detectionState = 0;
+  current.detectionMode = 1;                                         // Defaults to detection mode
   current.messageCount = 0;
   current.successCount = 0;
   sysStatus.resetCount = 0;                                          // Reset the reset count as well

@@ -267,6 +267,8 @@ public:
 		uint16_t hourlyCount;                             // Current Hourly Count
 		uint16_t dailyCount;                              // Current Daily Count
         uint8_t occupancyState;                           // Allows us to monitor occupancy state across functions
+        uint8_t detectionState;                           // Allows us to monitor detection state across functions
+        uint8_t detectionMode;                            // Allows us to monitor detection mode across functions
 		// OK to add more fields here 
 	};
 	CurrentDataStructure currentStruct;

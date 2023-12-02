@@ -40,7 +40,7 @@ void PeopleCounter::setup() {
 }
 
 bool PeopleCounter::loop(){
-  int oldOccupancyCount = current.hourlyCount;
+    int oldOccupancyCount = current.hourlyCount;
   int newOccupancyState = TofSensor::instance().getOccupancyState();
   
   if(newOccupancyState != stateStack.peek()){
@@ -79,7 +79,7 @@ bool PeopleCounter::loop(){
         break;
       case 4:
         if(newOccupancyState != 0 && newOccupancyState != impossibleStateTransition[stateStack.peek()]){  // If the final occupancy state is NOT 0 AND is not impossible, backtrack ...
-            while(stateStack.peek() != newOccupancyState){                                                     // ... until the top of the stack is equal to the new occupancy state ...
+          while(stateStack.peek() != newOccupancyState){                                                      // ... until the top of the stack is equal to the new occupancy state ...
               stateStack.pop();                                                                                     // ... we remove the top of the stack.
           }
           #if PEOPLECOUNTER_DEBUG
@@ -117,16 +117,19 @@ bool PeopleCounter::loop(){
           current.hourlyCount++;
           currentData.currentDataChanged = true;
         } else {
-          if(current.hourlyCount > 0 || SINGLE_ENTRANCE){
+          if(current.hourlyCount > 0 || !SINGLE_ENTRANCE){
             current.dailyCount--;
             current.hourlyCount--;
             currentData.currentDataChanged = true;
           }
-        }       
+        }
+        #if TENFOOTDISPLAY
+            printBigNumbers(current.hourlyCount);
+        #endif       
         return true;                    
       } else if(strcmp(states, "02310")) {
         if(!MOUNTED_INSIDE){                                      // ... and if the sequence (backwards) matches the decrement sequence then decrement the count.
-          if(current.hourlyCount > 0 || SINGLE_ENTRANCE){
+          if(current.hourlyCount > 0 || !SINGLE_ENTRANCE){
             current.dailyCount--;
             current.hourlyCount--;
             currentData.currentDataChanged = true;
@@ -136,6 +139,9 @@ bool PeopleCounter::loop(){
           current.hourlyCount++;
           currentData.currentDataChanged = true;
         }
+        #if TENFOOTDISPLAY
+            printBigNumbers(current.hourlyCount);
+        #endif
         return true;
       } else {
         Log.infoln("ERROR: Algorithm somehow produced states: %s", states);     // ... if the sequence does not match the decrement or increment sequence, do nothing.
@@ -145,11 +151,6 @@ bool PeopleCounter::loop(){
       if (current.occupancyState != stateStack.peek() && current.occupancyState != 255) printBigNumbers(current.occupancyState);
   #endif
   current.occupancyState = stateStack.peek();                                   // set the current occupancyState to the topmost value on the stack. (post correction)
-  #if TENFOOTDISPLAY
-      if (oldOccupancyCount != current.hourlyCount) printBigNumbers(current.hourlyCount);
-  #else
-    if (oldOccupancyCount != current.hourlyCount) Log.infoln("Occupancy %s %i",(current.hourlyCount > oldOccupancyCount) ? "increased to" : "decreased to", current.hourlyCount);
-  #endif
   return false;
 }
 

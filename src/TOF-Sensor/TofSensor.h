@@ -61,29 +61,14 @@ public:
      * 
      * You typically use TofSensor::instance().detect();
      */
-    // int detect();
-
-    /**
-     * @brief Returns the current detection mode.
-    */
-    // int getDetectionMode();
-
-    /**
-     * @brief Sets the detection mode. If detectionMode > 0, we use the detection Zone
-    */
-    // void setDetectionMode(int mode);
+    int detect();
 
     /**
      * @brief These functions will return the ambient signal in in kcps/SPAD for each of the zones.
      * 
      * These functions do not trigger an update, they simply return the current value
     */
-    // int getDetectionZone();
-
-    /**
-     * @brief Function to return the current detection state
-    */
-    // int getDetectionState();
+    int getDetectionZone();
 
     /**
      * @brief These functions will return the last signal strength measurement in kcps/SPAD for each of the zones.
@@ -137,8 +122,13 @@ public:
      * Protected as this should only be called from the TofSensor setup process.
      * 
     */
-    // bool performDetectionCalibration();
+    bool performDetectionCalibration();
 
+    /**
+     * @brief Calls performDetectionCalibration and performOccupancyCalibration
+     * 
+    */
+    bool recalibrate();
 
 protected:
     /**

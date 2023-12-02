@@ -2,20 +2,24 @@
 #define TOFSENSOR_CONFIG_H
 
 /***   Mounting Parameters   ***/
-#define NUM_OCCUPANCY_CALIBRATION_LOOPS 30      // How many samples to take during occupancy calibration.
+#define NUM_OCCUPANCY_CALIBRATION_LOOPS 15                   // How many samples to take during occupancy calibration.
+#define NUM_DETECTION_CALIBRATION_LOOPS 50                   // How many samples to take during detection calibration.
 #define CALIBRATION_SIGNAL_RETRY_THRESHOLD 35   // Value of the signal that will halt calibration and retry - Ex. a person was detected during calibration
 
 /***   Debugging   ***/
-#define DEBUG_COUNTER 1                         // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
+#define DEBUG_COUNTER 0                         // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
 #define SENSOR_TIMEOUT 500
 
-// Detection zone dimensions and optical centers
-#define COLUMNS_OF_SPADS 8                      // This is the width (accross the door with the sensor long axis perpendicular to the threshold) of the active SPADS
-#define ROWS_OF_SPADS    6                      // This is the depth (Through the door - when sensor mounted on the inside doorframe)
+// Occupancy zone dimensions and optical centers
+#define OCCUPANCY_COLUMNS_OF_SPADS      8                    // This is the width (accross the door with the sensor long axis perpendicular to the threshold) of the active SPADS
+#define OCCUPANCY_ROWS_OF_SPADS         6                    // This is the depth (Through the door - when sensor mounted on the inside doorframe)
+#define OCCUPANCY_FRONT_ZONE_CENTER     167
+#define OCCUPANCY_BACK_ZONE_CENTER      231
 
-// Will focus on the SPAD array of 6 rows and 8 columns
-#define FRONT_ZONE_CENTER     167
-#define BACK_ZONE_CENTER      231
+// Will focus on the entire spad array for the detection zone
+#define DETECTION_COLUMNS_OF_SPADS      16                   // This is the width (accross the door with the sensor long axis perpendicular to the threshold) of the active SPADS
+#define DETECTION_ROWS_OF_SPADS         16                   // This is the depth (Through the door - when sensor mounted on the inside doorframe)      
+#define DETECTION_ZONE_CENTER           199
 
 /** The TofSensor has a receiver array consisting of 16X16 Single Photon Diodes. 
  *  By default, all of them are used but you can reduce the receiver to a region of interest (ROI).

@@ -56,6 +56,13 @@ public:
     bool loop();
 
     /**
+     * @brief Perform TOFSensor setup operations again - recalibrates sensor zones
+     * 
+     * You typically use pinout::instance().recalibrate();
+     */
+    bool recalibrate();
+
+    /**
      * @brief This code collects basic data from the default sensors - temperature, humidity, battery and charge level
      * 
      * @details These are the sensors that are on the carrier board.
