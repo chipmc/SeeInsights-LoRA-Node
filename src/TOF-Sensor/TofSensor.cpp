@@ -99,13 +99,12 @@ bool TofSensor::performOccupancyCalibration() {
     if(TofSensor::loop() == SENSOR_TIMEOUT_ERROR){
       return false;
     }  
-    if(zoneSignalPerSpad[0][0] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD          // ... if any measurements exceed the retry threshold while calibrating, reset the baseline values and retry
+    if(zoneSignalPerSpad[0][0] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD          // ... if any measurements exceed the retry threshold while calibrating, retry calibration
         || zoneSignalPerSpad[1][0] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD 
         || zoneSignalPerSpad[0][1] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD 
         || zoneSignalPerSpad[1][1] >= CALIBRATION_SIGNAL_RETRY_THRESHOLD)
     {
       Log.infoln("Occupancy zone not clear - try again");
-      occupancyBaselines = {{0, 0}, {0, 0}};
       delay(20);
       TofSensor::performOccupancyCalibration();
     }
