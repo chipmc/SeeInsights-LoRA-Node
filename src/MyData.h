@@ -53,8 +53,6 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 2
-
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
 #define currentData currentStatusData::instance()
@@ -62,6 +60,7 @@ Current Data
 #define sysStatus sysStatusData::instance().sysStatusStruct
 #define current currentStatusData::instance().currentStruct
 
+#define STRUCTURES_VERSION 3
 #define UNIQUE_DEVICE_ID 2100UL						// This is the unique device ID for this device - used to generate the node number
 
 /**
@@ -255,20 +254,24 @@ public:
 
 	struct CurrentDataStructure
 	{
-        float internalTempC;                              // Enclosure temperature in degrees C
-        float internalHumidity;                           // Enclosure humidity in percent
-		float stateOfCharge;                              // Battery charge level
-		uint8_t batteryState;                             // Stores the current battery state (charging, discharging, etc)
-		int16_t RSSI;                                     // Latest signal strength value (updated adter ack and sent to gateway on next data report)
-		int16_t SNR;									  // Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
-		uint8_t messageCount;                             // What message are we on
-		uint8_t successCount;							  // How many messages are delivered successfully
-        time_t lastSampleTime;                            // Timestamp of last data collection for sensors or last count for counters
-		uint16_t hourlyCount;                             // Current Hourly Count
-		uint16_t dailyCount;                              // Current Daily Count
-        uint8_t occupancyState;                           // Allows us to monitor occupancy state across functions
-        uint8_t detectionState;                           // Allows us to monitor detection state across functions
-        uint8_t detectionMode;                            // Allows us to monitor detection mode across functions
+        float internalTempC;                    // Enclosure temperature in degrees C
+        float internalHumidity;                 // Enclosure humidity in percent
+		float stateOfCharge;                    // Battery charge level
+		uint8_t batteryState;                   // Stores the current battery state (charging, discharging, etc)
+		int16_t RSSI;                           // Latest signal strength value (updated adter ack and sent to gateway on next data report)
+		int16_t SNR;				            // Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
+		uint8_t messageCount;                   // What message are we on
+		uint8_t successCount;	  			    // How many messages are delivered successfully
+        time_t lastSampleTime;                  // Timestamp of last data collection for sensors or last count for counters
+		uint16_t hourlyCount;                   // Current Hourly Count
+		uint16_t dailyCount;                    // Current Daily Count
+        uint16_t hourlyPIRInterrupts;           // Current Hourly PIR Interrupt Triggers
+		uint16_t dailyPIRInterrupts;            // Current Daily Count
+        uint8_t occupancyState;                 // Allows us to monitor occupancy state across functions
+        byte detectionState;                    // Allows us to monitor detection state across functions
+        byte detectionMode;                     // Allows us to monitor detection mode across functions
+        byte mountedInside;                     // Flagged when mounted inside (when zone 2 is the "front" zone). Reverses the increment and decrements for the counts. 
+        byte singleEntrance;                    // Flagged when this is mounted above the only entrance to a room. Prevents negative count values. 
 		// OK to add more fields here 
 	};
 	CurrentDataStructure currentStruct;

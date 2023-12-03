@@ -32,7 +32,6 @@ typedef enum { NULL_STATE, JOIN_REQ, JOIN_ACK, DATA_RPT, DATA_ACK, ALERT_RPT, AL
 char loraStateNames[7][16] = {"Null", "Join Req", "Join Ack", "Data Report", "Data Ack", "Alert Rpt", "Alert Ack"};
 static LoRA_State lora_state = NULL_STATE;
 
-
 // Mesh has much greater memory requirements, and you may need to limit the
 // max message length to prevent wierd crashes
 #ifndef RH_MAX_MESSAGE_LEN
@@ -43,7 +42,6 @@ static LoRA_State lora_state = NULL_STATE;
 // max message length to prevent wierd crashes
 // #define RH_MESH_MAX_MESSAGE_LEN 50
 uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];               // Related to max message size - RadioHead example note: dont put this on the stack:
-
 
 bool LoRA_Functions::setup(bool gatewayID) {
     // Set up the Radio Module
@@ -190,10 +188,14 @@ bool LoRA_Functions::composeDataReportNode() {
 	buf[16] = lowByte(current.RSSI);
 	buf[17] = highByte(current.SNR);
 	buf[18] = lowByte(current.SNR);
+	buf[19] = highByte(current.hourlyPIRInterrupts);
+	buf[20] = lowByte(current.hourlyPIRInterrupts); 
+	buf[21] = highByte(current.dailyPIRInterrupts);
+	buf[22] = lowByte(current.dailyPIRInterrupts); 
 
 	// Send a message to manager_server
   	// A route to the destination will be automatically discovered.
-	unsigned char result = manager.sendtoWait(buf, 19, GATEWAY_ADDRESS, DATA_RPT);
+	unsigned char result = manager.sendtoWait(buf, 23, GATEWAY_ADDRESS, DATA_RPT);
 	
 	if ( result == RH_ROUTER_ERROR_NONE) {
 		// It has been reliably delivered to the next node.

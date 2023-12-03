@@ -11,7 +11,7 @@
 #include <arduino.h>
 #include <ArduinoLog.h>
 #include "MyData.h"
-#include "PeopleCounterConfig.h"
+#include "Config.h"
 #include "ErrorCodes.h"
 #include "TofSensor.h"
 

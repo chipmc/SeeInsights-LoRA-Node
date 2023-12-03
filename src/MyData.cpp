@@ -29,7 +29,7 @@ sysStatusData::~sysStatusData() {
 void sysStatusData::setup() {
     //The memory specs can be set before begin() to skip the auto-detection delay and write wear
     //24XX02 - 2048 bit / 256 bytes - 1 address byte, 8 byte page size
- //   myMem.setAddressBytes(1);
+    //   myMem.setAddressBytes(1);
 
     myMem.setPageSizeBytes(8);
     myMem.setMemorySizeBytes(256);
@@ -94,7 +94,7 @@ void sysStatusData::initialize() {
     // the initialize method is not called! This is only called when first
     // initialized.
 
-    Log.infoln("Loading system defaults");              // Letting us know that defaults are being loaded
+    Log.infoln("Loading system defaults");             // Letting us know that defaults are being loaded
     sysStatus.nodeNumber = 11;
     sysStatus.deviceID = UNIQUE_DEVICE_ID;
     sysStatus.structuresVersion = STRUCTURES_VERSION;
@@ -108,10 +108,9 @@ void sysStatusData::initialize() {
 
     Log.infoln("Saving new system values, node number %i and magic number %i reporing every %i minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
     myMem.put(0,sysStatus.structuresVersion);
+
     sysStatusData::storeSysData();
-
     sysStatusData::printSysData();
-
 }
 
 void sysStatusData::storeSysData() {
@@ -166,17 +165,19 @@ void currentStatusData::setup() {
 void currentStatusData::loop() {
 }
 
-void currentStatusData::resetEverything() {                          // The device is waking up in a new day or is a new install
+void currentStatusData::resetEverything() {            // The device is waking up in a new day or is a new install
 
-  current.occupancyState = 0;
-  current.detectionState = 0;
-  current.detectionMode = 1;                                         // Defaults to detection mode
   current.messageCount = 0;
   current.successCount = 0;
-  sysStatus.resetCount = 0;                                          // Reset the reset count as well
-  current.dailyCount = 0;                                            // Reset the counts in FRAM as well
-  current.hourlyCount = 0;
+  sysStatus.resetCount = 0;                            // Reset the reset count as well
   current.lastSampleTime = 0;
+  current.dailyCount = 0;                              // Reset the counts in FRAM as well
+  current.hourlyCount = 0;                                           
+  current.hourlyPIRInterrupts = 0;                     // Reset the number of PIR detections in FRAM as well
+  current.dailyPIRInterrupts = 0;
+  current.occupancyState = 0;
+  current.detectionState = 0;
+  current.detectionMode = 1;                           // Defaults to detection mode
 
   currentData.storeCurrentData();
 }
@@ -197,7 +198,7 @@ bool currentStatusData::validate(size_t dataSize) {
 void currentStatusData::initialize() {
 
     myMem.get(90,current);
-    if (current.hourlyCount > current.dailyCount || current.successCount > current.messageCount) {
+    if (current.hourlyCount > current.dailyCount || current.hourlyPIRInterrupts > current.dailyPIRInterrupts || current.successCount > current.messageCount) {
         Log.infoln("Current values not right - resetting");
         currentStatusData::resetEverything();
     }
@@ -215,9 +216,13 @@ void currentStatusData::printCurrentData() {
     Log.infoln("Current Data");
     Log.infoln("Hourly Count: %i", current.hourlyCount);
     Log.infoln("Daily Count: %i", current.dailyCount);
+    Log.infoln("Hourly PIR Interrupts: %i", current.hourlyPIRInterrupts);
+    Log.infoln("Daily PIR Interrupts: %i", current.dailyPIRInterrupts);
     Log.infoln("Last Sample Time: %i", current.lastSampleTime);
     Log.infoln("Message Count: %i", current.messageCount);
     Log.infoln("Success Count: %i", current.successCount);
+    Log.infoln("Mounted Inside?: %s", current.mountedInside ? "Yes" : "No");
+    Log.infoln("Single Entrance?: %i", current.singleEntrance ? "Yes" : "No");
 }
 
 

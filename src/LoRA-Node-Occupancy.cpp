@@ -23,20 +23,6 @@ Wish List:
 5) Perhaps we need to count and report the number of wakeup events
 */
 
-// Defines 
-#define NODENUMBEROFFSET 10000UL					// By how much do we off set each node by node number
-#define IRQ_Invalid 0								// Here is where we will keep track of what woke us
-#define IRQ_AB1805 1
-#define IRQ_RF95_DIO0 2
-#define IRQ_RF95_IRQ 3
-#define IRQ_UserSwitch 4
-#define IRQ_Sensor  5
-
-// Global timing settings
-#define OCCUPANCY_LATENCY 3000UL					// How long do we keep pinging after the last time we saw someone in the door
-#define DETECTION_WAIT_LENGTH 1000UL				// How long do we wait for a detection from the TOF sensor when the PIR sensor is active
-#define TRANSMIT_LATENCY 60UL						// How long do we wait after the last time we sent a message to send another=
-
 //Include Libraries:
 #include <arduino.h>
 #include <ArduinoLowPower.h>
@@ -50,6 +36,7 @@ Wish List:
 #include "take_measurements.h"
 #include "MyData.h"
 #include "LoRA_Functions.h"
+#include "Config.h"
 
 const uint8_t firmwareRelease = 3;
 
@@ -216,7 +203,7 @@ void loop()
 				Log.infoln("Interrupt Detached (ACTIVE_PING)");
 				lastOccupancy = millis();
 				publishStateTransition();	
-				Log.infoln("Active Ping with interrupt %s count of %d and OccupancyState of %d", (IRQ_Reason == 5) ? "PIR" : "Occupancy State", current.hourlyCount, current.occupancyState);
+				Log.infoln("Active Ping with PIR interrupt count of %d, hourlyCount of %d and OccupancyState of %d", current.hourlyPIRInterrupts, current.hourlyCount, current.occupancyState);
 			}
 
 			if (millis() - lastOccupancy > OCCUPANCY_LATENCY) {									// It has been too long since we know there was someone in the door
@@ -232,7 +219,7 @@ void loop()
 					Log.infoln("Interrupt Reattached (ACTIVE_PING ELSE)");
 					current.detectionMode = 1;           									    // ... set the device back to detection mode ...
 					current.occupancyState = 0;													// ... reset states to 0
-					current.detectionState = 0;
+					current.detectionState = 0;													
 					sensorDetect = false;														// ... clear the sensor flag
 					state = IDLE_STATE;															// ... and go back to IDLE_STATE
 					// state = SLEEPING_STATE;															// ... and go back to SLEEPING_STATE
@@ -447,6 +434,8 @@ void sensorISR()
 {
 	// if(state != ACTIVE_PING){
 		Log.infoln("sensorISR triggered");
+		current.hourlyPIRInterrupts++;
+		current.dailyPIRInterrupts++;
 		IRQ_Reason = IRQ_Sensor;   													  // and write to IRQ_Reason in order to wake the device up
 	// 	unsigned int numberOfMeasurements = 0;  
 	// 	static unsigned int totalMeasurementsToTake = (DETECTION_WAIT_LENGTH / 20);   // millis() does not work in the ISR, so we can just calculate the number of 20ms measurements to take instead

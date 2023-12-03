@@ -40,10 +40,9 @@ void take_measurements::setup() {
   else Log.infoln("VL53L1X initialization failed");
 
   PeopleCounter::instance().setup();
-  PeopleCounter::instance().setCount(1);
 
   delay (1000);         // Give the MAX17048 time to initialize (it takes 1 second) - does not work without this 
-  // Shoudl test to see if this can be shorter
+  // TODO:: test to see if this can be shorter
 }
 
 bool take_measurements::loop() {

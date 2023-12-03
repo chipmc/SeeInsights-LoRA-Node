@@ -1,5 +1,6 @@
 // Time of Flight Sensor Class
-// Author: Chip McClelland
+// Authors: Chip McClelland (See Insights, LLC)
+//          Alex Bowen (Orbit Development, LLC)
 // Date: May 2023
 // License: GPL3
 // This is the class for the ST Micro VL53L1X Time of Flight Sensor
@@ -9,8 +10,7 @@
 
 #include "ErrorCodes.h"
 #include "MyData.h"
-#include "TofSensorConfig.h"
-#include "PeopleCounterConfig.h"
+#include "Config.h"
 #include "TofSensor.h"
 #include <ArduinoLog.h>     // https://github.com/thijse/Arduino-Log
 
@@ -26,9 +26,7 @@ int lastSignal[2] = {0, 0};                         // The most recent Signal (z
 int lastAmbient[2] = {0, 0};                        // The most recent Ambient (zone 1 (ones) and zone 2 (twos))
 int occupancyState = 0;                             // The current occupancy state (occupied or not, zone 1 (ones) and zone 2 (twos))
 int ready = 0;                                      // "ready" flag
-
 int numberOfRetries = 0;                            // If the device retries three times in a row, we will reset with a sysStatus.alertCodeNode = 3
-
 
 TofSensor *TofSensor::_instance;
 
@@ -93,7 +91,7 @@ bool TofSensor::performOccupancyCalibration() {
   occupancyBaselines[0][1] = lastSignal[0];
   occupancyBaselines[1][0] = lastSignal[1] + 5;     
   occupancyBaselines[1][1] = lastSignal[1] + 5;
-  for (int i=0; i<NUM_OCCUPANCY_CALIBRATION_LOOPS; i++) {                     // Loop through a set number of times ... 
+  for (int i = 0; i < OCCUPANCY_CALIBRATION_LOOPS; i++) {                     // Loop through a set number of times ... 
     if(TofSensor::measure() == SENSOR_TIMEOUT_ERROR){
       return false;
     }  
@@ -106,17 +104,17 @@ bool TofSensor::performOccupancyCalibration() {
       TofSensor::performOccupancyCalibration();
     }
     if(zoneSignalPerSpad[0][0] < occupancyBaselines[0][0]) occupancyBaselines[0][0] = zoneSignalPerSpad[0][0];  // ... check if any of the readings are less than the minimum baseline for their zone
-    if(zoneSignalPerSpad[0][1] < occupancyBaselines[0][0]) occupancyBaselines[0][0] = zoneSignalPerSpad[0][1];
+    if(zoneSignalPerSpad[0][1] < occupancyBaselines[0][0]) occupancyBaselines[0][0] = zoneSignalPerSpad[0][1];  //     if they are, a the new minimum for the repective zone's baseline
     if(zoneSignalPerSpad[1][0] < occupancyBaselines[1][0]) occupancyBaselines[1][0] = zoneSignalPerSpad[1][0];    
     if(zoneSignalPerSpad[1][1] < occupancyBaselines[1][0]) occupancyBaselines[1][0] = zoneSignalPerSpad[1][1];
     
-    if(zoneSignalPerSpad[0][0] > occupancyBaselines[0][1]) occupancyBaselines[0][1] = zoneSignalPerSpad[0][0];  // ... check if any of the readings are greater than the maximum baseline for their zone
-    if(zoneSignalPerSpad[0][1] > occupancyBaselines[0][1]) occupancyBaselines[0][1] = zoneSignalPerSpad[0][1];
+    if(zoneSignalPerSpad[0][0] > occupancyBaselines[0][1]) occupancyBaselines[0][1] = zoneSignalPerSpad[0][0];  // ... check if any of the readings are greater than the maximum baseline for their zone. 
+    if(zoneSignalPerSpad[0][1] > occupancyBaselines[0][1]) occupancyBaselines[0][1] = zoneSignalPerSpad[0][1];  //     if they are, a the new maximum for the respective zone's baseline
     if(zoneSignalPerSpad[1][0] > occupancyBaselines[1][1]) occupancyBaselines[1][1] = zoneSignalPerSpad[1][0];
     if(zoneSignalPerSpad[1][1] > occupancyBaselines[1][1]) occupancyBaselines[1][1] = zoneSignalPerSpad[1][1];
   }
 
-  if(occupancyBaselines[0][0] < 5) occupancyBaselines[0][0] = 5;   // Make sure we have a bit of room at the bottom of the range for black hair
+  if(occupancyBaselines[0][0] < 5) occupancyBaselines[0][0] = 5;   // Make sure we have a bit of room at the bottom of the range for black hair (long black hair tends to have a signal close to 0)
   if(occupancyBaselines[1][0] < 5) occupancyBaselines[1][0] = 5;   
 
   Log.infoln("Target zone is clear with zone1 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD} and zone2 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD}",occupancyBaselines[0][0],occupancyBaselines[0][1],occupancyBaselines[1][0],occupancyBaselines[1][1]);
@@ -127,7 +125,7 @@ bool TofSensor::performDetectionCalibration() {
   TofSensor::detect();
   detectionBaselines[0] = lastDetectionSignal + 8;        // Assign the first reading as max AND min of baseline
   detectionBaselines[1] = lastDetectionSignal + 8; 
-  for (int i=0; i<NUM_DETECTION_CALIBRATION_LOOPS; i++) {       // Loop through a set number of times ... 
+  for (int i=0; i< DETECTION_CALIBRATION_LOOPS; i++) {       // Loop through a set number of times ... 
     if(TofSensor::detect() == SENSOR_TIMEOUT_ERROR){
       return false;
     } 
@@ -141,7 +139,7 @@ bool TofSensor::performDetectionCalibration() {
   }
   detectionBaselines[0] -= 3;                               
   detectionBaselines[1] += 3;
-  if(detectionBaselines[0] < 5) detectionBaselines[0] = 5;   // Make sure we have a bit of room at the bottom of the range for black hair. TODO:: MAYBE MAKE SPADS SMALLER OR USE DISTANCE
+  if(detectionBaselines[0] < 5) detectionBaselines[0] = 5;   // Make sure we have a bit of room at the bottom of the range for black hair (long black hair tends to have a signal close to 0)
 
   Log.infoln("Detection zone is clear with range {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD} ",detectionBaselines[0],detectionBaselines[1]);
   return true;
@@ -168,14 +166,14 @@ int TofSensor::measure(){
   ready = 0;                                                                           
   unsigned long startedRanging;
   for (int samples = 0; samples < 4; samples++){                                        // Take 4 samples...
-    int zone = samples % 2;                                                              // ... 2 for each zone.    
+    int zone = samples % 2;                                                             // ... 2 for each zone.    
     myTofSensor.stopRanging();
     myTofSensor.clearInterrupt();
-    myTofSensor.setROI(OCCUPANCY_ROWS_OF_SPADS,OCCUPANCY_COLUMNS_OF_SPADS,occupancyOpticalCenters[zone]);    // Set the Region of Interest for the two zones
+    myTofSensor.setROI(OCCUPANCY_ROWS_OF_SPADS,OCCUPANCY_COLUMNS_OF_SPADS,occupancyOpticalCenters[zone]);   // Set the Region of Interest for the two zones
     delay(1);
     myTofSensor.startRanging();
     startedRanging = millis();
-    while(!myTofSensor.checkForDataReady()) {                                            // Time out if something is wrong with the sensor
+    while(!myTofSensor.checkForDataReady()) {                                           // Time out if something is wrong with the sensor
       if (millis() - startedRanging > SENSOR_TIMEOUT) {
         Log.infoln("Sensor timed out - retrying in 10 seconds");
         delay(10000);
@@ -189,7 +187,7 @@ int TofSensor::measure(){
       samples--;                                                                         // ... ignore this reading ...
       continue;                                                                          // ... and try again.
     }
-    #if DEBUG_COUNTER
+    #if PRINT_SENSOR_MEASUREMENTS
      if(samples >= 2){                                                                   // Log both zones' measurement tuples for this loop.
       zone == 0 ? Log.infoln("{1st=%ikbps/SPAD, 2nd=%ikbps/SPAD}", zoneSignalPerSpad[zone][0], zoneSignalPerSpad[zone][1]) : Log.infoln("                                    {1st=%ikbps/SPAD, 2nd=%ikbps/SPAD}", zoneSignalPerSpad[zone][0], zoneSignalPerSpad[zone][1]);
      }
@@ -198,7 +196,7 @@ int TofSensor::measure(){
   return(++ready);
 }
 
-int TofSensor::detect(){                                                              // Take a measurement in the detection zone (unused)
+int TofSensor::detect(){                                                                 // Take a measurement in the detection zone (unused)
   ready = 0;
   unsigned long startedRanging;
   myTofSensor.stopRanging();
@@ -214,8 +212,8 @@ int TofSensor::detect(){                                                        
     }
   }
   lastDetectionSignal = myTofSensor.getSignalPerSpad();
-  #if DEBUG_COUNTER
-      Log.infoln("Detection Zone: %ikbps/SPAD", lastDetectionSignal);
+  #if PRINT_SENSOR_MEASUREMENTS
+      Log.infoln("Detection Zone: {%ikbps/SPAD}", lastDetectionSignal);
   #endif
   return(++ready);
 }
@@ -254,6 +252,3 @@ bool TofSensor::recalibrate() {
     return false;
   }
 }
-
-
-
