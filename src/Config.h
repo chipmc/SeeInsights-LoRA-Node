@@ -28,9 +28,9 @@
 
 /**  Timing Settings  **/
 #define DETECTION_WAIT_LENGTH 1000UL				    // How long do we wait for a detection from the TOF sensor when the PIR sensor is active
-#define OCCUPANCY_LATENCY 500UL                 // Amount of time to keep the interrupt active upon a detection by the PIR sensor
+#define OCCUPANCY_LATENCY 2500UL                // Amount of time to keep the interrupt active upon a detection by the PIR sensor
+#define PIR_INTERRUPT_LATENCY 1000UL            // Amount of time AFTER an interrupt completes to wait before triggering the interrupt again
 #define TRANSMIT_LATENCY 60UL						        // How long do we wait after the last time we sent a message to send another=
-
 
 /******************************************************************************************************/
 /**                                                                                                  **/
@@ -71,7 +71,7 @@
 #define SENSOR_TIMEOUT 500                      // Forces TofSensor::measure() to stop after waiting SENSOR_TIMEOUT ms for the SFEVL53L1X checkForDataReady() function to return a nonzero value.  
 
 /**  Calibration Settings  **/
-#define OCCUPANCY_CALIBRATION_LOOPS 25          // How many sets of samples to take during occupancy calibration (4 samples each, 2 for each zone to reduce noise).
+#define OCCUPANCY_CALIBRATION_LOOPS 30          // How many sets of samples to take during occupancy calibration (4 samples each, 2 for each zone to reduce noise).
 #define DETECTION_CALIBRATION_LOOPS 50          // How many samples to take during detection calibration.
 #define CALIBRATION_SIGNAL_RETRY_THRESHOLD 35   // Value of the signal that will halt calibration and retry - Ex. a person was detected during calibration
 
