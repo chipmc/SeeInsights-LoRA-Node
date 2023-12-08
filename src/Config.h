@@ -28,7 +28,7 @@
 
 /**  Timing Settings  **/
 #define DETECTION_WAIT_LENGTH 1000UL				    // How long do we wait for a detection from the TOF sensor when the PIR sensor is active
-#define OCCUPANCY_LATENCY 1500L                 // Amount of time to keep the interrupt active upon a detection by the PIR sensor
+#define OCCUPANCY_LATENCY 500UL                 // Amount of time to keep the interrupt active upon a detection by the PIR sensor
 #define TRANSMIT_LATENCY 60UL						        // How long do we wait after the last time we sent a message to send another=
 
 

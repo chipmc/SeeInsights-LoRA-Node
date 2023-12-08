@@ -200,6 +200,9 @@ void loop()
 			measure.loop();
 			if (state != oldState) {
 				detachInterrupt(gpio.I2C_INT);
+				Log.infoln("sensorISR triggered - in ACTIVE_PING");
+				current.hourlyPIRInterrupts++;
+				current.dailyPIRInterrupts++;
 				Log.infoln("Interrupt Detached (ACTIVE_PING)");
 				lastOccupancy = millis();
 				publishStateTransition();	
@@ -222,7 +225,6 @@ void loop()
 					current.detectionState = 0;													
 					sensorDetect = false;														// ... clear the sensor flag
 					state = IDLE_STATE;															// ... and go back to IDLE_STATE
-					// state = SLEEPING_STATE;															// ... and go back to SLEEPING_STATE
 				}
 			}
 		}  break;
@@ -355,7 +357,6 @@ void loop()
 				sysStatus.alertTimestampNode = timeFunctions.getTime();			
 				Log.infoln("Full Reset and Re-Join Network");
 				state = LoRA_LISTENING_STATE;									// Sends the alert and clears alert code
-
 			break;
 			case 6: 															// In this state system data is retained but current data is reset
 				currentData.resetEverything();
@@ -433,9 +434,6 @@ void userSwitchISR() {
 void sensorISR()
 {
 	// if(state != ACTIVE_PING){
-		Log.infoln("sensorISR triggered");
-		current.hourlyPIRInterrupts++;
-		current.dailyPIRInterrupts++;
 		IRQ_Reason = IRQ_Sensor;   													  // and write to IRQ_Reason in order to wake the device up
 	// 	unsigned int numberOfMeasurements = 0;  
 	// 	static unsigned int totalMeasurementsToTake = (DETECTION_WAIT_LENGTH / 20);   // millis() does not work in the ISR, so we can just calculate the number of 20ms measurements to take instead
