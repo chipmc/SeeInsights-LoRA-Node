@@ -176,8 +176,6 @@ void currentStatusData::resetEverything() {            // The device is waking u
   current.hourlyPIRInterrupts = 0;                     // Reset the number of PIR detections in FRAM as well
   current.dailyPIRInterrupts = 0;
   current.occupancyState = 0;
-  current.detectionState = 0;
-  current.detectionMode = 1;                           // Defaults to detection mode
 
   currentData.storeCurrentData();
 }

@@ -61,8 +61,6 @@ void wakeUp_Timer();
 // Program Variables
 volatile bool userSwitchDectected = false;		
 volatile bool sensorDetect = false;
-volatile unsigned long lastOccupancy = 0;
-volatile unsigned long lastInterrupt = 0;
 volatile uint8_t IRQ_Reason = 0; // 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor
 
 // Device Setup
@@ -126,6 +124,7 @@ void loop()
 			static unsigned long keepAwake = 0;
 			if (state != oldState) {
 				keepAwake = millis();
+				Log.infoln("%d", keepAwake);
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
 			if (currentData.currentDataChanged && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
@@ -133,8 +132,8 @@ void loop()
 				Log.infoln("Current data changed - going to transmit");
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
-			else if (sensorDetect) state = ACTIVE_PING;							// Someone is in the door stoart pinging
-			//else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	   // If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
+			else if (sensorDetect) state = ACTIVE_PING;							// Someone is in the door start pinging
+			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {
@@ -142,7 +141,8 @@ void loop()
 			time_t time;
 			IRQ_Reason = IRQ_Invalid;
 
-			if (digitalRead(gpio.INT)) break;									// If the sensor is still high, we need to stay awake
+			if (digitalRead(gpio.INT)) {Log.infoln("Sensor pin(line1) still high - delaying sleep"); break;}									// If the sensor is still high, we need to stay awake
+			if (digitalRead(gpio.I2C_INT)){Log.infoln("Sensor pin(line2) still high - delaying sleep"); break;}
 
 			publishStateTransition();              								// Publish state transition
 			// How long to sleep
@@ -198,35 +198,19 @@ void loop()
 		} break;
 
 		case ACTIVE_PING: {														// Defined as a state so we could get max sampling rate
-			
+			sensorDetect = false;
+
 			if (state != oldState) {
-				publishStateTransition();	
-				detachInterrupt(gpio.I2C_INT);
-				Log.infoln("sensorISR triggered - in ACTIVE_PING");
+				publishStateTransition();															// ... clear the sensor flag
 				current.hourlyPIRInterrupts++;
 				current.dailyPIRInterrupts++;
-				Log.infoln("Interrupt Detached (ACTIVE_PING)");
-				lastOccupancy = millis();
 				Log.infoln("Active Ping with PIR interrupt count of %d, hourlyCount of %d and OccupancyState of %d", current.hourlyPIRInterrupts, current.hourlyCount, current.occupancyState);
 			}
-			
-			measure.loop();
 
-			if (current.occupancyState == 3) {
-				lastOccupancy = millis();													// If the door is occupied - set the flag for another period
-				// Log.info("Occupancy State = %d", current.occupancyState);
-			}
-			
-			if (millis() - lastOccupancy > OCCUPANCY_LATENCY) {									// It has been too long since we know there was someone in the door
-				current.detectionMode = 1;           									    // ... set the device back to detection mode ...
-				current.occupancyState = 0;													// ... reset states to 0
-				current.detectionState = 0;													
-				sensorDetect = false;														// ... clear the sensor flag
-				state = IDLE_STATE;															// ... and go back to IDLE_STATE
-				detachInterrupt(gpio.I2C_INT);
-				Log.infoln("Interrupt Detached (ACTIVE_PING ELSE)");
-				LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
-				Log.infoln("Interrupt Reattached (ACTIVE_PING ELSE)");
+			measure.loop();	
+
+			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
+				state = IDLE_STATE;									// ... and go back to IDLE_STATE
 			}
 		}  break;
 
@@ -428,40 +412,11 @@ void wakeUp_Timer() {
 }
 
 void userSwitchISR() {
-  userSwitchDectected = true;
-  IRQ_Reason = IRQ_UserSwitch;
+	userSwitchDectected = true;
+  	IRQ_Reason = IRQ_UserSwitch;
 }
 
-void sensorISR()
-{
-	// if(state != ACTIVE_PING){
-		IRQ_Reason = IRQ_Sensor;   													  // and write to IRQ_Reason in order to wake the device up
-	// 	unsigned int numberOfMeasurements = 0;  
-	// 	static unsigned int totalMeasurementsToTake = (DETECTION_WAIT_LENGTH / 20);   // millis() does not work in the ISR, so we can just calculate the number of 20ms measurements to take instead
-	// 	current.detectionState = 0;	
-	// 	byte failed = 0;
-	// 	do {
-	// 		measure.loop();
-	// 		if(++numberOfMeasurements >= totalMeasurementsToTake) {
-	// 			failed = 1;
-	// 			break;
-	// 		}
-	// 	} while (current.detectionState == 0);
-
-	// 	if(failed){
-	// 		Log.infoln("sensorISR recorded no detection");
-	// 		sensorDetect = false;
-	// 	} else {
-	// 		Log.infoln("sensorISR detection made, measuring occupancy");
-		current.detectionMode = 0;    // take sensor out of detection mode
-		sensorDetect = true;	      // flag that the sensor has detected something
-	// 	}
-	// } else {
-	// 	detachInterrupt(gpio.I2C_INT);
-	// 	Log.infoln("Interrupt Detached (duplicate)");
-	// 	LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
-	// 	Log.infoln("Interrupt Reattached (duplicate)");
-	// 	current.detectionMode = 1; // take sensor out of detection mode
-	// 	sensorDetect = false;
-// }
+void sensorISR() {	
+	sensorDetect = true;	      // flag that the sensor has detected something
+	IRQ_Reason = IRQ_Sensor;      // and write to IRQ_Reason in order to wake the device up
 }

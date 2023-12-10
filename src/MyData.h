@@ -268,8 +268,6 @@ public:
         uint16_t hourlyPIRInterrupts;           // Current Hourly PIR Interrupt Triggers
 		uint16_t dailyPIRInterrupts;            // Current Daily Count
         uint8_t occupancyState;                 // Allows us to monitor occupancy state across functions
-        byte detectionState;                    // Allows us to monitor detection state across functions
-        byte detectionMode;                     // Allows us to monitor detection mode across functions
         byte mountedInside;                     // Flagged when mounted inside (when zone 2 is the "front" zone). Reverses the increment and decrements for the counts. 
         byte singleEntrance;                    // Flagged when this is mounted above the only entrance to a room. Prevents negative count values. 
 		// OK to add more fields here 

@@ -27,10 +27,8 @@
 #define NODENUMBEROFFSET 10000UL					      // By how much do we off set each node by node number
 
 /**  Timing Settings  **/
-#define DETECTION_WAIT_LENGTH 1000UL				    // How long do we wait for a detection from the TOF sensor when the PIR sensor is active
-#define OCCUPANCY_LATENCY 2500UL                // Amount of time to keep the interrupt active upon a detection by the PIR sensor
-#define PIR_INTERRUPT_LATENCY 1000UL            // Amount of time AFTER an interrupt completes to wait before triggering the interrupt again
-#define TRANSMIT_LATENCY 60UL						        // How long do we wait after the last time we sent a message to send another=
+#define TIME_HIGH_BEFORE_DETECTING 100UL        // Only initiate a detection if the sensor pin is high for TIME_HIGH_BEFORE_DETECTING ms
+#define TRANSMIT_LATENCY 5UL						        // How long do we wait after the last time we sent a message to send another=
 
 /******************************************************************************************************/
 /**                                                                                                  **/
@@ -72,7 +70,6 @@
 
 /**  Calibration Settings  **/
 #define OCCUPANCY_CALIBRATION_LOOPS 30          // How many sets of samples to take during occupancy calibration (4 samples each, 2 for each zone to reduce noise).
-#define DETECTION_CALIBRATION_LOOPS 50          // How many samples to take during detection calibration.
 #define CALIBRATION_SIGNAL_RETRY_THRESHOLD 35   // Value of the signal that will halt calibration and retry - Ex. a person was detected during calibration
 
 /**  Table of Optical Centers   ***
@@ -102,10 +99,5 @@
 #define OCCUPANCY_COLUMNS_OF_SPADS      8       // This is the width (accross the door with the sensor long axis perpendicular to the threshold) of the active SPADS
 #define OCCUPANCY_FRONT_ZONE_CENTER     167     // Denotes the SPAD number (see chart below) that is the to the right and above the exact center of occupancy zone 1's ROI
 #define OCCUPANCY_BACK_ZONE_CENTER      231     // Denotes the SPAD number (see chart below) that is the to the right and above the exact center of occupancy zone 2's ROI
-
-/**  Detection Zone Configuration   **/
-#define DETECTION_ROWS_OF_SPADS         16      // This is the depth (Through the door - when sensor mounted on the inside doorframe) (all rows)
-#define DETECTION_COLUMNS_OF_SPADS      16      // This is the width (accross the door with the sensor long axis perpendicular to the threshold) of the active SPADs (all columns)
-#define DETECTION_ZONE_CENTER           199     // Denotes the SPAD number (see chart below) that is the to the right and above the exact center of the detection zone's ROI (absolute middle)
 
 #endif

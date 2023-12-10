@@ -56,20 +56,6 @@ public:
      */
     int measure();
 
-     /**
-     * @brief Takes 1 measurements of signal strength for the detection optical zone.
-     * 
-     * You typically use TofSensor::instance().detect();
-     */
-    int detect();
-
-    /**
-     * @brief These functions will return the ambient signal in in kcps/SPAD for each of the zones.
-     * 
-     * These functions do not trigger an update, they simply return the current value
-    */
-    int getDetectionZone();
-
     /**
      * @brief These functions will return the last signal strength measurement in kcps/SPAD for each of the zones.
      * 
@@ -114,15 +100,6 @@ public:
      * 
     */
     bool performOccupancyCalibration();
-
-    /**
-     * @brief This function is called as part of the startup process to ensure the sensor does not see any obstructions
-     * 
-     * @details Stores the maximum and minimum signal strengths, designated as the "baseline" range, for each spad.
-     * Protected as this should only be called from the TofSensor setup process.
-     * 
-    */
-    bool performDetectionCalibration();
 
     /**
      * @brief Calls performDetectionCalibration and performOccupancyCalibration
