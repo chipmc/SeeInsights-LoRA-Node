@@ -132,7 +132,7 @@ void loop()
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// Someone is in the door start pinging
-			// else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
+			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {
