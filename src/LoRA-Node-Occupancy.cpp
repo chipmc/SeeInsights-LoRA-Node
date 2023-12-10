@@ -122,16 +122,32 @@ void loop()
 
 		case IDLE_STATE: {														// Unlike most sketches - nodes spend most time in sleep and only transit IDLE once or twice each period
 			static unsigned long keepAwake = 0;
+			static unsigned long lastPinLow = 0;
+			static unsigned long lastPinHigh = 0;
 			if (state != oldState) {
 				keepAwake = millis();
+				lastPinLow = millis();
+				lastPinHigh = millis();
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
 			if (currentData.currentDataChanged && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
-				state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
+				// state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
 				Log.infoln("Current data changed - going to transmit");
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
-			else if (sensorDetect) state = ACTIVE_PING;							// Someone is in the door start pinging
+			else if (sensorDetect) {											// If someone is detected by PIR ...
+				// if(!digitalRead(gpio.I2C_INT)){									// Don't transition to active ping until TIME_HIGH_BEFORE_DETECTING ms have passed without a LOW pin
+				// 	lastPinLow = millis();
+				// 	if(millis() - lastPinHigh > 1000) {							// if we have had a whole second of LOW, set sensorDetect false
+				// 		sensorDetect = false;
+				// 	}
+				// } else {
+				// 	lastPinHigh = millis();
+				// }
+				// if(millis() - lastPinLow > (TIME_HIGH_BEFORE_DETECTING)){
+					state = ACTIVE_PING;
+				// }
+			}
 			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - disabled until we get the PIR sensor - keep awake for 1 second 
 		} break;
 
@@ -209,7 +225,7 @@ void loop()
 			measure.loop();	
 
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
-				state = IDLE_STATE;									// ... and go back to IDLE_STATE
+				state = IDLE_STATE;																// ... and go back to IDLE_STATE
 			}
 		}  break;
 
