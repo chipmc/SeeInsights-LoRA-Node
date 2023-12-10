@@ -131,7 +131,7 @@ void loop()
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
 			if (currentData.currentDataChanged && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
-				// state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
+			    state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
 				Log.infoln("Current data changed - going to transmit");
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
