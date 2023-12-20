@@ -17,7 +17,7 @@
 
 //Include standard header files from libraries:
 #include <arduino.h>
-#include <AB1805_RK.h>
+#include <AB1805_RK.h>          // https://github.com/mapleiotsolutions/AB1805_RK_Arduino
 
 //Include application specific header files
 #include "pinout.h"

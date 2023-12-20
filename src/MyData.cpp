@@ -26,7 +26,7 @@ sysStatusData::~sysStatusData() {
 }
 
 
-void sysStatusData::setup() {
+bool sysStatusData::setup() {
     //The memory specs can be set before begin() to skip the auto-detection delay and write wear
     //24XX02 - 2048 bit / 256 bytes - 1 address byte, 8 byte page size
  //   myMem.setAddressBytes(1);
@@ -36,10 +36,22 @@ void sysStatusData::setup() {
     if (myMem.begin() == false)
     {
         Log.infoln("No memory detected. Freezing.");
-        while (1);
+        return false;
     }
     Log.infoln("Memory detected!");
     Log.infoln("Mem size in bytes: %i ", myMem.length());
+
+    // We will retrieve the system unique ID from the memory - this is something that 
+    // is set by the gateway and is unique to each node.
+    // The unique ID is made of a combination of two random bytes and two time bytes
+    if (myMem.read(1) == 255 || myMem.read(2) == 255) {                            // If the first byte is 255, then the memory has not been initialized
+        Log.infoln("This is a virgin node, need to get a unique ID from the gateway");
+        sysStatus.uniqueID = 0xFFFFFFFF;  // Four byte number that will signal that we need a unique ID from the gateway
+    }
+    else {
+        myMem.get(1,sysStatus.uniqueID);
+        Log.infoln("Node identified with unique ID %u", sysStatus.uniqueID);
+    }
 
     uint8_t versionNumber;
     myMem.get(0,versionNumber);
@@ -50,9 +62,9 @@ void sysStatusData::setup() {
     }
     else {
         myMem.get(10, sysStatus);
-     }
+    }
     // sysStatusData::printSysData();
-
+    return true;
 }
 
 void sysStatusData::loop() {
@@ -89,27 +101,23 @@ void sysStatusData::initialize() {
  
     Log.infoln("data initialized");
 
-    // Initialize the default value to 10 if the structure is reinitialized.
+    // Initialize the default value if the structure is reinitialized.
     // Be careful doing this, because when MyData is extended to add new fields,
     // the initialize method is not called! This is only called when first
     // initialized.
 
     Log.infoln("Loading system defaults");              // Letting us know that defaults are being loaded
-    sysStatus.nodeNumber = 11;
-    sysStatus.deviceID = UNIQUE_DEVICE_ID;
+    sysStatus.nodeNumber = 255;
     sysStatus.structuresVersion = STRUCTURES_VERSION;
     sysStatus.magicNumber = 27617;
     sysStatus.firmwareRelease = 255;                   // This value is set in the main program
     sysStatus.resetCount = 0;
-    sysStatus.frequencyMinutes = 1;
+    sysStatus.nextConnection = 0;
     sysStatus.alertCodeNode=1;
-    sysStatus.alertTimestampNode = 0;
-    sysStatus.openHours = true;
 
-    Log.infoln("Saving new system values, node number %i and magic number %i reporing every %i minutes", sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.frequencyMinutes);
+    Log.infoln("Saving new system values, node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);
     myMem.put(0,sysStatus.structuresVersion);
     sysStatusData::storeSysData();
-
     sysStatusData::printSysData();
 
 }
@@ -123,15 +131,18 @@ void sysStatusData::printSysData() {
     Log.infoln("System Data");
     Log.infoln("Magic Number: %d", sysStatus.magicNumber);
     Log.infoln("Node Number: %d", sysStatus.nodeNumber);
-    Log.infoln("Device ID: %d", sysStatus.deviceID);
+    Log.infoln("Device ID: %u", sysStatus.uniqueID);
     Log.infoln("Structures Version: %d", sysStatus.structuresVersion);
     Log.infoln("Firmware Release: %d", sysStatus.firmwareRelease);
     Log.infoln("Reset Count: %d", sysStatus.resetCount);
-    Log.infoln("Frequency Minutes: %d", sysStatus.frequencyMinutes);
+    Log.infoln("Next connection: %d", sysStatus.nextConnection);
     Log.infoln("Alert Code Node: %d", sysStatus.alertCodeNode);
-    Log.infoln("Alert Timestamp Node: %u", sysStatus.alertTimestampNode);
-    Log.infoln("Open Hours: %t", sysStatus.openHours);
     Log.infoln("sensorType: %d", sysStatus.sensorType);
+}
+
+void sysStatusData::updateUniqueID() {
+    myMem.put(1,sysStatus.uniqueID);
+    Log.infoln("UniqueID updated to %u and stored in protected space", sysStatus.uniqueID);
 }
 
 // *****************  Current Status Storage Object *******************
@@ -169,12 +180,9 @@ void currentStatusData::loop() {
 void currentStatusData::resetEverything() {                             // The device is waking up in a new day or is a new install
 
   current.occupancyState = 0;
-  current.messageCount = 0;
-  current.successCount = 0;
   sysStatus.resetCount = 0;                                          // Reset the reset count as well
-  current.dailyCount = 0;                                            // Reset the counts in FRAM as well
-  current.hourlyCount = 0;
-  current.lastSampleTime = 0;
+  current.occupancyGross = 0;                                            // Reset the counts in FRAM as well
+  current.occupancyNet = 0;
 
   currentData.storeCurrentData();
 }
@@ -195,11 +203,11 @@ bool currentStatusData::validate(size_t dataSize) {
 void currentStatusData::initialize() {
 
     myMem.get(90,current);
-    if (current.hourlyCount > current.dailyCount || current.successCount > current.messageCount) {
+    if (current.occupancyNet > current.occupancyGross) {
         Log.infoln("Current values not right - resetting");
         currentStatusData::resetEverything();
     }
-    Log.infoln("Loading current values, hourly %i and daily %i", current.hourlyCount, current.dailyCount);
+    Log.infoln("Loading current values, occupancy gross %i and occupancy net %i", current.occupancyGross, current.occupancyNet);
 
 }
 
@@ -211,11 +219,9 @@ void currentStatusData::storeCurrentData() {
 
 void currentStatusData::printCurrentData() {
     Log.infoln("Current Data");
-    Log.infoln("Hourly Count: %i", current.hourlyCount);
-    Log.infoln("Daily Count: %i", current.dailyCount);
-    Log.infoln("Last Sample Time: %i", current.lastSampleTime);
-    Log.infoln("Message Count: %i", current.messageCount);
-    Log.infoln("Success Count: %i", current.successCount);
+    Log.infoln("OccupancyChange: %i", current.occupancyGross);
+    Log.infoln("Occupancy: %i", current.occupancyNet);
+    Log.infoln("Sensor Placement: %s", (sysStatus.placement) ? "Inside" : "Outside");
 }
 
 

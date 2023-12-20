@@ -32,7 +32,7 @@ void PeopleCounter::setup() {
 bool PeopleCounter::loop(){                // This function is only called if there is a change in occupancy state
     static int oldOccupancyState = 0;       // Need to remember these for past state path
     static bool atTheThreshold = false;
-    int oldOccupancyCount = current.hourlyCount;
+    int oldOccupancyCount = current.occupancyNet;
 
     current.occupancyState = TofSensor::instance().getOccupancyState();
 
@@ -46,8 +46,8 @@ bool PeopleCounter::loop(){                // This function is only called if th
         if (atTheThreshold) {
           atTheThreshold = false;
           if (oldOccupancyState == 2) {
-            current.dailyCount++;
-            current.hourlyCount++;
+            current.occupancyGross++;
+            current.occupancyNet++;
           }
         }
         oldOccupancyState = 1;
@@ -57,8 +57,9 @@ bool PeopleCounter::loop(){                // This function is only called if th
         if (atTheThreshold) {
           atTheThreshold = false;
           if (oldOccupancyState == 1) {
-            if (current.hourlyCount > 0) {
-              current.hourlyCount--;
+            if (current.occupancyNet > 0) {
+              current.occupancyNet--;
+              current.occupancyGross--;
             }
           }
         }
@@ -77,9 +78,9 @@ bool PeopleCounter::loop(){                // This function is only called if th
     }
 
    #if TENFOOTDISPLAY
-    if (oldOccupancyCount != current.hourlyCount) {
+    if (oldOccupancyCount != current.occupancyNet) {
       currentData.currentDataChanged = true;
-      printBigNumbers(current.hourlyCount);
+      printBigNumbers(current.occupancyNet);
       return true;
     }
    #else
@@ -93,7 +94,7 @@ bool PeopleCounter::loop(){                // This function is only called if th
 }
 
 void PeopleCounter::setCount(int value){
-  current.hourlyCount = value;
+  current.occupancyNet = value;
 }
 
 int PeopleCounter::getLimit(){

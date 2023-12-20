@@ -97,17 +97,6 @@ public:
      */
     bool isItSafeToCharge();                               // See if it is safe to charge based on the temperature
 
-    /**
-     * @brief This function is called once a hardware interrupt is triggered by the device's sensor
-     * 
-     * @details The sensor may change based on the settings in sysSettings but the overall concept of operations
-     * is the same regardless.  The sensor will trigger an interrupt, which will set a flag. In the main loop
-     * that flag will call this function which will determine if this event should "count" as a visitor.
-     * 
-     * @returns true so we can reset the interrupt flag
-     * 
-     */
-    bool recordCount();
 
     protected:
 

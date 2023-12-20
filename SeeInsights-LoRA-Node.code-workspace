@@ -7,6 +7,10 @@
 		{
 			"name": "Basic Board Test",
 			"path": "../Basic Board Test"
+		},
+		{
+			"name": "LoRA-Connected-Counter",
+			"path": "../LoRA-Connected-Counter"
 		}
 	],
 	"settings": {

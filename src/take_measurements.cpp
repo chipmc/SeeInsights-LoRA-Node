@@ -111,19 +111,3 @@ bool take_measurements::isItSafeToCharge()                             // Return
   // Need to see if we even need this function
   return true;
 }
-
-
-bool take_measurements::recordCount() // This is where we check to see if an interrupt is set when not asleep or act on a tap that woke the device
-{
-  LED.on();                                                                            // Turn on the blue LED
-
-  current.lastSampleTime = timeFunctions.getTime();
-  current.hourlyCount = current.hourlyCount +1;                                              // Increment the PersonCount
-  current.dailyCount = current.dailyCount +1;                                               // Increment the PersonCount
-  Log.infoln("Count, hourly: %i. daily: %i",current.hourlyCount,current.dailyCount);
-  
-  delay(500);
-  LED.off();
-
-  return true;
-}
