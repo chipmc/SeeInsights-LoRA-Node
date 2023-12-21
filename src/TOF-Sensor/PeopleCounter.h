@@ -11,7 +11,7 @@
 #include <arduino.h>
 #include <ArduinoLog.h>
 #include "MyData.h"
-#include "PeopleCounterConfig.h"
+#include "Config.h"
 #include "ErrorCodes.h"
 #include "TofSensor.h"
 
@@ -47,21 +47,10 @@ public:
      */
     bool loop();
 
-    /**
-     * @brief allows us to set a limit on the number of folks allowed in a room
-    */
-    void setLimit(int value);
-
-    /**
-     * @brief Gives us a chance to see if a limit has been set for a room
-    */
+    int getCount();
     int getLimit();
-
-    /**
-     * @brief - Manually override the occupancy number
-    */
     void setCount(int value);
-
+    void setLimit(int value);
 
 protected:
     /**
@@ -99,6 +88,12 @@ protected:
      * The display options are set in the PeopleCounterConfig file as the TENFOOTDISPLAY declation
     */
     void printBigNumbers(int number);
+
+    /**
+     * @brief Algorithm that makes sense of nonsensical state transitions by filling in the
+     *        gaps to help the stack make sense again. 
+    */
+    void applyImpossibleStateTransitionCorrections(int newOccupancyState);
 
     int count = 0;
     int limit = DEFAULT_PEOPLE_LIMIT;

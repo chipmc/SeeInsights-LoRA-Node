@@ -25,7 +25,7 @@ void pinout::setup() {
   pinMode(WAKE, INPUT_PULLUP);
   pinMode(I2C_INT,INPUT_PULLDOWN);
   pinMode(I2C_EN,OUTPUT);              // Not sure if we can use this - messes with Boron i2c bus
-  digitalWrite(I2C_EN, HIGH);           // Turns on the module - change as we move to the production module
+  digitalWrite(I2C_EN, HIGH);          // Turns on the module - change as we move to the production module
   
   //Establish a random seed based on the tank level pin
   randomSeed(analogRead(Test1));

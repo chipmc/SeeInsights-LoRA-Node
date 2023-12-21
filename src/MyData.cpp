@@ -29,7 +29,7 @@ sysStatusData::~sysStatusData() {
 bool sysStatusData::setup() {
     //The memory specs can be set before begin() to skip the auto-detection delay and write wear
     //24XX02 - 2048 bit / 256 bytes - 1 address byte, 8 byte page size
- //   myMem.setAddressBytes(1);
+    //   myMem.setAddressBytes(1);
 
     myMem.setPageSizeBytes(8);
     myMem.setMemorySizeBytes(256);
@@ -117,9 +117,9 @@ void sysStatusData::initialize() {
 
     Log.infoln("Saving new system values, node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);
     myMem.put(0,sysStatus.structuresVersion);
+
     sysStatusData::storeSysData();
     sysStatusData::printSysData();
-
 }
 
 void sysStatusData::storeSysData() {
@@ -177,7 +177,7 @@ void currentStatusData::setup() {
 void currentStatusData::loop() {
 }
 
-void currentStatusData::resetEverything() {                             // The device is waking up in a new day or is a new install
+void currentStatusData::resetEverything() {            // The device is waking up in a new day or is a new install
 
   current.occupancyState = 0;
   sysStatus.resetCount = 0;                                          // Reset the reset count as well
@@ -222,6 +222,7 @@ void currentStatusData::printCurrentData() {
     Log.infoln("OccupancyChange: %i", current.occupancyGross);
     Log.infoln("Occupancy: %i", current.occupancyNet);
     Log.infoln("Sensor Placement: %s", (sysStatus.placement) ? "Inside" : "Outside");
+    Log.infoln("Single Entrance: %s", (sysStatus.singleEntrance) ? "Yes" : "No");
 }
 
 

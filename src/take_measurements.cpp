@@ -40,17 +40,23 @@ void take_measurements::setup() {
   else Log.infoln("VL53L1X initialization failed");
 
   PeopleCounter::instance().setup();
-  PeopleCounter::instance().setCount(1);
 
   delay (1000);         // Give the MAX17048 time to initialize (it takes 1 second) - does not work without this 
-  // Shoudl test to see if this can be shorter
+  // TODO:: test to see if this can be shorter
 }
 
 bool take_measurements::loop() {
-  if (TofSensor::instance().loop()) {                          // If there is new data from the sensor
-    if (PeopleCounter::instance().loop()) return true;         // Then check to see if we need to update the counts
-  }
-  return false;
+    if (TofSensor::instance().loop()) {             // If there is new data from the sensor ...
+      return PeopleCounter::instance().loop();                 // ... then check to see if we need to update the counts.
+    }
+    return false;
+}
+
+bool take_measurements::recalibrate() {
+   if(TofSensor::instance().recalibrate()){
+      return true;
+   }
+   else return false;
 }
 
 bool take_measurements::takeMeasurements() { 

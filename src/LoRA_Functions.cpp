@@ -32,7 +32,6 @@ typedef enum { NULL_STATE, JOIN_REQ, JOIN_ACK, DATA_RPT, DATA_ACK, ALERT_RPT, AL
 char loraStateNames[7][16] = {"Null", "Join Req", "Join Ack", "Data Report", "Data Ack", "Alert Rpt", "Alert Ack"};
 static LoRA_State lora_state = NULL_STATE;
 
-
 // Mesh has much greater memory requirements, and you may need to limit the
 // max message length to prevent wierd crashes
 #ifndef RH_MAX_MESSAGE_LEN
@@ -43,7 +42,6 @@ static LoRA_State lora_state = NULL_STATE;
 // max message length to prevent wierd crashes
 // #define RH_MESH_MAX_MESSAGE_LEN 50
 uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];               // Related to max message size - RadioHead example note: dont put this on the stack:
-
 
 bool LoRA_Functions::setup(bool gatewayID) {
     // Set up the Radio Module

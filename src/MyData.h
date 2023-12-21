@@ -52,7 +52,7 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 3                           // Version of the data structures (system and data)
+#define STRUCTURES_VERSION 4                           // Version of the data structures (system and data)
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
@@ -148,6 +148,7 @@ public:
 		uint8_t alertCodeNode;                            // Alert code from node
 		uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
         uint8_t placement;                                // 0 for outside, 1 for inside - determnines whether we count up or down
+        uint8_t singleEntrance;                           // 1 if this device is taking occupancy of a room with a a single entrance - prevents negative counts
 	};
 	SystemDataStructure sysStatusStruct;
 
@@ -261,12 +262,12 @@ public:
 	struct CurrentDataStructure
 	{
         int8_t internalTempC;                             // Enclosure temperature in degrees C
-        int8_t internalHumidity;                           // Enclosure humidity in percent
-		int8_t stateOfCharge;                              // Battery charge level
+        int8_t internalHumidity;                          // Enclosure humidity in percent
+		int8_t stateOfCharge;                             // Battery charge level
 		uint8_t batteryState;                             // Stores the current battery state (charging, discharging, etc)
 		int16_t RSSI;                                     // Latest signal strength value (updated adter ack and sent to gateway on next data report)
 		int16_t SNR;									  // Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
-		uint16_t occupancyGross;                         // Sum of occupancy changes for the day
+		uint16_t occupancyGross;                          // Sum of occupancy changes for the day
         uint16_t occupancyNet;                            // Current occupancy count
         uint8_t occupancyState;                           // Allows us to monitor occupancy state across functions
 		// OK to add more fields here 
