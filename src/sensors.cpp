@@ -19,7 +19,7 @@ sensors::~sensors() {
 
 
 void sensors::setup() {
-  // Setup code here
+    // Setup code here
 }
 
 void sensors::loop() {

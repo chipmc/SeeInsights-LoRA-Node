@@ -23,8 +23,8 @@
 #include "MyData.h"
 #include "stsLED.h"
 #include "timing.h"
-#include "ErrorCodes.h"
-#include "PeopleCounter.h"
+#include "TOF-Sensor\ErrorCodes.h"
+#include "TOF-Sensor\PeopleCounter.h"
 
 #define measure take_measurements::instance()
 
@@ -54,6 +54,13 @@ public:
      * You typically use pinout::instance().loop();
      */
     bool loop();
+
+    /**
+     * @brief Perform TOFSensor setup operations again - recalibrates sensor zones
+     * 
+     * You typically use pinout::instance().recalibrate();
+     */
+    bool recalibrate();
 
     /**
      * @brief This code collects basic data from the default sensors - temperature, humidity, battery and charge level
