@@ -15,6 +15,7 @@
 // v3 - Moved to the new occupancy module.
 // v4 - Breaking change, new Libraries and new data structures.  Requires gateway code v13 or higher
 // v5 - Merged improvements to the TOF sensor and interrupt wakeups via the PIR sensor. Consolidated file configurations and organized file structure.
+// v6 - Lots of bug fixes around data storage and node initialization.
 
 /*
 Wish List:
@@ -23,6 +24,7 @@ Wish List:
 3) Improve the "noisyness" of the TOF sensor
 4) Make sure we are achieving low power on shutdown / sleep
 5) Perhaps we need to count and report the number of wakeup events
+6) Need to be able to configure the device placment inside or outside a room
 */
 
 //Include Libraries:
@@ -63,60 +65,69 @@ void wakeUp_Timer();
 // Program Variables
 volatile bool userSwitchDectected = false;		
 volatile bool sensorDetect = false;
-volatile uint8_t IRQ_Reason = 0; // 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor
+volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor
 
 // Device Setup
 void setup() 
 {
-  Wire.begin(); //Establish Wire.begin for I2C communication
-  //Establish Serial connection if connected for debugging
-  Serial.begin(115200);
-  delay(5000);
+	Wire.begin(); 									// Establish Wire.begin for I2C communication
+	Serial.begin(115200);								//Establish Serial connection if connected for debugging
+	delay(2000);
 
-  // Log.begin(LOG_LEVEL_SILENT, &Serial);
-  Log.begin(LOG_LEVEL_TRACE, &Serial);
-  Log.infoln("PROGRAM: See Insights LoRa Node!" CR);
-  Log.infoln("Starting up...!");
+	// Log.begin(LOG_LEVEL_SILENT, &Serial);
+	Log.begin(LOG_LEVEL_TRACE, &Serial);
+	Log.infoln("PROGRAM: See Insights LoRa Node!" CR);
 
-  //Initialize each class used in this program
-  pinout::instance().setup();
-  gpio.setup();
-  LED.setup(gpio.STATUS);
-  LED.on();
-  sysData.setup();
-  delay(100);
-  timeFunctions.setup();
-  currentData.setup();
-  sysStatus.firmwareRelease = firmwareRelease;
-  measure.setup();
+	//Initialize each class used in this program
+	pinout::instance().setup();							// Pins and their modes
+	gpio.setup();											// GPIO pins
+	LED.setup(gpio.STATUS);								// Led used for status
+	LED.on();
+	sysData.setup();										// System state persistent store
+	delay(100);											// Reduce initialization errors - to be tested
+	timeFunctions.setup();
+	currentData.setup();
+	sysStatus.firmwareRelease = firmwareRelease;
+	measure.setup();
 
-  currentData.resetEverything(); // Just for testing - remove later
+	// Need to set up the User Button pressed action here
+	LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
+	LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
+	LowPower.attachInterruptWakeup(gpio.USER_SW, userSwitchISR, FALLING);
+	LowPower.attachInterruptWakeup(gpio.WAKE, wakeUp_Timer, FALLING); 
+	// LowPower.attachInterruptWakeup(gpio.RFM95_DIO0, wakeUp_RFM95_DIO0, RISING);	// DIO0 is an extra interrupt output from the radio. Could be used for LoRaWAN and/or CAD sleep in the future. 
 
-
-  // Need to set up the User Button pressed action here
-
-  LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
-  LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
-  LowPower.attachInterruptWakeup(gpio.USER_SW, userSwitchISR, FALLING);
-  LowPower.attachInterruptWakeup(gpio.WAKE, wakeUp_Timer, FALLING); 
-  // DIO0 is an extra interrupt output from the radio. Currently not used. Could be used for LoRaWAN and/or CAD sleep in the future. 
-  // LowPower.attachInterruptWakeup(gpio.RFM95_DIO0, wakeUp_RFM95_DIO0, RISING);
-
-  // In this section we test for issues and set alert codes as needed
+	// In this section we test for issues and set alert codes as needed
 	if (! LoRA.setup(false)) 	{						// Start the LoRA radio - Node
-		sysStatus.alertCodeNode = 3;										// Initialization failure
+		sysStatus.alertCodeNode = 3;					// Initialization failure
 		Log.infoln("LoRA Initialization failure alert code %d - power cycle in 30", sysStatus.alertCodeNode);
 	}
-	else if (sysStatus.nodeNumber > 10 || !timeFunctions.isRTCSet()) {			// If the node number indicates this node is uninitialized or the clock needs to be set, initiate a join request
-		sysStatus.alertCodeNode = 1; 									// Will initiate a join request
+	else if (sysStatus.nodeNumber == 255 || !timeFunctions.isRTCSet()) {			// If the node number indicates this node is uninitialized or the clock needs to be set, initiate a join request
+		Log.infoln("We got here becasue the node number is %d and the RTC is %s", sysStatus.nodeNumber, (timeFunctions.isRTCSet()) ? "set" : "not set");
+		sysStatus.alertCodeNode = 1; 					// Will initiate a join request
 		Log.infoln("Node number indicated unconfigured node of %d setting alert code to %d", sysStatus.nodeNumber, sysStatus.alertCodeNode);
 	}
 
-  if (state == INITIALIZATION_STATE) state = IDLE_STATE;
-  // Log.infoln("Startup complete for the Node with alert code %d and last connect %s", sysStatus.alertCodeNode, Time.format(sysStatus.lastConnection), "%T").c_str());
-  Log.infoln("Startup complete for the Node with alert code %d", sysStatus.alertCodeNode);
+	// Next, we will make sure that the device is set up to sleep for a reasonable amount of time
+	if (sysStatus.alertCodeNode == 0) {
+		if (sysStatus.nextConnection < timeFunctions.getTime()) {
+			sysStatus.nextConnection = timeFunctions.getTime() + 60UL;		// If the next connection is in the past, set it to 1 minute from now
+			Log.infoln("Next connection was in the past - setting to 1 minute from now");
+		}
+		else if (sysStatus.nextConnection - timeFunctions.getTime() > 3600UL) {
+			sysStatus.nextConnection = timeFunctions.getTime() + 3600UL;		// If the next connection is more than an hour from now, set it to 1 hour from now
+			Log.infoln("Next connection was more than an hour from now - setting to 1 hour from now");
+		}
+	}
 
-  LED.off();
+	if (state == INITIALIZATION_STATE) state = IDLE_STATE;
+	// Log.infoln("Startup complete for the Node with alert code %d and last connect %s", sysStatus.alertCodeNode, Time.format(sysStatus.lastConnection), "%T").c_str());
+	Log.infoln("Startup complete for the Node with alert code %d", sysStatus.alertCodeNode);
+
+	sysStatusData::instance().sysDataChanged = true;
+	currentStatusData::instance().currentDataChanged = true;
+
+	LED.off();
 }
 
 // Main Loop
@@ -126,32 +137,16 @@ void loop()
 
 		case IDLE_STATE: {														// Unlike most sketches - nodes spend most time in sleep and only transit IDLE once or twice each period
 			static unsigned long keepAwake = 0;
-			static unsigned long lastPinLow = 0;
-			static unsigned long lastPinHigh = 0;
 			if (state != oldState) {
 				keepAwake = millis();
-				lastPinLow = millis();
-				lastPinHigh = millis();
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
-			if (currentData.currentDataChanged && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
+			if (currentStatusData::instance().currentDataChanged = true && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
 			    state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
 				Log.infoln("Current data changed - going to transmit");
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
-			else if (sensorDetect) {											// If someone is detected by PIR ...
-				// if(!digitalRead(gpio.I2C_INT)){									// Don't transition to active ping until TIME_HIGH_BEFORE_DETECTING ms have passed without a LOW pin
-				// 	lastPinLow = millis();
-				// 	if(millis() - lastPinHigh > 1000) {							// if we have had a whole second of LOW, set sensorDetect false
-				// 		sensorDetect = false;
-				// 	}
-				// } else {
-				// 	lastPinHigh = millis();
-				// }
-				// if(millis() - lastPinLow > (TIME_HIGH_BEFORE_DETECTING)){
-					state = ACTIVE_PING;
-				// }
-			}
+			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
 			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - keep awake for 1 second 
 		} break;
 
@@ -164,10 +159,12 @@ void loop()
 
 			publishStateTransition();              								// Publish state transition
 			// How long to sleep
-			if (timeFunctions.isRTCSet() && sysStatus.nextConnection > timeFunctions.getTime()) {
-				time = sysStatus.nextConnection;
-				// Log.infoln("Sleep for %lu seconds until next event at %s with sensor %s", wakeInSeconds, Time.format(time, "%T").c_str(), (sysStatus.get_openHours()) ? "on" : "off");
-				Log.infoln("Sleep for %u seconds", sysStatus.nextConnection - timeFunctions.getTime());
+			if (timeFunctions.isRTCSet()) {
+				if (sysStatus.nextConnection < timeFunctions.getTime()) {
+					time = timeFunctions.getTime() + 60UL;
+				}
+				else time = sysStatus.nextConnection - timeFunctions.getTime();
+				Log.infoln("Sleep until %u with next connection %u and current Unix time %u", sysStatus.nextConnection - timeFunctions.getTime(), sysStatus.nextConnection, timeFunctions.getTime());
 			}
 			else {
 				time = timeFunctions.getTime() + 60UL;
@@ -180,7 +177,6 @@ void loop()
 			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
 			timeFunctions.interruptAtTime(time, 0);                 			// Set the interrupt for the next event
 			LowPower.sleep(timeFunctions.WDT_MaxSleepDuration);
-			LowPower.sleep();
 			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
@@ -241,7 +237,7 @@ void loop()
 					state = ERROR_STATE;														// Need to resolve alert before listening for others
 				}
 				Log.infoln("Received a message in %lmSec", millis() - listeningStarted);
-				sysData.sysDataChanged = true;													// We have received a message - need to update the system data
+				sysStatusData::instance().sysDataChanged = true;													// We have received a message - need to update the system data
 				state = IDLE_STATE;
 			}
 			else if (millis() - listeningStarted > 5000L) {
@@ -258,7 +254,7 @@ void loop()
 			publishStateTransition();                   						// Let everyone know we are changing state
 			sysStatus.lastConnection = timeFunctions.getTime();					// Prevents cyclical Transmits
 			measure.takeMeasurements();											// Taking measurements now should allow for accurate battery measurements
-			currentData.currentDataChanged = false;								// We have new data to send - clear so we don't get stuck in a loop
+			currentStatusData::instance().currentDataChanged = false;			// We have new data to send - clear so we don't get stuck in a loop
 			LoRA_Functions::instance().clearBuffer();
 			// Based on Alert code, determine what message to send
 			if (sysStatus.alertCodeNode == 0) result = LoRA_Functions::instance().composeDataReportNode();
@@ -272,7 +268,7 @@ void loop()
 			if (result) {
 				retryCount = 0;													// Successful transmission - go listen for response
 				state = LoRA_LISTENING_STATE;
-				sysData.sysDataChanged = true;
+				sysStatusData::instance().sysDataChanged = true;
 			}
 			else if (retryCount >= 3) {
 				Log.infoln("Too many retries - giving up for this period");

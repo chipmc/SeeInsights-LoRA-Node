@@ -50,7 +50,7 @@ bool LoRA_Functions::setup(bool gatewayID) {
 	manager.setTimeout(120); // Set to 120
 	manager.setRetries(2); // Set to 2	
 
-	Log.infoln("in LoRA setup - node number %d and uniqueID of %u",sysStatus.nodeNumber, sysStatus.uniqueID);
+	Log.infoln("In LoRA setup - node number %d and uniqueID of %u",sysStatus.nodeNumber, sysStatus.uniqueID);
 
 	if (gatewayID == true) {
 		sysStatus.nodeNumber = GATEWAY_ADDRESS;							// Gateway - Manager is initialized by default with GATEWAY_ADDRESS - make sure it is stored in FRAM
@@ -131,13 +131,12 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 		lora_state = (LoRA_State)messageFlag;
 		Log.infoln("Received from node %d with RSSI / SNR of %d / %d - a %s message with %d hops", from, driver.lastRssi(), rf95.lastSNR(), loraStateNames[lora_state], hops);
 
-		sysStatus.nodeNumber = from;									// Set the node number to the sender
 		sysStatus.token = (buf[3] << 8 | buf[4]);						// Set the token for validation - good for the day
 		sysStatus.lastConnection = ((buf[5] << 24) | (buf[6] << 16) | (buf[7] << 8) | buf[8]);	// Correct time from gateway
 		timeFunctions.setTime(sysStatus.lastConnection,0);  // Set time based on response from gateway
 		uint16_t secondsTillNextReport = (buf[9] << 8 | buf[10]);			// Frequency of reporting set by Gateway
 		sysStatus.nextConnection = sysStatus.lastConnection + secondsTillNextReport;
-		Log.infoln("Set clock to %i and report in %i seconds", timeFunctions.getTime(), secondsTillNextReport);
+		Log.infoln("Set clock to %i and next report is in %i seconds", timeFunctions.getTime(), secondsTillNextReport);
 
 		// Process Alert Codes
 		sysStatus.alertCodeNode = buf[11];								// The gateway may set an alert code for the node

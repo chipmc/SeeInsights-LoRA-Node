@@ -8,7 +8,7 @@
 
 #include "Config.h"
 #include "PeopleCounter.h"
-#include <utils\StackArray.h>
+#include "utils/StackArray.h"
 
 // StackArray data structure:
 // [ bottom, ... , ... , top ]

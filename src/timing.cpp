@@ -47,9 +47,15 @@ void timing::loop() {
  * Method Name: setTime()
  *******************************************************************************/
 bool timing::setTime(time_t UnixTime, uint8_t hundredths){
- 
   ab1805.setRtcFromTime(UnixTime,hundredths);
-  return true;
+  if (ab1805.isRTCSet()) {
+    Log.infoln("AB1805 is set to %l", UnixTime);
+    return true;
+  }
+  else {
+    Log.infoln("AB1805 is not set");
+    return false;
+  }
 }
 
 time_t timing::getTime() {

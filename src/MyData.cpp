@@ -41,6 +41,9 @@ bool sysStatusData::setup() {
     Log.infoln("Memory detected!");
     Log.infoln("Mem size in bytes: %i ", myMem.length());
 
+    uint8_t versionNumber;
+    myMem.get(0,versionNumber);
+
     // We will retrieve the system unique ID from the memory - this is something that 
     // is set by the gateway and is unique to each node.
     // The unique ID is made of a combination of two random bytes and two time bytes
@@ -50,11 +53,7 @@ bool sysStatusData::setup() {
     }
     else {
         myMem.get(1,sysStatus.uniqueID);
-        Log.infoln("Node identified with unique ID %u", sysStatus.uniqueID);
     }
-
-    uint8_t versionNumber;
-    myMem.get(0,versionNumber);
 
     if (versionNumber != STRUCTURES_VERSION) {
         Log.infoln("Structure changed from %i to %i",versionNumber,STRUCTURES_VERSION);
@@ -62,6 +61,7 @@ bool sysStatusData::setup() {
     }
     else {
         myMem.get(10, sysStatus);
+        Log.infoln("System Data retrieved from EEPROM with node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);
     }
     // sysStatusData::printSysData();
     return true;
@@ -69,7 +69,7 @@ bool sysStatusData::setup() {
 
 void sysStatusData::loop() {
     static unsigned long lastChecked = 0;
-    if (millis() - lastChecked > 10000) {                // Check for data changes every ten seconds while awake
+    if (millis() - lastChecked > 1000) {                // Check for data changes every ten seconds while awake - remember millis are only when awake
         lastChecked = millis();
 
        if (sysStatusData::sysDataChanged) {
@@ -175,6 +175,15 @@ void currentStatusData::setup() {
 }
 
 void currentStatusData::loop() {
+    static unsigned long lastChecked = 0;
+    if (millis() - lastChecked > 1000) {                // Check for data changes every ten seconds while awake - remember millis are only when awake
+        lastChecked = millis();
+
+       if (currentStatusData::currentDataChanged) {
+           currentStatusData::storeCurrentData();
+           currentStatusData::currentDataChanged = false;
+       }
+    }
 }
 
 void currentStatusData::resetEverything() {            // The device is waking up in a new day or is a new install
@@ -190,11 +199,10 @@ void currentStatusData::resetEverything() {            // The device is waking u
 bool currentStatusData::validate(size_t dataSize) {
     bool valid = true;
     if (valid) {
-        /*
-        if (current.get_hourlyCount() < 0 || current.get_hourlyCount()  > 1024) {
-            Log.info("current data not valid hourlyCount=%d" , current.get_hourlyCount());
+        if (current.occupancyNet > current.occupancyGross) {
+            Log.infoln("data not valid occupancy net =%d", current.occupancyNet);
             valid = false;
-        }*/
+        }
     }
     Log.infoln("current data is %s",(valid) ? "valid": "not valid");
     return valid;
@@ -213,7 +221,7 @@ void currentStatusData::initialize() {
 
 void currentStatusData::storeCurrentData() {
     Log.infoln("Storing current data to EEPROM");
-    currentData.currentDataChanged = false;
+    currentStatusData::currentDataChanged = false;
     myMem.put(90,current);
 }
 

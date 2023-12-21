@@ -65,7 +65,7 @@ bool take_measurements::takeMeasurements() {
       if (!take_measurements::getTemperatureHumidity()) returnResult = false;  // Temperature and humidity inside the enclosure
       if (!take_measurements::batteryState()) returnResult = false;// Using the Fuel guage
       if (!take_measurements::isItSafeToCharge()) returnResult = false; // This will be a safety check - Thermister on charge controller should manage
-      currentData.currentDataChanged = true; // This is a flag that will be used to indicate that the data has changed and needs to be saved
+      currentStatusData::instance().currentDataChanged = true; // This is a flag that will be used to indicate that the data has changed and needs to be saved
     return returnResult;
 
 }
