@@ -147,6 +147,7 @@ public:
 		time_t nextConnection;                            // When we are reporing at minute increments - what are they - for Gateways
 		uint8_t alertCodeNode;                            // Alert code from node
 		uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
+        uint8_t space;                                    // Assciates the node with a space - this value is changed by the Gateway
         uint8_t placement;                                // 0 for outside, 1 for inside - determnines whether we count up or down
         uint8_t singleEntrance;                           // 1 if this device is taking occupancy of a room with a a single entrance - prevents negative counts
 	};

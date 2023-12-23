@@ -16,6 +16,7 @@
 // v4 - Breaking change, new Libraries and new data structures.  Requires gateway code v13 or higher
 // v5 - Merged improvements to the TOF sensor and interrupt wakeups via the PIR sensor. Consolidated file configurations and organized file structure.
 // v6 - Lots of bug fixes around data storage and node initialization.
+// v7 - Started to add the logic to support spaces, placement and single entry/exit (requires Gateway v14 or above)
 
 /*
 Wish List:
@@ -42,7 +43,7 @@ Wish List:
 #include "LoRA_Functions.h"
 #include "Config.h"
 
-const uint8_t firmwareRelease = 4;
+const uint8_t firmwareRelease = 7;
 
 // Instandaitate the classes
 
@@ -141,7 +142,7 @@ void loop()
 				keepAwake = millis();
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
-			if (currentStatusData::instance().currentDataChanged = true && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
+			if ((currentStatusData::instance().currentDataChanged == true) && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
 			    state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
 				Log.infoln("Current data changed - going to transmit");
 			}

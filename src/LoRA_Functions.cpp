@@ -255,13 +255,17 @@ bool LoRA_Functions::composeJoinRequesttNode() {
 	buf[7] = sysStatus.uniqueID >> 16;							// This is a 4-byte identifier that is unique to each node and is only set once
 	buf[8] = sysStatus.uniqueID >> 8;							// This is a 4-byte identifier that is unique to each node and is only set once
 	buf[9] = sysStatus.uniqueID;								// This is a 4-byte identifier that is unique to each node and is only set once
-	buf[10] = 0;												// These last two bytes are used by the radiohead library to track re-transmissions and re-transmission delays
-	buf[11] = 0;
+	buf[10] = sysStatus.space;									// These next four bytes are sent to the gateway and may be updated in join process
+	buf[11] = sysStatus.placement;
+	buf[12] = sysStatus.singleEntrance;
+	buf[13] = 0;												// Reserved for future use
+	buf[14] = 0;												// These last two bytes are used by the radiohead library to track re-transmissions and re-transmission delays
+	buf[15] = 0;
 	
-	Log.infoln("Node %d Sending join request with magicNumer = %d, uniqueID = %u and sensorType = %d",sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.uniqueID, sysStatus.sensorType);
+	Log.infoln("Node %d Sending join request with magicNumer = %d, uniqueID = %u and sensorType = %d, and payload %d / %d/ %d",sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.uniqueID, sysStatus.sensorType, sysStatus.space,sysStatus.placement, sysStatus.singleEntrance);
 
 	LED.on();
-	unsigned char result = manager.sendtoWait(buf, 12, GATEWAY_ADDRESS, JOIN_REQ);
+	unsigned char result = manager.sendtoWait(buf, 16, GATEWAY_ADDRESS, JOIN_REQ);
 	LED.off();
 
 	if (result == RH_ROUTER_ERROR_NONE) {						// It has been reliably delivered to the next node.
@@ -289,7 +293,7 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 	// contents of response for 1-12 handled in common function above
 	// In a join request, the gateway will need to confirm the node number, set the uniqueID if this is a virgin device and set the sensor type and send a valid token
 
-	if (sysStatus.nodeNumber == 255 || sysStatus.nodeNumber == 0) sysStatus.nodeNumber = buf[17];									// Set the node number to the sender
+	if (sysStatus.nodeNumber == 255 || sysStatus.nodeNumber == 0) sysStatus.nodeNumber = buf[17];		// Set the node number future use
 
 	Log.infoln("Testing to see if we have a valid uniqueID of %u with %d and %d", sysStatus.uniqueID, sysStatus.uniqueID >> 24 , sysStatus.uniqueID >> 16);
 	if (sysStatus.uniqueID >> 24 == 255 && (0XFF & sysStatus.uniqueID >> 16) == 255) {			// If the uniqueID is not set, set it here
@@ -298,6 +302,11 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 		Log.infoln("Node %d Join request acknowledged and sensor set to %d - received uniqueID %u",sysStatus.nodeNumber, sysStatus.sensorType, sysStatus.uniqueID);
 	}
 	else Log.infoln("Node %d Join request acknowledged and sensor set to %d", sysStatus.nodeNumber, sysStatus.sensorType);
+
+	sysStatus.space = buf[18];									// These next four bytes are sent to the gateway and may be updated in join process
+	sysStatus.placement = buf[19];
+	sysStatus.singleEntrance = buf[20];
+	Log.infoln("Node %d Join request acknowledged and space set to %d, placement set to %d and singleEntrance set to %d", sysStatus.nodeNumber, sysStatus.space, sysStatus.placement, sysStatus.singleEntrance);
 
 	manager.setThisAddress(sysStatus.nodeNumber);
 	sysStatus.alertCodeNode = 0;									// Need to clear so we don't get in a retry cycle
