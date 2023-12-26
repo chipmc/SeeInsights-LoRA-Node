@@ -106,9 +106,12 @@ bool take_measurements::batteryState() {
     Log.infoln("Failed to get battery percent charge");
   }
 
+  current.batteryState = 0;  // TODO:: Need to get this from the battery controller somehow
   current.stateOfCharge = percent;
   Log.infoln("Batt Voltage: %FV and %F%% charged ", voltage, percent);
   return true;
+
+
 }
 
 

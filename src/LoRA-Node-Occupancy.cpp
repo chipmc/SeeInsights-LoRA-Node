@@ -17,6 +17,7 @@
 // v5 - Merged improvements to the TOF sensor and interrupt wakeups via the PIR sensor. Consolidated file configurations and organized file structure.
 // v6 - Lots of bug fixes around data storage and node initialization.
 // v7 - Started to add the logic to support spaces, placement and single entry/exit (requires Gateway v14 or above)
+// v7.1 - Minor updates to support messaging to the gateway and Ubidots.
 
 /*
 Wish List:
