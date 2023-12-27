@@ -18,6 +18,7 @@
 // v6 - Lots of bug fixes around data storage and node initialization.
 // v7 - Started to add the logic to support spaces, placement and single entry/exit (requires Gateway v14 or above)
 // v7.1 - Minor updates to support messaging to the gateway and Ubidots.
+// v7.2 - Fixes to reporting (Gross, net and less than zero if a single entrance) and sleep time calculation
 
 /*
 Wish List:
@@ -161,12 +162,17 @@ void loop()
 
 			publishStateTransition();              								// Publish state transition
 			// How long to sleep
+			time_t currentTime = timeFunctions.getTime();
+			Log.infoln("Current time is %u", (unsigned long)currentTime);
+			unsigned long sleepTime = (sysStatus.nextConnection - currentTime > 0) ? sysStatus.nextConnection - currentTime : 60UL;
+			Log.infoln("Going to sleep for %u seconds - Time %s valid, next connection is %u, current time is %u", sleepTime, (timeFunctions.isRTCSet()) ? "is" : "is not", sysStatus.nextConnection, currentTime);
+
 			if (timeFunctions.isRTCSet()) {
-				if (sysStatus.nextConnection < timeFunctions.getTime()) {
+				if (sysStatus.nextConnection < currentTime) {
 					time = timeFunctions.getTime() + 60UL;
 				}
-				else time = sysStatus.nextConnection - timeFunctions.getTime();
-				Log.infoln("Sleep until %u with next connection %u and current Unix time %u", sysStatus.nextConnection - timeFunctions.getTime(), sysStatus.nextConnection, timeFunctions.getTime());
+				else time = sysStatus.nextConnection - currentTime;
+				Log.infoln("Timer set to wake by %s in %u seconds", (sleepTime > timeFunctions.WDT_MaxSleepDuration) ? "watchdog" : "alarm", (sleepTime > timeFunctions.WDT_MaxSleepDuration) ? timeFunctions.WDT_MaxSleepDuration : sleepTime);
 			}
 			else {
 				time = timeFunctions.getTime() + 60UL;
