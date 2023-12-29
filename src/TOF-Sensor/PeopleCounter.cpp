@@ -111,7 +111,7 @@ bool PeopleCounter::loop(){
     snprintf(states, sizeof(states), "%i%i%i%i%i", stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop());   
     if(strcmp(states, "02310")){            // If the sequence backwards(because of stack) matches the increment sequence then increment the count ... 
       if(sysStatus.placement){                     // ... but reverse the count (decrement) if we are mounted inside, ...       
-        if(current.occupancyNet > 0 || !sysStatus.singleEntrance){   // ... but don't decrement the count if the count cannot possibly be negative (single entrance door)
+        if(current.occupancyNet > 0 || sysStatus.multi){   // ... but don't decrement the count if the count cannot possibly be negative (single entrance door)
           current.occupancyGross++;
           current.occupancyNet--;
           currentData.currentDataChanged = true;
@@ -131,14 +131,14 @@ bool PeopleCounter::loop(){
         current.occupancyNet++;
         currentData.currentDataChanged = true;
       } else {
-        if(current.occupancyNet > 0 || !sysStatus.singleEntrance){   // ... but don't decrement the count if the count cannot possibly be negative (single entrance door)
+        if(current.occupancyNet > 0 || sysStatus.multi){   // ... but don't decrement the count if the count cannot possibly be negative (single entrance door)
           current.occupancyGross++;
           current.occupancyNet--;
           currentData.currentDataChanged = true;
         }
       }
       // This is a safety check to ensure that the count cannot be negative - this should never happen if we have a single door into the room
-      if (sysStatus.singleEntrance && current.occupancyNet < 0) current.occupancyNet = 0;  // If the count is negative, set it to 0 (single entrance door)
+      if (!sysStatus.multi && current.occupancyNet < 0) current.occupancyNet = 0;  // If the count is negative, set it to 0 (single entrance door)
 
       #if PRINT_HOURLY_COUNT_TENFOOTDISPLAY
           printBigNumbers(current.occupancyNet);

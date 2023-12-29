@@ -27,17 +27,14 @@ void take_measurements::setup() {
     Log.infoln("SHT31 initialization failed");
     // Likely need to do some error handling here
   }
-  else Log.infoln("SHT31-D initializated with i2c address 0x44");
 
   if (!maxlipo.begin()) {
     Log.infoln("MAX17048 initialization failed!");
   }
-  else Log.infoln("MAX17048 initialized with i2c address 0x%d", maxlipo.getChipID());
 
   if (TofSensor::instance().setup()) {
     Log.infoln("VL53L1X initialized");
   }
-  else Log.infoln("VL53L1X initialization failed");
 
   PeopleCounter::instance().setup();
 

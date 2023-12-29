@@ -18,7 +18,6 @@ stsLED::~stsLED() {
 
 void stsLED::setup(uint8_t pin1) {
     _pin1 = pin1;
-    Log.infoln("Settting up LED on pin: %i", _pin1);
     pinMode(_pin1, OUTPUT); // This is already done in the Pinout.cpp
 }
 

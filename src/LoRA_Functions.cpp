@@ -257,12 +257,12 @@ bool LoRA_Functions::composeJoinRequesttNode() {
 	buf[9] = sysStatus.uniqueID;								// This is a 4-byte identifier that is unique to each node and is only set once
 	buf[10] = sysStatus.space;									// These next four bytes are sent to the gateway and may be updated in join process
 	buf[11] = sysStatus.placement;
-	buf[12] = sysStatus.singleEntrance;
+	buf[12] = sysStatus.multi;
 	buf[13] = 0;												// Reserved for future use
 	buf[14] = 0;												// These last two bytes are used by the radiohead library to track re-transmissions and re-transmission delays
 	buf[15] = 0;
 	
-	Log.infoln("Node %d Sending join request with magicNumer = %d, uniqueID = %u and sensorType = %d, and payload %d / %d/ %d",sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.uniqueID, sysStatus.sensorType, sysStatus.space,sysStatus.placement, sysStatus.singleEntrance);
+	Log.infoln("Node %d Sending join request with magicNumer = %d, uniqueID = %u and sensorType = %d, and payload %d / %d/ %d",sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.uniqueID, sysStatus.sensorType, sysStatus.space,sysStatus.placement, sysStatus.multi);
 
 	LED.on();
 	unsigned char result = manager.sendtoWait(buf, 16, GATEWAY_ADDRESS, JOIN_REQ);
@@ -305,8 +305,8 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 
 	sysStatus.space = buf[18];									// These next four bytes are sent to the gateway and may be updated in join process
 	sysStatus.placement = buf[19];
-	sysStatus.singleEntrance = buf[20];
-	Log.infoln("Node %d Join request acknowledged and space set to %d, placement set to %d and singleEntrance set to %d", sysStatus.nodeNumber, sysStatus.space, sysStatus.placement, sysStatus.singleEntrance);
+	sysStatus.multi = buf[20];
+	Log.infoln("Node %d Join request acknowledged and space set to %d, placement set to %d and singleEntrance set to %d", sysStatus.nodeNumber, sysStatus.space, sysStatus.placement, sysStatus.multi);
 
 	manager.setThisAddress(sysStatus.nodeNumber);
 	sysStatus.alertCodeNode = 0;									// Need to clear so we don't get in a retry cycle

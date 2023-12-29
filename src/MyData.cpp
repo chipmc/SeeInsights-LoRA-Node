@@ -230,7 +230,7 @@ void currentStatusData::printCurrentData() {
     Log.infoln("OccupancyChange: %i", current.occupancyGross);
     Log.infoln("Occupancy: %i", current.occupancyNet);
     Log.infoln("Sensor Placement: %s", (sysStatus.placement) ? "Inside" : "Outside");
-    Log.infoln("Single Entrance: %s", (sysStatus.singleEntrance) ? "Yes" : "No");
+    Log.infoln("Multiple Entrances: %s", (sysStatus.multi) ? "Yes" : "No");
 }
 
 

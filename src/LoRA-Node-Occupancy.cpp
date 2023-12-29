@@ -20,6 +20,7 @@
 // v7.1 - Minor updates to support messaging to the gateway and Ubidots.
 // v7.2 - Fixes to reporting (Gross, net and less than zero if a single entrance) and sleep time calculation
 // v7.3 - Reduced the verbosity of the sleeping messaging.  
+// v7.4 - Changed name of single entrance to multi - want default to be zero
 
 /*
 Wish List:
@@ -171,7 +172,7 @@ void loop()
 					time = timeFunctions.getTime() + 60UL;
 				}
 				else time = sysStatus.nextConnection - currentTime;
-				Log.infoln("Time is valid, set to wake by %s in %u seconds", (sleepTime > timeFunctions.WDT_MaxSleepDuration) ? "watchdog" : "alarm", (sleepTime > timeFunctions.WDT_MaxSleepDuration) ? timeFunctions.WDT_MaxSleepDuration : sleepTime);
+				Log.infoln("Time is valid, set to wake by %s in %u seconds", (sleepTime > timeFunctions.WDT_MaxSleepDuration - 1) ? "watchdog" : "alarm", (sleepTime > timeFunctions.WDT_MaxSleepDuration -1) ? timeFunctions.WDT_MaxSleepDuration -1: sleepTime);
 			}
 			else {
 				time = timeFunctions.getTime() + 60UL;
@@ -181,10 +182,10 @@ void loop()
 			// if (!sysStatus.openHours) if (sysStatus.openHours) sensorControl(sysStatus.get_sensorType(),false);
 			// Configure Sleep
 
-			// timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
+			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
 			timeFunctions.interruptAtTime(time, 0);                 			// Set the interrupt for the next event
 			LowPower.sleep(timeFunctions.WDT_MaxSleepDuration);
-			// timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
 				state = IDLE_STATE;
@@ -357,7 +358,7 @@ void loop()
 			case 6: 															// In this state system data is retained but current data is reset
 				currentData.resetEverything();
 				sysStatus.alertCodeNode = 0;
-				state = LoRA_LISTENING_STATE;									// Once we clear the counts we can go back to listening
+				state = IDLE_STATE;											// Once we clear the counts we can go back to Idle / sleep - the park is closed
 			break;
 			default:
 				Log.infoln("Undefined Error State");
