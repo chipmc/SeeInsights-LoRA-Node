@@ -38,8 +38,6 @@ bool sysStatusData::setup() {
         Log.infoln("No memory detected. Freezing.");
         return false;
     }
-    Log.infoln("Memory detected!");
-    Log.infoln("Mem size in bytes: %i ", myMem.length());
 
     uint8_t versionNumber;
     myMem.get(0,versionNumber);

@@ -180,29 +180,25 @@ bool LoRA_Functions::composeDataReportNode() {
 	buf[11] = lowByte(current.occupancyGross);
 	buf[12] = highByte(current.occupancyNet);
 	buf[13] = lowByte(current.occupancyNet);
-	buf[14] = 0;								// The data payload size is constant - not all sensor types will use all bytes
+	buf[14] = 0;								// The data payload size is constant - not all sensor types will use all 8 bytes
 	buf[15] = 0;
 	buf[16] = 0;
 	buf[17] = 0;
-	buf[18] = 0;
-	buf[19] = 0;
-	buf[20] = 0;
-	buf[21] = 0;
-	buf[22] = current.internalTempC;
-	buf[23] = current.stateOfCharge;
-	buf[24] = current.batteryState;	
-	buf[25] = sysStatus.resetCount;
-	buf[26] = highByte(current.RSSI);
-	buf[27] = lowByte(current.RSSI);
-	buf[28] = highByte(current.SNR);
-	buf[29] = lowByte(current.SNR);
-	buf[30] = 0;		// These last two bytes are used by the radiohead library to track re-transmissions and re-transmission delays
-	buf[31] = 0;
+	buf[18] = current.internalTempC;
+	buf[19] = current.stateOfCharge;
+	buf[20] = current.batteryState;	
+	buf[21] = sysStatus.resetCount;
+	buf[22] = highByte(current.RSSI);
+	buf[23] = lowByte(current.RSSI);
+	buf[24] = highByte(current.SNR);
+	buf[25] = lowByte(current.SNR);
+	buf[26] = 0;		// These last two bytes are used by the radiohead library to track re-transmissions and re-transmission delays
+	buf[27] = 0;
 
 
 	// Send a message to manager_server
   	// A route to the destination will be automatically discovered.
-	unsigned char result = manager.sendtoWait(buf, 32, GATEWAY_ADDRESS, DATA_RPT);
+	unsigned char result = manager.sendtoWait(buf, 28, GATEWAY_ADDRESS, DATA_RPT);
 	
 	if ( result == RH_ROUTER_ERROR_NONE) {
 		// It has been reliably delivered to the next node.

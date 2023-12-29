@@ -21,6 +21,7 @@
 // v7.2 - Fixes to reporting (Gross, net and less than zero if a single entrance) and sleep time calculation
 // v7.3 - Reduced the verbosity of the sleeping messaging.  
 // v7.4 - Changed name of single entrance to multi - want default to be zero
+// v8.0 - Breaking change - amended data payload values for data and join requests - Requires gateway v15 or above
 
 /*
 Wish List:
@@ -398,14 +399,18 @@ void loop()
 void publishStateTransition(void)
 {
 	char stateTransitionString[256];
+	bool publish = true;
+
 	if (state == IDLE_STATE) {
 		if (!timeFunctions.isRTCSet()) snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s with invalid time", stateNames[oldState],stateNames[state]);
+		else if (oldState == ACTIVE_PING) publish = false;			// Don't log this transition - too many times
 		else snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s", stateNames[oldState],stateNames[state]);
 	}
+	else if (state == ACTIVE_PING && oldState == IDLE_STATE) publish = false;		// Don't log this transition - too many times
 	else if (sysStatus.alertCodeNode != 0) snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s with alert code %d", stateNames[oldState],stateNames[state], sysStatus.alertCodeNode);
 	else snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s", stateNames[oldState],stateNames[state]);
 	oldState = state;
-	Log.infoln(stateTransitionString);
+	if (publish) Log.infoln(stateTransitionString);
 }
 
 void wakeUp_RFM95_IRQ() {
