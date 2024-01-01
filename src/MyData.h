@@ -148,8 +148,8 @@ public:
 		uint8_t alertCodeNode;                            // Alert code from node
 		uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
         uint8_t space;                                    // Assciates the node with a space - this value is changed by the Gateway
-        uint8_t placement;                                // 0 for outside, 1 for inside - determnines whether we count up or down
-        uint8_t multi;                                    // 1 if this device is taking occupancy of a room with more than one - prevents negative counts
+        uint8_t placement;                                // 0 for outside, 1 for inside - determines whether we count up or down - this value is changed by the Gateway
+        uint8_t multi;                                    // 1 if this device is taking occupancy of a room with more than one entrance, prevents negative counts - this value is changed by the Gateway
 	};
 	SystemDataStructure sysStatusStruct;
 

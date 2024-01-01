@@ -22,6 +22,7 @@
 // v7.3 - Reduced the verbosity of the sleeping messaging.  
 // v7.4 - Changed name of single entrance to multi - want default to be zero
 // v8.0 - Breaking change - amended data payload values for data and join requests - Requires gateway v15 or above
+// v9.0 - Breaking change - amended data payload values for data requests - setting mounting variables based on Join data payload - Requires gateway v16 or above
 
 /*
 Wish List:
