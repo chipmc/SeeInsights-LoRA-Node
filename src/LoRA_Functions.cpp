@@ -143,9 +143,10 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 
 		// The gateway may set an alert code for the node
 		if (sysStatus.alertCodeNode == 7) {								// This alert triggers an update to the sensor type on the node - handle it here
-			Log.infoln("The gatway is updating sensor type from %d to %d", sysStatus.sensorType, buf[12]);
+			Log.infoln("The gateway is updating sensor type from %d to %d", sysStatus.sensorType, buf[12]);
 			sysStatus.alertCodeNode = 0;								// Sensor updated - clear alert
 		}
+
 		sysStatus.sensorType = buf[12];
 
 		if (sysStatus.alertCodeNode) {
@@ -180,9 +181,9 @@ bool LoRA_Functions::composeDataReportNode() {
 	buf[11] = lowByte(current.occupancyGross);
 	buf[12] = highByte(current.occupancyNet);
 	buf[13] = lowByte(current.occupancyNet);
-	buf[14] = 0;								// The data payload size is constant - not all sensor types will use all 8 bytes
-	buf[15] = 0;
-	buf[16] = 0;
+	buf[14] = sysStatus.space;								// The data payload size is constant - not all sensor types will use all 8 bytes
+	buf[15] = sysStatus.placement;
+	buf[16] = sysStatus.multi;
 	buf[17] = 0;
 	buf[18] = current.internalTempC;
 	buf[19] = current.stateOfCharge;
@@ -283,13 +284,15 @@ bool LoRA_Functions::composeJoinRequesttNode() {
 }
 
 bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
-	//LEDStatus blinkOrange(RGB_COLOR_ORANGE, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIORITY_IMPORTANT);
+	// LEDStatus blinkOrange(RGB_COLOR_ORANGE, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIORITY_IMPORTANT);
 	// Activate LED
 
 	// contents of response for 1-12 handled in common function above
 	// In a join request, the gateway will need to confirm the node number, set the uniqueID if this is a virgin device and set the sensor type and send a valid token
 
 	if (sysStatus.nodeNumber == 255 || sysStatus.nodeNumber == 0) sysStatus.nodeNumber = buf[17];		// Set the node number future use
+
+	if(sysStatus.sensorType!= buf[12]) sysStatus.sensorType = buf[12];
 
 	Log.infoln("Testing to see if we have a valid uniqueID of %u with %d and %d", sysStatus.uniqueID, sysStatus.uniqueID >> 24 , sysStatus.uniqueID >> 16);
 	if (sysStatus.uniqueID >> 24 == 255 && (0XFF & sysStatus.uniqueID >> 16) == 255) {			// If the uniqueID is not set, set it here
@@ -298,16 +301,16 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 		Log.infoln("Node %d Join request acknowledged and sensor set to %d - received uniqueID %u",sysStatus.nodeNumber, sysStatus.sensorType, sysStatus.uniqueID);
 	}
 	else Log.infoln("Node %d Join request acknowledged and sensor set to %d", sysStatus.nodeNumber, sysStatus.sensorType);
-
-	sysStatus.space = buf[18];									// These next four bytes are sent to the gateway and may be updated in join process
-	sysStatus.placement = buf[19];
-	sysStatus.multi = buf[20];
-	Log.infoln("Node %d Join request acknowledged and space set to %d, placement set to %d and singleEntrance set to %d", sysStatus.nodeNumber, sysStatus.space, sysStatus.placement, sysStatus.multi);
+	
+	if(sysStatus.space != buf[18]) sysStatus.space = buf[18];
+	if (buf[12] == 10) {
+		if(sysStatus.placement != buf[19]) sysStatus.placement = buf[19];
+		if(sysStatus.multi != buf[20]) sysStatus.multi = buf[20];
+	}
+	Log.infoln("Node %d Join request acknowledged and space set to %d, placement set to %d and multiEntrance set to %d", sysStatus.nodeNumber, sysStatus.space, sysStatus.placement, sysStatus.multi);
 
 	manager.setThisAddress(sysStatus.nodeNumber);
 	sysStatus.alertCodeNode = 0;									// Need to clear so we don't get in a retry cycle
 
 	return true;
 }
-
-
