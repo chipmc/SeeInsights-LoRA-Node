@@ -111,8 +111,11 @@ bool TofSensor::performOccupancyCalibration() {
     if(zoneSignalPerSpad[1][1] > occupancyBaselines[1][1]) occupancyBaselines[1][1] = zoneSignalPerSpad[1][1];
   }
 
-  if(occupancyBaselines[0][0] < 5) occupancyBaselines[0][0] = 5;   // Make sure we have a bit of room at the bottom of the range for black hair (long black hair tends to have a signal close to 0)
-  if(occupancyBaselines[1][0] < 5) occupancyBaselines[1][0] = 5;   
+  // if(occupancyBaselines[0][0] < 5) occupancyBaselines[0][0] = 5;   // Make sure we have a bit of room at the bottom of the range for black hair (long black hair tends to have a signal close to 0)
+  // if(occupancyBaselines[1][0] < 5) occupancyBaselines[1][0] = 5;   
+
+  // if(occupancyBaselines[0][1] < 20) occupancyBaselines[0][1] = 20;   // Make sure we have a bit of room at the bottom of the range for black hair (long black hair tends to have a signal close to 0)
+  // if(occupancyBaselines[1][1] < 20) occupancyBaselines[1][1] = 20; 
 
   Log.infoln("Target zone is clear with zone1 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD} and zone2 range at {MIN: %ikcps/SPAD, MAX: %ikcps/SPAD}",occupancyBaselines[0][0],occupancyBaselines[0][1],occupancyBaselines[1][0],occupancyBaselines[1][1]);
   return true;

@@ -47,7 +47,7 @@
 /**  Debugging Flags  **/
 #define PRINT_SENSOR_MEASUREMENTS 0             // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
 #define PRINT_STACK_VISUALIZATION 0             // Actively prints a visual representation of the occupancyState stack and the line number (Ex. SEQUENCE [SIZE = 2]: [0, 2] <--- 2)
-#define PRINT_HOURLY_COUNT_TENFOOTDISPLAY 1     // Prints currentData.hourlyCount using ASCII characters to produce a large number that can be read at a distance.
+#define PRINT_HOURLY_COUNT_TENFOOTDISPLAY 0     // Prints currentData.hourlyCount using ASCII characters to produce a large number that can be read at a distance.
 #define PRINT_OCCUPANCY_STATE_TENFOOTDISPLAY 0  // Prints the occupancy state using ASCII characters to produce a large number that can be read at a distance.
 
 /*******************************************/
@@ -66,8 +66,8 @@
 #define SENSOR_TIMEOUT 500                      // Forces TofSensor::measure() to stop after waiting SENSOR_TIMEOUT ms for the SFEVL53L1X checkForDataReady() function to return a nonzero value.  
 
 /**  Calibration Settings  **/
-#define OCCUPANCY_CALIBRATION_LOOPS 30          // How many sets of samples to take during occupancy calibration (4 samples each, 2 for each zone to reduce noise).
-#define CALIBRATION_SIGNAL_RETRY_THRESHOLD 35   // Value of the signal that will halt calibration and retry - Ex. a person was detected during calibration
+#define OCCUPANCY_CALIBRATION_LOOPS 50          // How many sets of samples to take during occupancy calibration (4 samples each, 2 for each zone to reduce noise).
+#define CALIBRATION_SIGNAL_RETRY_THRESHOLD 25   // Value of the signal that will halt calibration and retry - Ex. a person was detected during calibration
 
 /**  Table of Optical Centers   ***
   * 
