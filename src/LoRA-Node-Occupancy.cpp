@@ -23,6 +23,7 @@
 // v7.4 - Changed name of single entrance to multi - want default to be zero
 // v8.0 - Breaking change - amended data payload values for data and join requests - Requires gateway v15 or above
 // v9.0 - Breaking change - amended data payload values for data requests - setting mounting variables based on Join data payload - Requires gateway v16 or above
+// v10 - Now using the Pololu VL53L1X library (installed through platformIO). Simplified TOF measurements and calibration. Vast improvements to SPAD configuration using this library
 
 /*
 Wish List:
@@ -154,7 +155,7 @@ void loop()
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
-			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - keep awake for 1 second 
+			// else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {

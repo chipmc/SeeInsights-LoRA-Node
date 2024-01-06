@@ -46,13 +46,13 @@ bool PeopleCounter::loop(){
       case 0:                         
         stateStack.push(0);                            // First value MUST be a 0
         #if PRINT_STACK_VISUALIZATION
-          Log.infoln("[Line 51]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
+          Log.infoln("[Line 49]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
         #endif                                           
         break;
       case 1:
         stateStack.push(newOccupancyState);            // Push to the stack without checking for impossibilities
         #if PRINT_STACK_VISUALIZATION
-          Log.infoln("[Line 57]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
+          Log.infoln("[Line 55]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
         #endif
         break;                                                           
       case 2:                           // When the stateStack has 2 or 3 items, we must identify impossible patterns and fix them - or backtrack.
@@ -61,16 +61,16 @@ bool PeopleCounter::loop(){
         #if PRINT_STACK_VISUALIZATION                                  // [0, x, 3] <-- x becomes [0, x],     [0, 3, x] <-- 3 becomes [0, 3],     [0, x, 3] <-- 0 becomes [0].  
           switch (stateStack.count()){                                 // Anything not in need of corrections is added to the stack as normal.
             case 1:
-              Log.infoln("[Line 66]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
+              Log.infoln("[Line 64]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
               break;
             case 2:
-              Log.infoln("[Line 69]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
+              Log.infoln("[Line 67]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
               break;
             case 3:
-              Log.infoln("[Line 72]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), newOccupancyState);
+              Log.infoln("[Line 70]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), newOccupancyState);
               break;
             case 4:
-              Log.infoln("[Line 75]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), newOccupancyState);
+              Log.infoln("[Line 73]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), newOccupancyState);
               break;
           }
         #endif
@@ -83,16 +83,16 @@ bool PeopleCounter::loop(){
           #if PRINT_STACK_VISUALIZATION
             switch (stateStack.count()){
               case 1:
-                Log.infoln("[Line 88]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
+                Log.infoln("[Line 86]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
                 break;
               case 2:
-                Log.infoln("[Line 91]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
+                Log.infoln("[Line 99]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
                 break;
               case 3:
-                Log.infoln("[Line 94]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), newOccupancyState);
+                Log.infoln("[Line 92]: SEQUENCE [SIZE = %i]: [%i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), newOccupancyState);
                 break;
               case 4:
-                Log.infoln("[Line 97]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), newOccupancyState);
+                Log.infoln("[Line 95]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), newOccupancyState);
                 break;
             }
           #endif        
@@ -106,7 +106,7 @@ bool PeopleCounter::loop(){
   if(stateStack.count() == 5){              // If the stack is finished ...
     char states[56];                        // ... turn it into a string by popping all values off the stack...
     #if PRINT_STACK_VISUALIZATION
-      Log.infoln("[Line 111]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), newOccupancyState);
+      Log.infoln("[Line 109]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), newOccupancyState);
     #endif 
     snprintf(states, sizeof(states), "%i%i%i%i%i", stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop());   
     if(strcmp(states, "02310")){            // If the sequence backwards(because of stack) matches the increment sequence then increment the count ... 
@@ -121,7 +121,7 @@ bool PeopleCounter::loop(){
         current.occupancyNet++;
         currentData.currentDataChanged = true;
       }
-      #if PRINT_HOURLY_COUNT_TENFOOTDISPLAY
+      #if PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
           printBigNumbers(current.occupancyNet);
       #endif       
       return true;                    
@@ -140,7 +140,7 @@ bool PeopleCounter::loop(){
       // This is a safety check to ensure that the count cannot be negative - this should never happen if we have a single door into the room
       if (!sysStatus.multi && current.occupancyNet < 0) current.occupancyNet = 0;  // If the count is negative, set it to 0 (single entrance door)
 
-      #if PRINT_HOURLY_COUNT_TENFOOTDISPLAY
+      #if PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
           printBigNumbers(current.occupancyNet);
       #endif
       return true;
