@@ -86,7 +86,7 @@ bool TofSensor::performOccupancyCalibration() {
          || zoneDistances[1] >= zoneBaselineDistances[1] + FLOOR_INTERFERENCE_BUFFER ) 
      ||(zoneDistances[0] <= zoneBaselineDistances[0] - FLOOR_INTERFERENCE_BUFFER          // ... OR further measurements are below baseline - FLOOR_INTERFERENCE_BUFFER
          || zoneDistances[1] <= zoneBaselineDistances[1] - FLOOR_INTERFERENCE_BUFFER )){
-      Log.infoln("Occupancy zone not clear - try again");
+      Log.infoln("Occupancy zone not clear (Measurements had too much variation) - trying again");
       delay(CALIBRATION_RETRY_DELAY);
       return TofSensor::performOccupancyCalibration();                                    // ... retry calibration by returning a recursive call of this function, which resets the zoneBaselineDistances
     }
@@ -94,16 +94,14 @@ bool TofSensor::performOccupancyCalibration() {
     if(zoneDistances[1] < zoneBaselineDistances[1]) zoneBaselineDistances[1] = zoneDistances[1];   // ... if they are, set them as the baseline.
   }
 
-  if(zoneBaselineDistances[0] > 4000 || zoneBaselineDistances[1] > 4000) {    // if the baselines make no sense (happened when face down on the couch), retry. Maximum distance should be 4000mm 
-    Log.infoln("Occupancy zone not clear - try again");
-    delay(CALIBRATION_RETRY_DELAY);
-    return TofSensor::performOccupancyCalibration();   // ... retry calibration by returning a recursive call of this function, which resets the zoneBaselineDistances
-  } 
-
   zoneBaselineDistances[0] = zoneBaselineDistances[0] - FLOOR_INTERFERENCE_BUFFER;    // Adjust the baselines by subtracting the FLOOR_INTERFERENCE_BUFFER
   zoneBaselineDistances[1] = zoneBaselineDistances[1] - FLOOR_INTERFERENCE_BUFFER;
 
-
+  if(zoneBaselineDistances[0] > 4000 || zoneBaselineDistances[1] > 4000) {    // If we measured the baseline to be less than the FLOOR_INTERFERENCE_BUFFER, try again. 4000mm(4m) is the maximum measurement distance
+    Log.infoln("Occupancy zone not clear (Something is too close to the sensor) - trying again");
+    delay(CALIBRATION_RETRY_DELAY);
+    return TofSensor::performOccupancyCalibration();   // ... retry calibration by returning a recursive call of this function, which resets the zoneBaselineDistances
+  } 
 
   Log.infoln("Target zone is clear with zone1 baseline at %imm and zone2 baseline at %imm",zoneBaselineDistances[0],zoneBaselineDistances[1]);
   return true;
@@ -128,8 +126,7 @@ int TofSensor::measure(){
       int32_t timingBudget = 33000;                    //(in us)
       myTofSensor.setDistanceMode(VL53L1X::Long);          
     #endif
-    
-    myTofSensor.setROISize(OCCUPANCY_ZONE_SPAD_WIDTH, OCCUPANCY_ZONE_SPAD_DEPTH);
+    myTofSensor.setROISize(OCCUPANCY_ZONE_SPAD_DEPTH, OCCUPANCY_ZONE_SPAD_WIDTH);
     myTofSensor.setROICenter(occupancyOpticalCenters[zone]);
     myTofSensor.setMeasurementTimingBudget(timingBudget);    // 20000us in short distance mode, 33000us in long distance mode
 
@@ -145,9 +142,13 @@ int TofSensor::measure(){
     #if PRINT_SENSOR_MEASUREMENTS                               // Logs both zones' distances for this loop.
       zone == 0 ? Log.infoln("{zone1 = %dmm}", zoneDistances[zone]) : Log.infoln("                                    (zone2 = %dmm)", zoneDistances[zone]);
     #endif
-    // #if PRINT_ROI_DETAILS
-    //   Log.infoln("SPAD array for zone %d: %d x %d = %d SPADs", zone, myTofSensor.getROIX(), myTofSensor.getROIY(), myTofSensor.getSpadNb());
-    // #endif
+    #if PRINT_ROI_DETAILS
+      uint8_t ROIx;
+      uint8_t ROIy;
+      myTofSensor.getROISize(&ROIx, &ROIy);
+      uint8_t ROICenter = myTofSensor.getROICenter();
+      Log.infoln("SPAD array for zone %d: %d x %d SPADs with center %d", zone, ROIx, ROIy, ROICenter);
+    #endif
   }
   return(++ready);
 }
