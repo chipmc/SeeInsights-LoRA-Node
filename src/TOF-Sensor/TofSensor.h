@@ -10,7 +10,7 @@
 #ifndef __TOFSENSOR_H
 #define __TOFSENSOR_H
 
-#include "SparkFun_VL53L1X.h" //Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
+#include "VL53L1X.h" // Install the Pololu VL53L1X library through PlatformIO
 
 /**
  * This class is a singleton; you do not create one as a global, on the stack, or with new.
@@ -57,32 +57,18 @@ public:
     int measure();
 
     /**
-     * @brief These functions will return the last signal strength measurement in kcps/SPAD for each of the zones.
+     * @brief These functions will return the last signal distance measurement in mm for each of the zones.
      * 
      * These functions do not trigger an update, they simply return the current value
     */
-    int getOccupancyZone1();
+    int getLastDistanceZone1();
 
     /**
-     * @brief These functions will return the last signal strength measurement in kcps/SPAD for each of the zones.
+     * @brief These functions will return the last distance measurement in mm for each of the zones.
      * 
      * These functions do not trigger an update, they simply return the current value
     */
-    int getOccupancyZone2();
-
-     /**
-     * @brief These functions will return the ambient signal in in kcps/SPAD for each of the zones.
-     * 
-     * These functions do not trigger an update, they simply return the current value
-    */
-    int getOccupancyZone1Ambient();
-
-    /**
-     * @brief These functions will return the ambient signal in in kcps/SPAD for each of the zones.
-     * 
-     * These functions do not trigger an update, they simply return the current value
-    */
-    int getOccupancyZone2Ambient();
+    int getLastDistanceZone2();
 
     /**
      * @brief Function to return the current occupancy state
@@ -137,7 +123,7 @@ protected:
      */
     static TofSensor *_instance;
 
-    SFEVL53L1X myTofSensor;                 // Only called from this class
+    VL53L1X myTofSensor;                 // Only called from this class
 
 };
 #endif  /* __TOFSENSOR_H */
