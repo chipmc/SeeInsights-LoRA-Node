@@ -65,11 +65,10 @@
 
 /**  Sensor Settings  **/
 #define SENSOR_TIMEOUT 500                      // Forces TofSensor::measure() to stop after waiting SENSOR_TIMEOUT ms for the SFEVL53L1X checkForDataReady() function to return a nonzero value.  
-#define SHORT_DISTANCE_MODE 0                   // Set to 1 in order to only measure distance using the top 1.3m of both zones (by default we measure distance up to 4m) - May have better performance in strong ambient light
 
 /**  Calibration Settings  **/
-#define OCCUPANCY_CALIBRATION_LOOPS 50          // How many sets of samples to take during occupancy calibration (2 samples each). Increasing this may reduce noise.
-#define FLOOR_INTERFERENCE_BUFFER 150           // Flat value (in mm) to add to the measured distance in order to rule out variations that occur in measurements taken of the floor.
+#define DEFAULT_OCCUPANCY_CALIBRATION_LOOPS 50          // How many sets of samples to take during occupancy calibration (2 samples each). Increasing this may reduce noise.
+#define DEFAULT_FLOOR_INTERFERENCE_BUFFER 150           // Flat value (in mm) to add to the measured distance in order to rule out variations that occur in measurements taken of the floor.
 #define CALIBRATION_RETRY_DELAY 1000            // Length of time (in ms) to delay if, during calibration, we detect a person and need to try again.
 
                     /**  Table of Optical Centers   ***

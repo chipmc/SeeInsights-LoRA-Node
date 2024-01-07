@@ -8,7 +8,7 @@
  */
 
 // Data exchange formats
-// Format of a data report - From the Node to the Gateway so includes a token
+// Format of a data report - From the Node to the Gateway so includes a token - most common message from node to gateway
 /*
 *** Header Section - Common to all Nodes
 buf[0 - 1] magicNumber                      // Magic number that identifies the Gateway's network
@@ -30,17 +30,18 @@ buf[26] Re-Tries                            // This byte is dedicated to RHRelia
 buf[27] Re-Transmission Delay               // This byte is dedicated to RHReliableDatagram.cpp to update the accumulated delay with each re-transmission
 */
 
-// Format of a data acknowledgement - From the Gateway to the Node
+// Format of a data acknowledgement - From the Gateway to the Node - Most common message from gatewat to node
 /*    
     buf[0 - 1] magicNumber                  // Magic Number
     buf[2] nodeNumber                       // Node number (unique for the network)
     buf[3 - 4] Token                        // Parrot the token back to the node
     buf[5 - 8] Time.now()                   // Set the time 
     buf[9 - 10] Seconds to next Report      // The gateway tells the node how many seconds until next transmission window - up to 18 hours
-    buf[11] alertCode                       // This lets the Gateway trigger an alert on the node - typically a join request
-    buf[12] sensorType                      // Let's the Gateway reset the sensor if needed 
-    buf[13] Re-Tries                        // This byte is dedicated to RHReliableDatagram.cpp to update the number of re-transmissions
-    buf[14] Re-Transmission Delay           // This byte is dedicated to RHReliableDatagram.cpp to update the accumulated delay with each re-transmission
+    buf[11] alertCodeNode                   // This lets the Gateway trigger an alert on the node - typically a join request
+    buf[12] alertContextNode                // This lets the Gateway send context with an alert code if needed
+    buf[13] sensorType                      // Let's the Gateway reset the sensor if needed 
+    buf[14] Re-Tries                        // This byte is dedicated to RHReliableDatagram.cpp to update the number of re-transmissions
+    buf[15] Re-Transmission Delay           // This byte is dedicated to RHReliableDatagram.cpp to update the accumulated delay with each re-transmission
 */
 
 // Format of a join request - From the Node to the Gateway
@@ -60,17 +61,18 @@ buf[15]  Re-Transmission Delay              // This byte is dedicated to RHRelia
 // Format for a join acknowledgement -  From the Gateway to the Node
 /*
     buf[0 - 1]  magicNumber                 // Magic Number
-    buf[2] nodeNumber;                      // nodeNumber - This is the old node number - if the node is new - it will be 255 - will get updated in Join ACK
+    buf[2] nodeNumber;                      // nodeNumber - assigned by the Gateway
     buf[3 - 4] token                        // token for validation - good for the day
     buf[5 - 8] Time.now()                   // Set the time 
     buf[9 - 10] Seconds till next report    // For the Gateway minutes on the hour  
     buf[11] alertCodeNode                   // Gateway can set an alert code here
-    buf[12]  sensorType				        // Gateway confirms sensor type
-    buf[13 - 16] uniqueID                   // This is a 4-byte identifier that is unique to each node and is only set once by the gateway on 1st joining
-    buf[17] nodeNumber                      // This is the new node number - if the node is new - it will be 255 - will get updated in Join ACK
-    buf[18-21] Payload                      // Payload - 4 bytes sensor type determines interpretation                         
-    buf[22]  Re-Tries                       // This byte is dedicated to RHReliableDatagram.cpp to update the number of re-transmissions
-    buf[23] Re-Transmission Delay           // This byte is dedicated to RHReliableDatagram.cpp to update the accumulated delay with each re-transmission
+    buf[12] alertContextNode                // This lets the Gateway send context with an alert code if needed
+    buf[13]  sensorType				        // Gateway confirms sensor type
+    buf[14 - 17] uniqueID                   // This is a 4-byte identifier that is unique to each node and is only set once by the gateway on 1st joining
+    buf[18]  nodeNumber                     // Gateway assigns a node number
+    buf[19-22] Payload                      // Payload - 4 bytes sensor type determines interpretation                         
+    buf[23]  Re-Tries                       // This byte is dedicated to RHReliableDatagram.cpp to update the number of re-transmissions
+    buf[24] Re-Transmission Delay           // This byte is dedicated to RHReliableDatagram.cpp to update the accumulated delay with each re-transmission
 */
 
 #ifndef __LORA_FUNCTIONS_H

@@ -113,10 +113,14 @@ void sysStatusData::initialize() {
     sysStatus.resetCount = 0;
     sysStatus.nextConnection = 0;
     sysStatus.alertCodeNode = 1;
+    sysStatus.alertContextNode = 0;
     sysStatus.zoneMode = DEFAULT_ZONE_MODE;
+    sysStatus.interferenceBuffer = DEFAULT_FLOOR_INTERFERENCE_BUFFER;
+    sysStatus.occupancyCalibrationLoops = DEFAULT_OCCUPANCY_CALIBRATION_LOOPS;
+    sysStatus.distanceMode = 2;         // defaults to long distance mode
+
 
     Log.infoln("Saving new system values, node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);
-    Log.infoln("Set zone mode to default, zoneMode: %i", sysStatus.zoneMode);
     myMem.put(0,sysStatus.structuresVersion);
 
     sysStatusData::storeSysData();
@@ -138,11 +142,7 @@ void sysStatusData::printSysData() {
     Log.infoln("Reset Count: %d", sysStatus.resetCount);
     Log.infoln("Next connection: %d", sysStatus.nextConnection);
     Log.infoln("Alert Code Node: %d", sysStatus.alertCodeNode);
-    Log.infoln("sensorType: %d", sysStatus.sensorType);
-    Log.infoln("space: %d", sysStatus.space);
-    Log.infoln("placement: %d", sysStatus.placement ? "Inside" : "Outside");
-    Log.infoln("multi: %d", sysStatus.multi ? "Multi-Entrance" : "Single-Entrance");
-    Log.infoln("zoneMode: %d", sysStatus.zoneMode);
+    Log.infoln("Alert Code Context: %d", sysStatus.alertCodeNode);
 }
 
 void sysStatusData::updateUniqueID() {
