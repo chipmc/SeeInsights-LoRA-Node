@@ -30,8 +30,10 @@ System Data
     25              time_t         nextConnection       next time we will attempt to connect to the gateway
 	29              uint8_t        alertCodeNode        Alert code from node
 	30      	    uint8_t        sensorType           PIR sensor, car counter, others - this value is changed by the Gateway
-    31              uint8_t        placement            0 for outside, 1 for inside - determnines whether we count up or down
-    32-49           Reserved
+    31              uint8_t        space                The identifier for the "space", a numerical designation (0-63) for the location that the node is in
+    32              uint8_t        placement            0 for outside, 1 for inside - determines whether we count up or down
+    33              uint8_t        multi                0 for single entrance, 1 for multi entrance
+    34              uint8_t        zoneMode             The predefined SPAD configuration of a ToF Sensor. See Config.h for a description of the zone modes.
 Current Data
     90              int8_t         internalTempC;       Enclosure temperature in degrees C
     94              int8_t         internalHumidity     Enclosure humidity in percent
@@ -39,7 +41,7 @@ Current Data
 	102          	uint8_t        batteryState         Stores the current battery state (charging, discharging, etc)
 	103             int16_t        RSSI                 Latest signal strength value (updated adter ack and sent to gateway on next data report)
 	105	            int16_t        SNR				    Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
-	110             uint16_t       occupancyGross      Change in occupancy since last report
+	110             uint16_t       occupancyGross       Change in occupancy since last report
 	113             uint16_t       occupancyNet         Current occupancy count
     115             uint8_t        occupancyState       Allows us to monitor occupancy state across functions
 */
@@ -52,7 +54,7 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 4                           // Version of the data structures (system and data)
+#define STRUCTURES_VERSION 5                           // Version of the data structures (system and data)
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
@@ -150,7 +152,8 @@ public:
         uint8_t space;                                    // Assciates the node with a space - this value is changed by the Gateway
         uint8_t placement;                                // 0 for outside, 1 for inside - determines whether we count up or down - this value is changed by the Gateway
         uint8_t multi;                                    // 1 if this device is taking occupancy of a room with more than one entrance, prevents negative counts - this value is changed by the Gateway
-	};
+        uint8_t zoneMode;                                 // The predefined SPAD configuration of a ToF Sensor. See Config.h for a description of the zone modes.
+    };
 	SystemDataStructure sysStatusStruct;
 
 public:

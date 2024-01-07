@@ -16,7 +16,6 @@
 #include <Wire.h>
 
 /** Occupancy **/
-uint8_t occupancyOpticalCenters[2] = {OCCUPANCY_FRONT_ZONE_CENTER, OCCUPANCY_BACK_ZONE_CENTER}; // Array of optical centers for the Occupancy zones (zone 1and zone 2)
 uint16_t zoneDistances[2] = {0, 0};                      // Stores the measured distances of the last measurement (measures both zone 1 and zone 2)
 uint16_t zoneBaselineDistances[2] = {0, 0};                  // Maximum distance measure captured during calibration PLUS a static value from Config.h to prevent floor interference.
 int occupancyState = 0;                             // The current occupancy state (occupied or not, zone 1 (ones) and zone 2 (twos))
@@ -117,7 +116,44 @@ int TofSensor::loop(){    // This function will update the current detection or 
 }
 
 int TofSensor::measure(){
-  ready = 0;                                                                           
+  ready = 0;
+  uint8_t zoneWidth;                      // width of SPADs (across the door)
+  uint8_t zoneDepth;                      // depth of SPADs (through the door)
+  uint8_t zoneOpticalCenters[2];          // Array of optical centers for the Occupancy zones (zone 1 and zone 2)
+
+  switch(sysStatus.zoneMode){             // Set the spad depth, spad width and opticalCenters as defined by the zoneMode. See Config.h for zone mode definitions.
+      case 0:                 // default
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 1:                 // separated
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 2:                 // verySeparated
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 3:                 // frontFocused
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 4:                 // backFocused
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+  }        
+
   for (int zone = 0; zone < 2; zone++){           // Take 2 samples, 1 for each zone.
     #if SHORT_DISTANCE_MODE
       int32_t timingBudget = 20000;                    //(in us)
@@ -126,8 +162,9 @@ int TofSensor::measure(){
       int32_t timingBudget = 33000;                    //(in us)
       myTofSensor.setDistanceMode(VL53L1X::Long);          
     #endif
-    myTofSensor.setROISize(OCCUPANCY_ZONE_SPAD_DEPTH, OCCUPANCY_ZONE_SPAD_WIDTH);
-    myTofSensor.setROICenter(occupancyOpticalCenters[zone]);
+    
+    myTofSensor.setROISize(zoneDepth, zoneWidth);
+    myTofSensor.setROICenter(zoneOpticalCenters[zone]);
     myTofSensor.setMeasurementTimingBudget(timingBudget);    // 20000us in short distance mode, 33000us in long distance mode
 
     // ** POLOLU DOCUMENTATION ** 
