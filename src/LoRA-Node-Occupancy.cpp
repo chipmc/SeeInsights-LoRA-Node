@@ -25,7 +25,7 @@
 // v9.0 - Breaking change - amended data payload values for data requests - setting mounting variables based on Join data payload - Requires gateway v16 or above
 // v10 - Now using the Pololu VL53L1X library (installed through platformIO). Simplified TOF measurements and calibration. Vast improvements to SPAD configuration using this library
 // v11 - Breaking Change - Now able to fully control all configuration for the TOF sensor. Enhanced Alerts by adding alertContext (1 byte of data) to the alerts.
-//		 ... added zoneModes, a set of predefined SPAD configurations. Zone mode can be changed by the gateway.
+//		 ... added zoneModes, a set of predefined SPAD configurations. Zone mode can be changed by the gateway - Requires gateway v17 or above
 
 /*
 Wish List:
