@@ -24,6 +24,8 @@
 // v8.0 - Breaking change - amended data payload values for data and join requests - Requires gateway v15 or above
 // v9.0 - Breaking change - amended data payload values for data requests - setting mounting variables based on Join data payload - Requires gateway v16 or above
 // v10 - Now using the Pololu VL53L1X library (installed through platformIO). Simplified TOF measurements and calibration. Vast improvements to SPAD configuration using this library
+// v11 - Breaking Change - Now able to fully control all configuration for the TOF sensor. Enhanced Alerts by adding alertContext (1 byte of data) to the alerts.
+//		 ... added zoneModes, a set of predefined SPAD configurations. Zone mode can be changed by the gateway - Requires gateway v17 or above
 
 /*
 Wish List:
@@ -362,6 +364,36 @@ void loop()
 				currentData.resetEverything();
 				sysStatus.alertCodeNode = 0;
 				state = IDLE_STATE;											// Once we clear the counts we can go back to Idle / sleep - the park is closed
+			break;
+			case 7: 															// In this state an update to the zoneMode is to be made using the alertContext
+				sysStatus.zoneMode = sysStatus.alertContextNode;
+				Log.infoln("Alert code 7 - Zone mode now set to %d", sysStatus.zoneMode);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 8: 															// In this state an update to the zoneMode is to be made using the alertContext
+				sysStatus.distanceMode = sysStatus.alertContextNode;
+				Log.infoln("Alert code 8 - Distance mode now set to %d", sysStatus.distanceMode);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 9: 															// In this state an update to the interferenceBuffer is to be made using the alertContext
+				sysStatus.interferenceBuffer = sysStatus.alertContextNode;
+				Log.infoln("Alert code 9 - Interference Buffer now set to %dmm", sysStatus.interferenceBuffer);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 10: 															// In this state an update to the occupancyCalibrationLoops is to be made using the alertContext
+				sysStatus.occupancyCalibrationLoops = sysStatus.alertContextNode;
+				Log.infoln("Alert code 10 - Occupancy Calibration Loops now set to %d", sysStatus.occupancyCalibrationLoops);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 11: 															// In this state an update to the occupancyCalibrationLoops is to be made using the alertContext
+				measure.recalibrate();
+				Log.infoln("Alert code 11 - Device recalibrating");
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
 			default:
 				Log.infoln("Undefined Error State");

@@ -139,18 +139,11 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 		Log.infoln("Set clock to %i and next report is in %i seconds", timeFunctions.getTime(), secondsTillNextReport);
 
 		// Process Alert Codes
-		sysStatus.alertCodeNode = buf[11];								// The gateway may set an alert code for the node
-
-		// The gateway may set an alert code for the node
-		if (sysStatus.alertCodeNode == 7) {								// This alert triggers an update to the sensor type on the node - handle it here
-			Log.infoln("The gateway is updating sensor type from %d to %d", sysStatus.sensorType, buf[12]);
-			sysStatus.alertCodeNode = 0;								// Sensor updated - clear alert
-		}
-
-		sysStatus.sensorType = buf[12];
+		sysStatus.alertCodeNode = buf[11];			// The gateway may set an alert code for the node
+		sysStatus.alertContextNode = buf[12];		// The gateway may send alert context with an alert code
 
 		if (sysStatus.alertCodeNode) {
-			Log.infoln("The gateway set an alert %d", sysStatus.alertCodeNode);
+			Log.infoln("The gateway set an alert %d with context %d", sysStatus.alertCodeNode, sysStatus.alertContextNode);
 		}
 
 		if (lora_state == DATA_ACK) { if(LoRA_Functions::instance().receiveAcknowledmentDataReportNode()) return true;}
@@ -184,7 +177,7 @@ bool LoRA_Functions::composeDataReportNode() {
 	buf[14] = sysStatus.space;								// The data payload size is constant - not all sensor types will use all 8 bytes
 	buf[15] = sysStatus.placement;
 	buf[16] = sysStatus.multi;
-	buf[17] = 0;
+	buf[17] = sysStatus.zoneMode;
 	buf[18] = current.internalTempC;
 	buf[19] = current.stateOfCharge;
 	buf[20] = current.batteryState;	
@@ -217,7 +210,7 @@ bool LoRA_Functions::composeDataReportNode() {
         Log.infoln("Node %d - Data report send to gateway %d failed - Unable to Deliver", sysStatus.nodeNumber, GATEWAY_ADDRESS);
 	}
 	else  {
-		Log.infoln("Node %d - Data report send to gateway %d failed  - Unknown", sysStatus.nodeNumber, GATEWAY_ADDRESS);
+		Log.infoln("Node %d - Data report send to gateway %d failed - Unknown", sysStatus.nodeNumber, GATEWAY_ADDRESS);
 	}
 	LED.off();
 	return false;
@@ -233,7 +226,7 @@ bool LoRA_Functions::receiveAcknowledmentDataReportNode() {
 		Log.infoln("Park is closed - will reset current occupancy");
 	}
 
-	Log.infoln("Data report acknowledged %s alert for message %d park is %s and alert code is %d", (sysStatus.alertCodeNode) ? "with":"without", buf[11], (sysStatus.alertCodeNode != 6) ? "open":"closed", sysStatus.alertCodeNode);
+	Log.infoln("Data report acknowledged %s alert for message %d park is %s and alert code is %d with alert context %d", (sysStatus.alertCodeNode) ? "with":"without", buf[11], (sysStatus.alertCodeNode != 6) ? "open":"closed", sysStatus.alertCodeNode, sysStatus.alertContextNode);
 
 	return true;
 }
@@ -290,25 +283,40 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 	// contents of response for 1-12 handled in common function above
 	// In a join request, the gateway will need to confirm the node number, set the uniqueID if this is a virgin device and set the sensor type and send a valid token
 
-	if (sysStatus.nodeNumber == 255 || sysStatus.nodeNumber == 0) sysStatus.nodeNumber = buf[17];		// Set the node number future use
+	if (sysStatus.nodeNumber == 255 || sysStatus.nodeNumber == 0) sysStatus.nodeNumber = buf[18];		// Set the node number future use
 
-	if(sysStatus.sensorType!= buf[12]) sysStatus.sensorType = buf[12];
+	if(sysStatus.sensorType != buf[13]) {
+		sysStatus.sensorType = buf[13];
+		Log.infoln("Node %d Join request acknowledged and sensorType updated to %d", sysStatus.nodeNumber, sysStatus.sensorType);
+	} else {
+		Log.infoln("Node %d Join request acknowledged - sensorType up to date.", sysStatus.nodeNumber);
+	}
 
 	Log.infoln("Testing to see if we have a valid uniqueID of %u with %d and %d", sysStatus.uniqueID, sysStatus.uniqueID >> 24 , sysStatus.uniqueID >> 16);
 	if (sysStatus.uniqueID >> 24 == 255 && (0XFF & sysStatus.uniqueID >> 16) == 255) {			// If the uniqueID is not set, set it here
-		sysStatus.uniqueID = (buf[13] << 24 | buf[14] << 16 | buf[15] << 8 | buf[16]);
+		sysStatus.uniqueID = (buf[14] << 24 | buf[15] << 16 | buf[16] << 8 | buf[17]);
 		sysData.updateUniqueID();														// Update the memory with the new uniqueID	
 		Log.infoln("Node %d Join request acknowledged and sensor set to %d - received uniqueID %u",sysStatus.nodeNumber, sysStatus.sensorType, sysStatus.uniqueID);
 	}
-	else Log.infoln("Node %d Join request acknowledged and sensor set to %d", sysStatus.nodeNumber, sysStatus.sensorType);
 	
-	if(sysStatus.space != buf[18]) sysStatus.space = buf[18];
-	if (buf[12] == 10) {
-		if(sysStatus.placement != buf[19]) sysStatus.placement = buf[19];
-		if(sysStatus.multi != buf[20]) sysStatus.multi = buf[20];
+	if(sysStatus.space != buf[18]) {
+		if(buf[18] > 63){
+			sysStatus.space = 0;
+		} else {
+			sysStatus.space = buf[19];
+		}
+		Log.infoln("Node %d Join request acknowledged - space set to %d", sysStatus.nodeNumber, sysStatus.space);
 	}
-	Log.infoln("Node %d Join request acknowledged and space set to %d, placement set to %d and multiEntrance set to %d", sysStatus.nodeNumber, sysStatus.space, sysStatus.placement, sysStatus.multi);
-
+	if (sysStatus.sensorType == 10) {
+		if(sysStatus.placement != buf[20]) {
+			sysStatus.placement = buf[20];
+			Log.infoln("Node %d Join request acknowledged - placement set to %d", sysStatus.nodeNumber, sysStatus.placement);
+		}
+		if(sysStatus.multi != buf[21]) {
+			sysStatus.multi = buf[21];
+		 	Log.infoln("Node %d Join request acknowledged - multiEntrance set to %d", sysStatus.nodeNumber, sysStatus.multi);
+		}
+	}
 	manager.setThisAddress(sysStatus.nodeNumber);
 	sysStatus.alertCodeNode = 0;									// Need to clear so we don't get in a retry cycle
 

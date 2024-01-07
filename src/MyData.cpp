@@ -1,4 +1,5 @@
 #include "MyData.h"
+#include "Config.h"
 
 //Define necassary subclasses used within this singleton class:
 ExternalEEPROM myMem;
@@ -111,7 +112,13 @@ void sysStatusData::initialize() {
     sysStatus.firmwareRelease = 255;                   // This value is set in the main program
     sysStatus.resetCount = 0;
     sysStatus.nextConnection = 0;
-    sysStatus.alertCodeNode=1;
+    sysStatus.alertCodeNode = 1;
+    sysStatus.alertContextNode = 0;
+    sysStatus.zoneMode = DEFAULT_ZONE_MODE;
+    sysStatus.interferenceBuffer = DEFAULT_FLOOR_INTERFERENCE_BUFFER;
+    sysStatus.occupancyCalibrationLoops = DEFAULT_OCCUPANCY_CALIBRATION_LOOPS;
+    sysStatus.distanceMode = 2;         // defaults to long distance mode
+
 
     Log.infoln("Saving new system values, node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);
     myMem.put(0,sysStatus.structuresVersion);
@@ -135,7 +142,7 @@ void sysStatusData::printSysData() {
     Log.infoln("Reset Count: %d", sysStatus.resetCount);
     Log.infoln("Next connection: %d", sysStatus.nextConnection);
     Log.infoln("Alert Code Node: %d", sysStatus.alertCodeNode);
-    Log.infoln("sensorType: %d", sysStatus.sensorType);
+    Log.infoln("Alert Code Context: %d", sysStatus.alertCodeNode);
 }
 
 void sysStatusData::updateUniqueID() {
@@ -229,6 +236,7 @@ void currentStatusData::printCurrentData() {
     Log.infoln("Occupancy: %i", current.occupancyNet);
     Log.infoln("Sensor Placement: %s", (sysStatus.placement) ? "Inside" : "Outside");
     Log.infoln("Multiple Entrances: %s", (sysStatus.multi) ? "Yes" : "No");
+    Log.infoln("Zone 1 Center SPAD: %s", (sysStatus.multi) ? "Yes" : "No");
 }
 
 

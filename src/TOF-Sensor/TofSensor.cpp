@@ -16,7 +16,6 @@
 #include <Wire.h>
 
 /** Occupancy **/
-uint8_t occupancyOpticalCenters[2] = {OCCUPANCY_FRONT_ZONE_CENTER, OCCUPANCY_BACK_ZONE_CENTER}; // Array of optical centers for the Occupancy zones (zone 1and zone 2)
 uint16_t zoneDistances[2] = {0, 0};                      // Stores the measured distances of the last measurement (measures both zone 1 and zone 2)
 uint16_t zoneBaselineDistances[2] = {0, 0};                  // Maximum distance measure captured during calibration PLUS a static value from Config.h to prevent floor interference.
 int occupancyState = 0;                             // The current occupancy state (occupied or not, zone 1 (ones) and zone 2 (twos))
@@ -78,15 +77,15 @@ bool TofSensor::performOccupancyCalibration() {
   }
   zoneBaselineDistances[0] = zoneDistances[0];    // Assign the first readings as the baselines
   zoneBaselineDistances[1] = zoneDistances[1];
-  for (int i = 0; i < OCCUPANCY_CALIBRATION_LOOPS; i++) {    // Loop through a set number of times ... 
+  for (int i = 0; i < sysStatus.occupancyCalibrationLoops; i++) {    // Loop through a set number of times ... 
     if(TofSensor::measure() == SENSOR_TIMEOUT_ERROR){        // ... measuring again each time ...
       return false; 
     }  
-    if((zoneDistances[0] >= zoneBaselineDistances[0] + FLOOR_INTERFERENCE_BUFFER          // ... if further measurements exceed the baseline + FLOOR_INTERFERENCE_BUFFER ...
-         || zoneDistances[1] >= zoneBaselineDistances[1] + FLOOR_INTERFERENCE_BUFFER ) 
-     ||(zoneDistances[0] <= zoneBaselineDistances[0] - FLOOR_INTERFERENCE_BUFFER          // ... OR further measurements are below baseline - FLOOR_INTERFERENCE_BUFFER
-         || zoneDistances[1] <= zoneBaselineDistances[1] - FLOOR_INTERFERENCE_BUFFER )){
-      Log.infoln("Occupancy zone not clear (Measurements had too much variation) - trying again");
+    if((zoneDistances[0] >= zoneBaselineDistances[0] + sysStatus.interferenceBuffer          // ... if further measurements exceed the baseline + FLOOR_INTERFERENCE_BUFFER ...
+         || zoneDistances[1] >= zoneBaselineDistances[1] + sysStatus.interferenceBuffer ) 
+     ||(zoneDistances[0] <= zoneBaselineDistances[0] - sysStatus.interferenceBuffer          // ... OR further measurements are below baseline - FLOOR_INTERFERENCE_BUFFER
+         || zoneDistances[1] <= zoneBaselineDistances[1] - sysStatus.interferenceBuffer )){
+      Log.infoln("Occupancy zone not clear, measurements had too much variation - trying again (maybe increase interference buffer?)");
       delay(CALIBRATION_RETRY_DELAY);
       return TofSensor::performOccupancyCalibration();                                    // ... retry calibration by returning a recursive call of this function, which resets the zoneBaselineDistances
     }
@@ -94,8 +93,8 @@ bool TofSensor::performOccupancyCalibration() {
     if(zoneDistances[1] < zoneBaselineDistances[1]) zoneBaselineDistances[1] = zoneDistances[1];   // ... if they are, set them as the baseline.
   }
 
-  zoneBaselineDistances[0] = zoneBaselineDistances[0] - FLOOR_INTERFERENCE_BUFFER;    // Adjust the baselines by subtracting the FLOOR_INTERFERENCE_BUFFER
-  zoneBaselineDistances[1] = zoneBaselineDistances[1] - FLOOR_INTERFERENCE_BUFFER;
+  zoneBaselineDistances[0] = zoneBaselineDistances[0] - sysStatus.interferenceBuffer;    // Adjust the baselines by subtracting the FLOOR_INTERFERENCE_BUFFER
+  zoneBaselineDistances[1] = zoneBaselineDistances[1] - sysStatus.interferenceBuffer;
 
   if(zoneBaselineDistances[0] > 4000 || zoneBaselineDistances[1] > 4000) {    // If we measured the baseline to be less than the FLOOR_INTERFERENCE_BUFFER, try again. 4000mm(4m) is the maximum measurement distance
     Log.infoln("Occupancy zone not clear (Something is too close to the sensor) - trying again");
@@ -117,17 +116,66 @@ int TofSensor::loop(){    // This function will update the current detection or 
 }
 
 int TofSensor::measure(){
-  ready = 0;                                                                           
+  ready = 0;
+  uint8_t zoneWidth;                      // width of SPADs (across the door)
+  uint8_t zoneDepth;                      // depth of SPADs (through the door)
+  uint8_t zoneOpticalCenters[2];          // Array of optical centers for the Occupancy zones (zone 1 and zone 2)
+
+  switch(sysStatus.zoneMode){             // Set the spad depth, spad width and opticalCenters as defined by the zoneMode. See Config.h for zone mode definitions.
+      case 0:                 // default
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 1:                 // separated
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 2:                 // verySeparated
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 3:                 // frontFocused
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 4:                 // backFocused
+        zoneWidth = 16;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+  }        
+
   for (int zone = 0; zone < 2; zone++){           // Take 2 samples, 1 for each zone.
-    #if SHORT_DISTANCE_MODE
-      int32_t timingBudget = 20000;                    //(in us)
-      myTofSensor.setDistanceMode(VL53L1X::Short);
-    #else
-      int32_t timingBudget = 33000;                    //(in us)
-      myTofSensor.setDistanceMode(VL53L1X::Long);          
-    #endif
-    myTofSensor.setROISize(OCCUPANCY_ZONE_SPAD_DEPTH, OCCUPANCY_ZONE_SPAD_WIDTH);
-    myTofSensor.setROICenter(occupancyOpticalCenters[zone]);
+    int32_t timingBudget;
+    switch (sysStatus.distanceMode) {
+      case 0:
+        timingBudget = 20000;                    //(in us)
+        myTofSensor.setDistanceMode(VL53L1X::Short);
+      break;
+      case 1:
+        timingBudget = 33000;                    //(in us)
+        myTofSensor.setDistanceMode(VL53L1X::Medium);
+      break;
+      case 2:
+        timingBudget = 33000;                    //(in us)
+        myTofSensor.setDistanceMode(VL53L1X::Long);          
+      break;
+      default: // default to long if something is up
+        timingBudget = 33000;                    //(in us)
+        myTofSensor.setDistanceMode(VL53L1X::Long);
+    }
+    
+    myTofSensor.setROISize(zoneDepth, zoneWidth);
+    myTofSensor.setROICenter(zoneOpticalCenters[zone]);
     myTofSensor.setMeasurementTimingBudget(timingBudget);    // 20000us in short distance mode, 33000us in long distance mode
 
     // ** POLOLU DOCUMENTATION ** 
