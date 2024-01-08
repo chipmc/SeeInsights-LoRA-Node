@@ -28,6 +28,7 @@
 //		 ... Now able to fully control all configuration for the TOF sensor. Enhanced Alerts by adding alertContext (1 byte of data) to the alerts.
 //		 ... added zoneModes, a set of predefined SPAD configurations. Zone mode can be changed by the gateway 
 // v11.1 - Fixed data type issues with occupancyNet, fixed misuse of strcmp found in PeopleCounter where counts were in backwards direction
+// v11.2 - Implemented LoRA Radio sleep to reduce power consumption and changed sleep mode to deep sleep
 
 /*
 Wish List:
@@ -157,7 +158,7 @@ void loop()
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
-			// else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - keep awake for 1 second 
+			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {
@@ -189,7 +190,8 @@ void loop()
 
 			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
 			timeFunctions.interruptAtTime(time, 0);                 			// Set the interrupt for the next event
-			LowPower.sleep(timeFunctions.WDT_MaxSleepDuration);
+			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
+			LowPower.deepSleep(timeFunctions.WDT_MaxSleepDuration);												// Go to sleep
 			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
