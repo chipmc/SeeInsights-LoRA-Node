@@ -281,7 +281,7 @@ public:
 		int16_t RSSI;                                     // Latest signal strength value (updated adter ack and sent to gateway on next data report)
 		int16_t SNR;									  // Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
 		uint16_t occupancyGross;                          // Sum of occupancy changes for the day
-        uint16_t occupancyNet;                            // Current occupancy count
+        int16_t occupancyNet;                             // Current occupancy count
         uint8_t occupancyState;                           // Allows us to monitor occupancy state across functions
 		// OK to add more fields here 
 	};

@@ -109,7 +109,8 @@ bool PeopleCounter::loop(){
       Log.infoln("[Line 109]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), newOccupancyState);
     #endif 
     snprintf(states, sizeof(states), "%i%i%i%i%i", stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop());   
-    if(strcmp(states, "02310")){            // If the sequence backwards(because of stack) matches the increment sequence then increment the count ... 
+    // Log.infoln("[Line 112]: %s placement: %d", states, sysStatus.placement);
+    if(strcmp(states, "02310") == 0){            // If the sequence backwards(because of stack) matches the increment sequence then increment the count ... 
       if(sysStatus.placement){                     // ... but reverse the count (decrement) if we are mounted inside, ...       
         if(current.occupancyNet > 0 || sysStatus.multi){   // ... but don't decrement the count if the count cannot possibly be negative (single entrance door)
           current.occupancyGross++;
@@ -125,7 +126,7 @@ bool PeopleCounter::loop(){
           printBigNumbers(current.occupancyNet);
       #endif       
       return true;                    
-    } else if(strcmp(states, "01320")) {    // If the sequence backwards(because of stack) matches the decrement sequence then decrement the count ...
+    } else if(strcmp(states, "01320") == 0) {    // If the sequence backwards(because of stack) matches the decrement sequence then decrement the count ...
       if(sysStatus.placement) {                    // ... but reverse the count (increment) if we are mounted inside.               
         current.occupancyGross++;
         current.occupancyNet++;

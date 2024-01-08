@@ -27,15 +27,14 @@
 // v11 - Breaking Change - Requires gateway v17 or above
 //		 ... Now able to fully control all configuration for the TOF sensor. Enhanced Alerts by adding alertContext (1 byte of data) to the alerts.
 //		 ... added zoneModes, a set of predefined SPAD configurations. Zone mode can be changed by the gateway 
+// v11.1 - Fixed data type issues with occupancyNet, fixed misuse of strcmp found in PeopleCounter where counts were in backwards direction
 
 /*
 Wish List:
-1) Better error handling on startup - memory or TOF initialization errors
-2) Need to collect all relevant settings into one configuration header file
+1) Better error handling on startup - memory
 3) Improve the "noisyness" of the TOF sensor
 4) Make sure we are achieving low power on shutdown / sleep
 5) Perhaps we need to count and report the number of wakeup events
-6) Need to be able to configure the device placment inside or outside a room
 */
 
 //Include Libraries:
