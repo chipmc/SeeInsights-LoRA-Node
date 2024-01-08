@@ -117,9 +117,9 @@ int TofSensor::loop(){    // This function will update the current detection or 
 
 int TofSensor::measure(){
   ready = 0;
-  uint8_t zoneWidth;                      // width of SPADs (across the door)
-  uint8_t zoneDepth;                      // depth of SPADs (through the door)
-  uint8_t zoneOpticalCenters[2];          // Array of optical centers for the Occupancy zones (zone 1 and zone 2)
+  uint8_t zoneWidth = 0;                      // width of SPADs (across the door)
+  uint8_t zoneDepth = 0;                      // depth of SPADs (through the door)
+  uint8_t zoneOpticalCenters[2] = {0,0};          // Array of optical centers for the Occupancy zones (zone 1 and zone 2)
 
   switch(sysStatus.zoneMode){             // Set the spad depth, spad width and opticalCenters as defined by the zoneMode. See Config.h for zone mode definitions.
       case 0:                 // default
@@ -130,27 +130,27 @@ int TofSensor::measure(){
       break;
       case 1:                 // separated
         zoneWidth = 16;
-        zoneDepth = 8;
-        zoneOpticalCenters[0] = 167;
-        zoneOpticalCenters[1] = 231;
+        zoneDepth = 6;
+        zoneOpticalCenters[0] = 159;
+        zoneOpticalCenters[1] = 239;
       break;
       case 2:                 // verySeparated
         zoneWidth = 16;
-        zoneDepth = 8;
-        zoneOpticalCenters[0] = 167;
-        zoneOpticalCenters[1] = 231;
+        zoneDepth = 4;
+        zoneOpticalCenters[0] = 151;
+        zoneOpticalCenters[1] = 247;
       break;
       case 3:                 // frontFocused
         zoneWidth = 16;
-        zoneDepth = 8;
-        zoneOpticalCenters[0] = 167;
-        zoneOpticalCenters[1] = 231;
+        zoneDepth = 4;
+        zoneOpticalCenters[0] = 151;
+        zoneOpticalCenters[1] = 183;
       break;
       case 4:                 // backFocused
         zoneWidth = 16;
-        zoneDepth = 8;
-        zoneOpticalCenters[0] = 167;
-        zoneOpticalCenters[1] = 231;
+        zoneDepth = 4;
+        zoneOpticalCenters[0] = 215;
+        zoneOpticalCenters[1] = 247;
       break;
   }        
 
