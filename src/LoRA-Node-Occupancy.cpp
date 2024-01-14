@@ -29,12 +29,11 @@
 //		 ... added zoneModes, a set of predefined SPAD configurations. Zone mode can be changed by the gateway 
 // v11.1 - Fixed data type issues with occupancyNet, fixed misuse of strcmp found in PeopleCounter where counts were in backwards direction
 // v11.2 - Implemented LoRA Radio sleep to reduce power consumption and changed sleep mode to deep sleep
+// v11.3 - Added Alert Code 12 - Gateway can manually set the occupancyNet value
 
 /*
 Wish List:
 1) Better error handling on startup - memory
-3) Improve the "noisyness" of the TOF sensor
-4) Make sure we are achieving low power on shutdown / sleep
 5) Perhaps we need to count and report the number of wakeup events
 */
 
