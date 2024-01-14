@@ -391,9 +391,15 @@ void loop()
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
-			case 11: 															// In this state an update to the occupancyCalibrationLoops is to be made using the alertContext
+			case 11: 															// In this state a recalibration is being initiated by the alert code
 				measure.recalibrate();
 				Log.infoln("Alert code 11 - Device recalibrating");
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 12: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
+				current.occupancyNet = sysStatus.alertContextNode;
+				Log.infoln("Alert code 12 - Gateway has overwritten occupancyNet. New occupancyNet: %d", current.occupancyNet);
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
