@@ -140,7 +140,7 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 
 		// Process Alert Codes
 		sysStatus.alertCodeNode = buf[11];			// The gateway may set an alert code for the node
-		sysStatus.alertContextNode = buf[12];		// The gateway may send alert context with an alert code
+		sysStatus.alertContextNode = (buf[12] << 8 | buf[13]);		// The gateway may send alert context with an alert code
 
 		if (sysStatus.alertCodeNode) {
 			Log.infoln("The gateway set an alert %d with context %d", sysStatus.alertCodeNode, sysStatus.alertContextNode);

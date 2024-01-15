@@ -30,6 +30,7 @@
 // v11.1 - Fixed data type issues with occupancyNet, fixed misuse of strcmp found in PeopleCounter where counts were in backwards direction
 // v11.2 - Implemented LoRA Radio sleep to reduce power consumption and changed sleep mode to deep sleep
 // v11.3 - Added Alert Code 12 - Gateway can manually set the occupancyNet value
+// v11.4 - Breaking change - Gateway v17.5 or later - changed size of alertContext in data payload to uint16_t, expanded range of interferenceBuffer and occupancyCalibrationLoops
 
 /*
 Wish List:
@@ -52,7 +53,7 @@ Wish List:
 #include "LoRA_Functions.h"
 #include "Config.h"
 
-const uint8_t firmwareRelease = 7;
+const uint8_t firmwareRelease = 11;
 
 // Instandaitate the classes
 

@@ -4,9 +4,7 @@
 // Date: May 2023
 // License: GPL3
 // This is the class for the ST Micro VL53L1X Time of Flight Sensor
-// We are using the Sparkfun library which has some shortcomgings
-// - It does not implement distance mode medium
-// - It does not give access to the factory calibration of the optical center
+// We are using the Pololu VL53L1X library.
 
 #include "ErrorCodes.h"
 #include "MyData.h"
