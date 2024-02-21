@@ -299,8 +299,8 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 		Log.infoln("Node %d Join request acknowledged and sensor set to %d - received uniqueID %u",sysStatus.nodeNumber, sysStatus.sensorType, sysStatus.uniqueID);
 	}
 	
-	if(sysStatus.space != buf[18]) {
-		if(buf[18] > 63){
+	if(sysStatus.space != buf[19]) {
+		if(buf[19] > 63){
 			sysStatus.space = 0;
 		} else {
 			sysStatus.space = buf[19];

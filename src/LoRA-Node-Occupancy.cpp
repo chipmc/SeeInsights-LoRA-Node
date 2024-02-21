@@ -31,6 +31,7 @@
 // v11.2 - Implemented LoRA Radio sleep to reduce power consumption and changed sleep mode to deep sleep
 // v11.3 - Added Alert Code 12 - Gateway can manually set the occupancyNet value
 // v11.4 - Breaking change - Gateway v17.5 or later - changed size of alertContext in data payload to uint16_t, expanded range of interferenceBuffer and occupancyCalibrationLoops
+// v11.5 - fixed bug with space, where we were checking the wrong index in buffer in Lora_Functions.cpp
 
 /*
 Wish List:
