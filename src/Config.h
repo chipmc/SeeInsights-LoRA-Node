@@ -45,7 +45,7 @@
 /*******************************************/
 
 /**  Debugging Flags  **/
-#define PRINT_SENSOR_MEASUREMENTS 0             // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
+#define PRINT_SENSOR_MEASUREMENTS 1             // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
 #define PRINT_STACK_VISUALIZATION 1             // Actively prints a visual representation of the occupancyState stack and the line number (Ex. SEQUENCE [SIZE = 2]: [0, 2] <--- 2)
 #define PRINT_OCCUPANCY_NET_TENFOOTDISPLAY 1    // Prints currentData.occupancyNet using ASCII characters to produce a large number that can be read at a distance.
 #define PRINT_OCCUPANCY_STATE_TENFOOTDISPLAY 0  // Prints the occupancy state using ASCII characters to produce a large number that can be read at a distance.
@@ -68,8 +68,8 @@
 
 /**  Calibration Settings  **/
 #define DEFAULT_OCCUPANCY_CALIBRATION_LOOPS 50          // How many sets of samples to take during occupancy calibration (2 samples each). Increasing this may reduce noise.
-#define DEFAULT_FLOOR_INTERFERENCE_BUFFER 150           // Flat value (in mm) to add to the measured distance in order to rule out variations that occur in measurements taken of the floor.
-#define CALIBRATION_RETRY_DELAY 1000            // Length of time (in ms) to delay if, during calibration, we detect a person and need to try again.
+#define DEFAULT_FLOOR_INTERFERENCE_BUFFER 300           // Flat value (in mm) to add to the measured distance in order to rule out variations that occur in measurements taken of the floor.
+#define CALIBRATION_RETRY_DELAY 100            // Length of time (in ms) to delay if, during calibration, we detect a person and need to try again.
 
                     /**  Table of Optical Centers   ***
                       * 
@@ -217,6 +217,6 @@ Positive Count ---->
  */
 
 /**  Occupancy Zone Configurations  **/
-#define DEFAULT_ZONE_MODE 0 // 'default'
+#define DEFAULT_ZONE_MODE 3 // 'default'
 
 #endif
