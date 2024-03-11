@@ -59,7 +59,7 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 13                           // Version of the data structures (system and data)
+#define STRUCTURES_VERSION 14                           // Version of the data structures (system and data)
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example

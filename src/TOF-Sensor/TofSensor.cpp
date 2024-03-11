@@ -150,6 +150,18 @@ int TofSensor::measure(){
         zoneOpticalCenters[0] = 215;
         zoneOpticalCenters[1] = 247;
       break;
+      case 5:                 // thin
+        zoneWidth = 8;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
+      case 6:                 // veryThin
+        zoneWidth = 4;
+        zoneDepth = 8;
+        zoneOpticalCenters[0] = 167;
+        zoneOpticalCenters[1] = 231;
+      break;
   }        
 
   for (int zone = 0; zone < 2; zone++){           // Take 2 samples, 1 for each zone.
