@@ -29,7 +29,7 @@ protected:
     static MachineVisionCamera *_instance;
 
 private:
-    CameraInterface *camera;  // Contains a Camera instance to interact with
+    CameraInterface *_camera;  // Contains a Camera instance to interact with
 };
 
 #endif  /* __MACHINE_VISION_CAMERA_H */

@@ -4,12 +4,12 @@
 // Declare instance as null
 MachineVisionCamera* MachineVisionCamera::_instance = nullptr;
 
-// Constructor - initially, the camera (private pointer to CameraInstance object) points to nothing
-MachineVisionCamera::MachineVisionCamera() : camera(nullptr) {}
+// Constructor - initially, the _camera (private pointer to object implementing CameraInterface) points to nothing
+MachineVisionCamera::MachineVisionCamera() : _camera(nullptr) {}
 
-// Destructor - also deletes the camera pointer
+// Destructor - also deletes the _camera pointer
 MachineVisionCamera::~MachineVisionCamera() {
-    delete camera; // Release memory
+    delete _camera; // Release memory
 }
 
 // Singleton pattern [static]
@@ -22,27 +22,27 @@ MachineVisionCamera& MachineVisionCamera::instance() {
 
 // Setup function
 bool MachineVisionCamera::setup(int sensorType) {
-    // If camera instance already exists, delete it before creating a new one
-    if (camera) {
-        delete camera;
-        camera = nullptr;
+    // If _camera instance already exists, delete it before creating a new one
+    if (_camera) {
+        delete _camera;
+        _camera = nullptr;
     }
     
-    // Instantiate the appropriate camera instance based on sensorType
+    // Instantiate the appropriate _camera instance based on sensorType
     switch (sensorType) {
         case 0:
-            camera = &OpenMVH7Plus::instance(); // Get singleton instance
+            _camera = &OpenMVH7Plus::instance(); // Get singleton instance
             break;
-        // Add other camera types here
+        // Add other _camera types here
         default:
             return false; // Unsupported sensorType
     }
     
-    // Setup the camera instance
-    if (!camera->setup()) {
+    // Setup the _camera instance
+    if (!_camera->setup()) {
         // Setup failed
-        delete camera;
-        camera = nullptr;
+        delete _camera;
+        _camera = nullptr;
         Log.infoln("Failed to initialize Camera instance - MachineVisionCamera::setup()");
         return false;
     }
@@ -52,9 +52,9 @@ bool MachineVisionCamera::setup(int sensorType) {
 }
 
 bool MachineVisionCamera::readCount() {
-    if (!camera) {
-        Log.infoln("Failed to read count, camera is null - MachineVisionCamera::readCount()");
+    if (!_camera) {
+        Log.infoln("Failed to read count, _camera is null - MachineVisionCamera::readCount()");
         return false;
     }
-    return camera->readCount();
+    return _camera->readCount();
 }
