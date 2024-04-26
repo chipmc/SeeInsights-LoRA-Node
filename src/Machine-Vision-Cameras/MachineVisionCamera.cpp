@@ -43,14 +43,17 @@ bool MachineVisionCamera::setup(int sensorType) {
         // Setup failed
         delete camera;
         camera = nullptr;
+        Log.infoln("Failed to initialize Camera instance - MachineVisionCamera::setup()");
         return false;
     }
     
+    Log.infoln("MachineVisionCamera successfully initialized - MachineVisionCamera::setup()");
     return true;
 }
 
 bool MachineVisionCamera::readCount() {
     if (!camera) {
+        Log.infoln("Failed to read count, camera is null - MachineVisionCamera::readCount()");
         return false;
     }
     return camera->readCount();

@@ -21,7 +21,7 @@ SerialConnection &SerialConnection::instance() {
 
 bool SerialConnection::initialize() {
     Serial1.begin(115200);                              // Open serial port to communicate with Serial1 device
-    Log.info("Initializing Serial Connection");
+    Log.info("Initializing Serial Connection - SerialConnection::initialize()");
     return true;
 }
 
@@ -30,7 +30,7 @@ bool SerialConnection::sendMessage(const char *message) {       // This function
         Serial1.println(message);
         return true;
     }
-    Log.info("Could not send message - Serial1 is not available");
+    Log.info("Could not send message, Serial1 is not available - SerialConnection::sendMessage()");
     return false;
 }
 
@@ -53,7 +53,7 @@ bool SerialConnection::receiveMessage(char *response, int responseSize) {       
             return true;                                                     // Return true to indicate that there was a response
         }
         else {
-            Log.info("SerialConnection received no bytes");
+            Log.info("SerialConnection received no bytes - SerialConnection::receiveMessage()");
             return false;
         }
     }
