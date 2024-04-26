@@ -4,16 +4,10 @@
 // License: GPL3
 // This is an instance of a machine vision camera, where the type of camera is defined 
 
-#ifndef __MACHINEVISIONCAMERA_H
-#define __MACHINEVISIONCAMERA_H
+#ifndef __MACHINE_VISION_CAMERA_H
+#define __MACHINE_VISION_CAMERA_H
 
-// Base Class for Camera Instances
-class CameraInstance {
-public:
-    virtual bool setup() = 0;
-    virtual bool capture() = 0;
-    virtual ~CameraInstance() {}
-};
+#include "CameraInterface.h"
 
 class MachineVisionCamera {
 public:
@@ -21,7 +15,7 @@ public:
 
     bool setup(int sensorType);
 
-    bool capture();
+    bool readCount();
 
 protected:
     MachineVisionCamera();
@@ -35,7 +29,7 @@ protected:
     static MachineVisionCamera *_instance;
 
 private:
-    CameraInstance *cameraInstance;
+    CameraInterface *camera;  // Contains a Camera instance to interact with
 };
 
-#endif  /* __MACHINEVISIONCAMERA_H */
+#endif  /* __MACHINE_VISION_CAMERA_H */

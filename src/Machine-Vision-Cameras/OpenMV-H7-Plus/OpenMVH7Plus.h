@@ -1,15 +1,15 @@
-#ifndef __OPENMVH7PLUS_H
-#define __OPENMVH7PLUS_H
+#ifndef __OPENMV_H7_PLUS_H
+#define __OPENMV_H7_PLUS_H
 
 #include "Machine-Vision-Cameras/MachineVisionCamera.h"
 
-class OpenMVH7Plus : public CameraInstance {
+class OpenMVH7Plus : public CameraInterface {
 public:
     static OpenMVH7Plus& instance();
 
     bool setup() override;
 
-    bool capture() override;
+    bool readCount() override;
 
 protected:
     OpenMVH7Plus();
@@ -23,4 +23,4 @@ protected:
     static OpenMVH7Plus *_instance;
 };
 
-#endif  /* __OPENMVH7PLUS_H */
+#endif  /* __OPENMV_H7_PLUS_H */

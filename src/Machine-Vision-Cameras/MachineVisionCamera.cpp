@@ -1,18 +1,18 @@
 #include "MachineVisionCamera.h"
 #include "./OpenMV-H7-Plus/OpenMVH7Plus.h"
 
-// [static]
+// Declare instance as null
 MachineVisionCamera* MachineVisionCamera::_instance = nullptr;
 
-// Constructor
-MachineVisionCamera::MachineVisionCamera() : cameraInstance(nullptr) {}
+// Constructor - initially, the camera (private pointer to CameraInstance object) points to nothing
+MachineVisionCamera::MachineVisionCamera() : camera(nullptr) {}
 
-// Destructor
+// Destructor - also deletes the camera pointer
 MachineVisionCamera::~MachineVisionCamera() {
-    delete cameraInstance;
+    delete camera; // Release memory
 }
 
-// Singleton instance getter
+// Singleton pattern [static]
 MachineVisionCamera& MachineVisionCamera::instance() {
     if (!_instance) {
         _instance = new MachineVisionCamera();
@@ -23,15 +23,15 @@ MachineVisionCamera& MachineVisionCamera::instance() {
 // Setup function
 bool MachineVisionCamera::setup(int sensorType) {
     // If camera instance already exists, delete it before creating a new one
-    if (cameraInstance) {
-        delete cameraInstance;
-        cameraInstance = nullptr;
+    if (camera) {
+        delete camera;
+        camera = nullptr;
     }
     
     // Instantiate the appropriate camera instance based on sensorType
     switch (sensorType) {
         case 0:
-            cameraInstance = &OpenMVH7Plus::instance(); // Get singleton instance
+            camera = &OpenMVH7Plus::instance(); // Get singleton instance
             break;
         // Add other camera types here
         default:
@@ -39,19 +39,19 @@ bool MachineVisionCamera::setup(int sensorType) {
     }
     
     // Setup the camera instance
-    if (!cameraInstance->setup()) {
+    if (!camera->setup()) {
         // Setup failed
-        delete cameraInstance;
-        cameraInstance = nullptr;
+        delete camera;
+        camera = nullptr;
         return false;
     }
     
     return true;
 }
 
-bool MachineVisionCamera::capture() {
-    if (!cameraInstance) {
+bool MachineVisionCamera::readCount() {
+    if (!camera) {
         return false;
     }
-    return cameraInstance->capture();
+    return camera->readCount();
 }
