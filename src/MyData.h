@@ -153,14 +153,14 @@ public:
 		time_t lastConnection;                     		  // Last time we successfully connected to Particle
 		time_t nextConnection;                            // When we are reporing at minute increments - what are they - for Gateways
 		uint8_t alertCodeNode;                            // Alert code from node
-        uint16_t alertContextNode;                         // Alert context from node
-        uint8_t sensorType;                                // PIR sensor, car counter, others - this value is changed by the Gateway
+        uint16_t alertContextNode;                        // Alert context from node
+        uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
         uint8_t space;                                    // Assciates the node with a space - this value is changed by the Gateway
         uint8_t placement;                                // 0 for outside, 1 for inside - determines whether we count up or down - this value is changed by the Gateway
         uint8_t multi;                                    // 1 if this device is taking occupancy of a room with more than one entrance, prevents negative counts - this value is changed by the Gateway
         uint8_t zoneMode;                                 // The predefined SPAD configuration of a ToF Sensor. See Config.h for a description of the zone modes.
-        uint16_t interferenceBuffer;                       // The floor interference buffer of a ToF Sensor.
-        uint16_t occupancyCalibrationLoops;                // The number of calibration loops to execute for a ToF Sensor during calibration.
+        uint16_t interferenceBuffer;                      // The floor interference buffer of a ToF Sensor.
+        uint16_t occupancyCalibrationLoops;               // The number of calibration loops to execute for a ToF Sensor during calibration.
         uint8_t distanceMode;                             // The distance mode for the TOF sensor. 0 = short (up to 1.3m), 1 = medium (up to 3m), 2 = long (up to 4m)
     };
 	SystemDataStructure sysStatusStruct;
@@ -277,7 +277,7 @@ public:
         int8_t internalTempC;                             // Enclosure temperature in degrees C
         int8_t internalHumidity;                          // Enclosure humidity in percent
 		int8_t stateOfCharge;                             // Battery charge level
-		uint8_t batteryState;                             // Stores the current battery state (charging, discharging, etc)
+		uint8_t batteryState;                             // Stores the current battery state (low, charging, discharging, etc)
 		int16_t RSSI;                                     // Latest signal strength value (updated adter ack and sent to gateway on next data report)
 		int16_t SNR;									  // Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
 		uint16_t occupancyGross;                          // Sum of occupancy changes for the day
