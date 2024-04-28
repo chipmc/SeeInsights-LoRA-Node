@@ -39,7 +39,7 @@ TofSensor::~TofSensor() {
 VL53L1X myTofSensor;
 
 bool TofSensor::setup(){  
-  myTofSensor.setTimeout(500);
+  myTofSensor.setTimeout(SENSOR_TIMEOUT);
   if(!myTofSensor.init()){
     if(numberOfRetries == 3){                      // if 3 retries, return false
       sysStatus.alertCodeNode = 3;  
@@ -168,25 +168,25 @@ int TofSensor::measure(){
     int32_t timingBudget;
     switch (sysStatus.distanceMode) {
       case 0:
-        timingBudget = 20000;                    //(in us)
+        timingBudget = sysStatus.tofPollingRateMS >= 20 ? sysStatus.tofPollingRateMS * 1000 : 22000;  // enforce minimum for distanceMode short (20000us)
         myTofSensor.setDistanceMode(VL53L1X::Short);
       break;
       case 1:
-        timingBudget = 33000;                    //(in us)
+        timingBudget = sysStatus.tofPollingRateMS >= 33 ? sysStatus.tofPollingRateMS * 1000 : 33000;  // enforce minimum for distanceMode medium (33000us)
         myTofSensor.setDistanceMode(VL53L1X::Medium);
       break;
       case 2:
-        timingBudget = 33000;                    //(in us)
+        timingBudget = sysStatus.tofPollingRateMS >= 33 ? sysStatus.tofPollingRateMS * 1000 : 33000;  // enforce minimum for distanceMode long (33000us)
         myTofSensor.setDistanceMode(VL53L1X::Long);          
       break;
       default: // default to long if something is up
-        timingBudget = 33000;                    //(in us)
+        timingBudget = sysStatus.tofPollingRateMS >= 33 ? sysStatus.tofPollingRateMS * 1000 : 33000;  // enforce minimum for distanceMode long (33000us)
         myTofSensor.setDistanceMode(VL53L1X::Long);
     }
     
     myTofSensor.setROISize(zoneDepth, zoneWidth);
     myTofSensor.setROICenter(zoneOpticalCenters[zone]);
-    myTofSensor.setMeasurementTimingBudget(timingBudget);    // 20000us in short distance mode, 33000us in long distance mode
+    myTofSensor.setMeasurementTimingBudget(timingBudget);    // 20000us minimum in short distance mode, 33000us minimum in medium/long distance mode
 
     // ** POLOLU DOCUMENTATION ** 
     // Starts a single-shot range measurement. If blocking is true (the default),

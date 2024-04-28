@@ -118,6 +118,7 @@ void sysStatusData::initialize() {
     sysStatus.interferenceBuffer = DEFAULT_FLOOR_INTERFERENCE_BUFFER;
     sysStatus.occupancyCalibrationLoops = DEFAULT_OCCUPANCY_CALIBRATION_LOOPS;
     sysStatus.distanceMode = 2;         // defaults to long distance mode
+    sysStatus.tofPollingRateMS = 33;    // defaults to minimum polling rate for long distance mode
 
 
     Log.infoln("Saving new system values, node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);

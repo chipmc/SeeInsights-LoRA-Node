@@ -32,6 +32,7 @@
 // v11.3 - Added Alert Code 12 - Gateway can manually set the occupancyNet value
 // v11.4 - Breaking change - Gateway v17.5 or later - changed size of alertContext in data payload to uint16_t, expanded range of interferenceBuffer and occupancyCalibrationLoops
 // v11.5 - fixed bug with space, where we were checking the wrong index in buffer in Lora_Functions.cpp
+// v12 - Breaking change - requires Gateway v21.5 or later - gateway can now configure TOF polling rate through particle command (see README of gateway)
 
 /*
 Wish List:
@@ -401,6 +402,12 @@ void loop()
 			case 12: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
 				current.occupancyNet = sysStatus.alertContextNode;
 				Log.infoln("Alert code 12 - Gateway has overwritten occupancyNet. New occupancyNet: %d", current.occupancyNet);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 13: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
+				sysStatus.tofPollingRateMS = sysStatus.alertContextNode;
+				Log.infoln("Alert code 13 - TOF Sensor Polling Rate now set to %dms", sysStatus.tofPollingRateMS);
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
