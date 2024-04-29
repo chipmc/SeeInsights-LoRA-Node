@@ -23,19 +23,21 @@ public:
     static SerialConnection &instance();
 
     /**
-     * @brief Perform setup operations; call this from global application setup()
+     * @brief Perform setup operations for a Serial1 connection
      * 
-     * You typically use SerialConnection::instance().setup();
+     * SerialConnection::instance().setup();
      */
     bool initialize() override;
 
     /**
-     * @brief Send a message to the Serial1 device
+     * @brief Send a message over the Serial1 line
+     * SerialConnection::instance().sendMessage();
     */
     bool sendMessage(const char *message) override;
 
     /**
-     * @brief Get the response from the Serial1 device
+     * @brief Read a message from the Serial1 line
+     * SerialConnection::instance().receiveMessage();
     */
     bool receiveMessage(char *response, int responseSize) override;
 

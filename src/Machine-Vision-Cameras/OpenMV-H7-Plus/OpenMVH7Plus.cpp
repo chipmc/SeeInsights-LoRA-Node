@@ -1,5 +1,4 @@
 #include "OpenMVH7Plus.h"
-#include "Utils/Assets/Serial/SerialConnection.h"
 
 // Declare instance as null
 OpenMVH7Plus* OpenMVH7Plus::_instance = nullptr;
@@ -23,7 +22,7 @@ bool OpenMVH7Plus::setup() {
     return true; 
 }
 
-bool OpenMVH7Plus::readCount() {
+bool OpenMVH7Plus::readData() {
     char response[32];
     SerialConnection::instance().receiveMessage(response, sizeof(response));
     return true; 

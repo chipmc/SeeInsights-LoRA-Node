@@ -3,13 +3,18 @@
 
 #include <ArduinoLog.h>     // https://github.com/thijse/Arduino-Log
 
+/**
+ * Defines default behavior for all asset connections must implement
+*/
 class AssetConnectionInterface {
 public:
     virtual ~AssetConnectionInterface() {}
 
-    // Asset connections are often Singletons (cannot enforce here), so 
-    // be sure to implement instance() functionality in new singletons
-    // that implement this interface.
+    /**
+     * AssetConnections are Singletons (cannot enforce here), so 
+     * be sure to implement instance() functionality in new singletons
+     * that implement this interface.
+     */
 
     // Initialize the connection
     virtual bool initialize() = 0;

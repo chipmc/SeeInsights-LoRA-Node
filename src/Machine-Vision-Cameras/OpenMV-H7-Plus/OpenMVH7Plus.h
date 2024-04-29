@@ -1,15 +1,31 @@
 #ifndef __OPENMV_H7_PLUS_H
 #define __OPENMV_H7_PLUS_H
 
-#include "Machine-Vision-Cameras/MachineVisionCamera.h"
+#include "Machine-Vision-Cameras/CameraInterface.h"
+#include "Utils/Assets/Serial/SerialConnection.h"
 
+/**
+ * OpenMV H7 Plus camera - Singleton that implements CameraInterface
+ */
 class OpenMVH7Plus : public CameraInterface {
 public:
+
+    /**
+     * @brief Gets the singleton instance of this class, allocating it if necessary
+     * 
+     * Use OpenMVH7Plus::instance() to instantiate the singleton.
+     */
     static OpenMVH7Plus& instance();
 
+    /**
+     * @brief Performs setup operations for the OpenMV H7 Plus camera.
+     */
     bool setup() override;
 
-    bool readCount() override;
+    /**
+     * @brief Reads data from an OpenMV H7 Plus, using a SerialConnection
+     */
+    bool readData() override;
 
 protected:
     OpenMVH7Plus();
