@@ -33,6 +33,7 @@
 // v11.4 - Breaking change - Gateway v17.5 or later - changed size of alertContext in data payload to uint16_t, expanded range of interferenceBuffer and occupancyCalibrationLoops
 // v11.5 - fixed bug with space, where we were checking the wrong index in buffer in Lora_Functions.cpp
 // v11.6 - Added a feature to put the device to sleep when the battery charge gets below 10%
+// v11.7 - Fixed issue with state of charge indicator - need to use an internal pull-up
 
 /*
 Wish List:

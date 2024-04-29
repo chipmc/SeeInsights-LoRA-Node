@@ -33,19 +33,24 @@ void take_measurements::setup() {
   }
   else {                                                          // Iniitalization was successful - now we need to configure the device
     // TODO:: test to see if this can be shorter
-    delay (1000);                                                 // Give the MAX17048 time to initialize (it takes 1 second) - does not work without this 
+    delay (100);                                                  // Give the MAX17048 time to initialize (it takes 1 second) - does not work without this 
     maxlipo.setAlertVoltages(3.7 , 4.2);                          // Set the alert voltages to 3.6V and 4.2V - https://blog.ampow.com/lipo-voltage-chart/
+
+    // Next we need to check to see if the battery alert flag needs to be cleared
     if (digitalRead(gpio.BATTINT) == LOW) {                       // If the interrupt is active low there is an alert (need to determine what the alert is for)
-      byte activeAlert = maxlipo.getAlertStatus();                // Get the alert status
-      Log.infoln("Battery alert value of %d which is %s low battery at %4.2f V", activeAlert, (activeAlert | 0b00000010)? "is" : "is not",maxlipo.cellVoltage());
-      if (maxlipo.cellVoltage() < 3.7) current.batteryState = 0;                                   // This is the state where the battery is less than 10%
-    }
-    else {                                                        // If the interrupt high then we are above 3.7V 
-      if (maxlipo.cellVoltage() >=3.7) {
-         maxlipo.clearAlertFlag(0x00);                            // Clear all the alert flags - not sure we want to do this but what the heck
+      if (maxlipo.cellVoltage() > 3.7) {
+        maxlipo.clearAlertFlag(0x00);                             // If the voltage is above 3.7V then we can clear the alert flag
         current.batteryState = 1;                                 // This is the state where the battery is 10% or more
       }
+      else {
+        current.batteryState = 0;                                 // This is the state where the battery is less than 10%
+      }
     }
+
+    byte activeAlert = maxlipo.getAlertStatus();                  // Get the alert status
+
+    Log.infoln("Battery alert value of %d which is %s and battery interrupt is %s battery voltage at %FV and charge at %F%%", activeAlert, (activeAlert | 0b00000010)? "active" : "not active", (digitalRead(gpio.BATTINT)) ? "HIGH" : "LOW", maxlipo.cellVoltage(), maxlipo.cellPercent());
+
   }
 
   if (TofSensor::instance().setup()) {
@@ -111,8 +116,8 @@ bool take_measurements::batteryState() {                              // This fu
   }
 
   if (digitalRead(gpio.BATTINT) == LOW) {                             // If the interrupt is active low there is an alert (need to determine what the alert is for)
-    byte activeAlert = maxlipo.getAlertStatus();                      // Get the alert status
-    Log.infoln("Battery alert value of %d which is %s low battery at %4.2f V", activeAlert, (activeAlert | 0b00000010)? "is" : "is not",maxlipo.cellVoltage());
+    byte activeAlert = maxlipo.getAlertStatus();                  // Get the alert status
+    Log.infoln("Battery alert value of %d which is %s and battery interrupt is %s battery voltage at %FV and charge at %F%%", activeAlert, (activeAlert | 0b00000010)? "active" : "not active", (digitalRead(gpio.BATTINT)) ? "HIGH" : "LOW", maxlipo.cellVoltage(), maxlipo.cellPercent());
     if (maxlipo.cellVoltage() < 3.7) current.batteryState = 0;                                   // This is the state where the battery is less than 10%
   }
   else {                                                              // If the interrupt high then we are above 3.7V 
