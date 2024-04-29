@@ -33,7 +33,8 @@
 // v11.4 - Breaking change - Gateway v17.5 or later - changed size of alertContext in data payload to uint16_t, expanded range of interferenceBuffer and occupancyCalibrationLoops
 // v11.5 - fixed bug with space, where we were checking the wrong index in buffer in Lora_Functions.cpp
 // v11.6 - Added a feature to put the device to sleep when the battery charge gets below 10%
-// v11.7 - Fixed issue with state of charge indicator - need to use an internal pull-up
+// v11.7 - Fixed issue with Battery Interrupt - need to use an internal pull-up
+// v11.8 - Now using the !SHUTDOWN pin on the MAX17048 for sleep mode (note no shutdown pin for the PIR sensor)
 
 /*
 Wish List:
@@ -196,9 +197,13 @@ void loop()
 
 			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
 			timeFunctions.interruptAtTime(time, 0);                 			// Set the interrupt for the next event
+			digitalWrite(gpio.I2C_EN, LOW);									// Turn off the I2C bus (pre-production module)
+			Log.infoln("Going to sleep for %u seconds with sensor off", (sleepTime > timeFunctions.WDT_MaxSleepDuration - 1) ? timeFunctions.WDT_MaxSleepDuration - 1 : sleepTime);
 			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
 			LowPower.deepSleep(timeFunctions.WDT_MaxSleepDuration);				// Go to sleep
 			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+			digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
+			Log.infoln("Woke up from sleep and turning sensor on");
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
 				state = IDLE_STATE;
@@ -242,10 +247,16 @@ void loop()
 			unsigned long time_millis = time * 1000UL;
 
 			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
+			digitalWrite(gpio.I2C_EN, LOW);									// Turn off the I2C bus (pre-production module)
+			Log.infoln("Going to sleep for one hour with sensor off");
+
 			timeFunctions.interruptAtTime(time + 1, 0);                 		// Set the interrupt for the next event - this is the backup alarm - like a snooze button
 			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
 			LowPower.deepSleep(time_millis);									// Go to sleep
 			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+			digitalWrite(gpio.I2C_EN, HIGH);									// Turn off the I2C bus (pre-production module)
+			Log.infoln("Waking up the sensor");
+
 			measure.takeMeasurements();											// Check to see if the battery is charged
 			state = IDLE_STATE;
 
