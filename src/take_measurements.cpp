@@ -134,9 +134,9 @@ bool take_measurements::batteryState() {                              // This fu
   }
 
   float percent = maxlipo.cellPercent();                               // There is no error checking in the Adafruit lib - so, +100% is an invalid result
-  if (percent < 0.00 || percent > 100.0) {
+  if (percent < 0.00 || percent > 101.0) {
     current.batteryState = 2;                                          // This indicates that we did not get a valid state of charge measurement
-    Log.infoln("Failed to get battery percent charge");
+    Log.infoln("Failed to get battery percent charge - %F%%", percent);
     return false;
   }
 

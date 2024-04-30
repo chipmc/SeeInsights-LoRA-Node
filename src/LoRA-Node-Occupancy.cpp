@@ -35,6 +35,7 @@
 // v11.6 - Added a feature to put the device to sleep when the battery charge gets below 10%
 // v11.7 - Fixed issue with Battery Interrupt - need to use an internal pull-up
 // v11.8 - Now using the !SHUTDOWN pin on the MAX17048 for sleep mode (note no shutdown pin for the PIR sensor)
+// v11.9 - Potnential fix for device locking up when going to sleep - added a delay after turning off the I2C bus
 
 /*
 Wish List:
@@ -176,8 +177,10 @@ void loop()
 			if (digitalRead(gpio.I2C_INT)){Log.infoln("Sensor pin(line2) still high - delaying sleep"); break;}
 
 			publishStateTransition();              								// Publish state transition
-			// How long to sleep
-			time_t currentTime = timeFunctions.getTime();
+
+			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
+
+			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 			unsigned long sleepTime = (sysStatus.nextConnection - currentTime > 0) ? sysStatus.nextConnection - currentTime : 60UL;
 
 			if (timeFunctions.isRTCSet()) {
@@ -197,9 +200,8 @@ void loop()
 
 			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
 			timeFunctions.interruptAtTime(time, 0);                 			// Set the interrupt for the next event
-			digitalWrite(gpio.I2C_EN, LOW);									// Turn off the I2C bus (pre-production module)
-			Log.infoln("Going to sleep for %u seconds with sensor off", (sleepTime > timeFunctions.WDT_MaxSleepDuration - 1) ? timeFunctions.WDT_MaxSleepDuration - 1 : sleepTime);
-			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
+			digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
+			delay(50);
 			LowPower.deepSleep(timeFunctions.WDT_MaxSleepDuration);				// Go to sleep
 			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
 			digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
