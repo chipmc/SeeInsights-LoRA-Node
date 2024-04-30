@@ -59,7 +59,7 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 15                           // Version of the data structures (system and data)
+#define STRUCTURES_VERSION 17                           // Version of the data structures (system and data)
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
@@ -162,7 +162,7 @@ public:
         uint16_t interferenceBuffer;                      // The floor interference buffer of a ToF Sensor.
         uint16_t occupancyCalibrationLoops;               // The number of calibration loops to execute for a ToF Sensor during calibration.
         uint8_t distanceMode;                             // The distance mode for a TOF sensor asset. 0 = short (up to 1.3m), 1 = medium (up to 3m), 2 = long (up to 4m)
-        uint8_t tofPollingRateMS;                         // The polling rate for a TOF sensor asset. 20 = minimum for short distanceMode, 33 = minimum for long distanceMode (enforced in TofSensor module)
+        uint8_t tofDetectionsPerSecond;                   // The number of detections to make per second when in detection mode on the TOF sensor
     };
 	SystemDataStructure sysStatusStruct;
 
@@ -278,7 +278,7 @@ public:
         int8_t internalTempC;                             // Enclosure temperature in degrees C
         int8_t internalHumidity;                          // Enclosure humidity in percent
 		int8_t stateOfCharge;                             // Battery charge level
-		uint8_t batteryState;                             // Stores the current battery state (charging, discharging, etc)
+		uint8_t batteryState;                             // Stores the current battery state (low, charging, discharging, etc)
 		int16_t RSSI;                                     // Latest signal strength value (updated adter ack and sent to gateway on next data report)
 		int16_t SNR;									  // Latest Signal to Noise Ratio (updated after ack and send to gatewat on next dara report)
 		uint16_t occupancyGross;                          // Sum of occupancy changes for the day

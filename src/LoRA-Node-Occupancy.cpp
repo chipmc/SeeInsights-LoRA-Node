@@ -35,7 +35,9 @@
 // v11.6 - Added a feature to put the device to sleep when the battery charge gets below 10%
 // v11.7 - Fixed issue with Battery Interrupt - need to use an internal pull-up
 // v11.8 - Now using the !SHUTDOWN pin on the MAX17048 for sleep mode (note no shutdown pin for the PIR sensor)
-// v12 - Breaking change - requires Gateway v21.5 or later - gateway can now configure TOF polling rate through particle command (see README of gateway)
+// v12 - TOF Sensor now has a 'detection' mode, where it will detect people using a 16x16 array of SPADS with a configurable intermeasurement period before measuring at the max rate
+// 		... Gateway can now configure TOF detections per second through particle command (see README of gateway)
+//		... Requires Gateway v21.5 or later for particle function to be available
 
 /*
 Wish List:

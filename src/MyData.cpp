@@ -114,12 +114,11 @@ void sysStatusData::initialize() {
     sysStatus.nextConnection = 0;
     sysStatus.alertCodeNode = 1;
     sysStatus.alertContextNode = 0;
-    sysStatus.zoneMode = DEFAULT_ZONE_MODE;
-    sysStatus.interferenceBuffer = DEFAULT_FLOOR_INTERFERENCE_BUFFER;
-    sysStatus.occupancyCalibrationLoops = DEFAULT_OCCUPANCY_CALIBRATION_LOOPS;
-    sysStatus.distanceMode = 2;         // defaults to long distance mode
-    sysStatus.tofPollingRateMS = 33;    // defaults to minimum polling rate for long distance mode
-
+    sysStatus.zoneMode = TOF_DEFAULT_ZONE_MODE;
+    sysStatus.interferenceBuffer = TOF_DEFAULT_FLOOR_INTERFERENCE_BUFFER;
+    sysStatus.occupancyCalibrationLoops = TOF_DEFAULT_OCCUPANCY_CALIBRATION_LOOPS;
+    sysStatus.distanceMode = TOF_DEFAULT_DISTANCE_MODE;                       
+    sysStatus.tofDetectionsPerSecond = TOF_DEFAULT_DETECTIONS_PER_SECOND;   
 
     Log.infoln("Saving new system values, node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);
     myMem.put(0,sysStatus.structuresVersion);

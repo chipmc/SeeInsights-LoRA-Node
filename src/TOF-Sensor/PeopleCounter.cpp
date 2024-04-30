@@ -45,20 +45,20 @@ bool PeopleCounter::loop(){
     switch(stateStack.count()){
       case 0:                         
         stateStack.push(0);                            // First value MUST be a 0
-        #if PRINT_STACK_VISUALIZATION
+        #if TOF_PRINT_STACK_VISUALIZATION 
           Log.infoln("[Line 49]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
         #endif                                           
         break;
       case 1:
         stateStack.push(newOccupancyState);            // Push to the stack without checking for impossibilities
-        #if PRINT_STACK_VISUALIZATION
+        #if TOF_PRINT_STACK_VISUALIZATION 
           Log.infoln("[Line 55]: SEQUENCE [SIZE = %i]: [%i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), newOccupancyState);
         #endif
         break;                                                           
       case 2:                           // When the stateStack has 2 or 3 items, we must identify impossible patterns and fix them - or backtrack.
       case 3:                                                          // [0, 1] <-- 2 becomes [0, 1, 3, 2],  [0, 2] <-- 1 becomes [0, 2, 3, 1],
         applyImpossibleStateTransitionCorrections(newOccupancyState);  // [0, 3] <-- 2 becomes [0, 1, 3, 2],  [0, 3] <-- 1 becomes [0, 2, 3, 1], 
-        #if PRINT_STACK_VISUALIZATION                                  // [0, x, 3] <-- x becomes [0, x],     [0, 3, x] <-- 3 becomes [0, 3],     [0, x, 3] <-- 0 becomes [0].  
+        #if TOF_PRINT_STACK_VISUALIZATION                                   // [0, x, 3] <-- x becomes [0, x],     [0, 3, x] <-- 3 becomes [0, 3],     [0, x, 3] <-- 0 becomes [0].  
           switch (stateStack.count()){                                 // Anything not in need of corrections is added to the stack as normal.
             case 1:
               Log.infoln("[Line 64]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
@@ -80,7 +80,7 @@ bool PeopleCounter::loop(){
           while(stateStack.peek() != newOccupancyState){                                                  // ... until the top of the stack is equal to the new occupancy state ...
               stateStack.pop();                                                                           // ... we remove the top of the stack.
           }
-          #if PRINT_STACK_VISUALIZATION
+          #if TOF_PRINT_STACK_VISUALIZATION 
             switch (stateStack.count()){
               case 1:
                 Log.infoln("[Line 86]: SEQUENCE [SIZE = %i]: [%i] <--- %i", stateStack.count(), stateStack.peekIndex(0), newOccupancyState);
@@ -105,7 +105,7 @@ bool PeopleCounter::loop(){
   
   if(stateStack.count() == 5){              // If the stack is finished ...
     char states[56];                        // ... turn it into a string by popping all values off the stack...
-    #if PRINT_STACK_VISUALIZATION
+    #if TOF_PRINT_STACK_VISUALIZATION 
       Log.infoln("[Line 109]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), newOccupancyState);
     #endif 
     snprintf(states, sizeof(states), "%i%i%i%i%i", stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop(), stateStack.pop());   
@@ -122,7 +122,7 @@ bool PeopleCounter::loop(){
         current.occupancyNet++;
         currentData.currentDataChanged = true;
       }
-      #if PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
+      #if TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
           printBigNumbers(current.occupancyNet);
       #endif       
       return true;                    
@@ -141,7 +141,7 @@ bool PeopleCounter::loop(){
       // This is a safety check to ensure that the count cannot be negative - this should never happen if we have a single door into the room
       if (!sysStatus.multi && current.occupancyNet < 0) current.occupancyNet = 0;  // If the count is negative, set it to 0 (single entrance door)
 
-      #if PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
+      #if TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
           printBigNumbers(current.occupancyNet);
       #endif
       return true;
@@ -155,7 +155,7 @@ bool PeopleCounter::loop(){
       return false;   
     }
   }
-  #if PRINT_OCCUPANCY_STATE_TENFOOTDISPLAY
+  #if TOF_PRINT_OCCUPANCY_STATE_TENFOOTDISPLAY
       if (current.occupancyState != stateStack.peek() && current.occupancyState != 255) printBigNumbers(current.occupancyState);
   #endif
   current.occupancyState = stateStack.peek();                               // Set the current occupancyState to the topmost value on the stack. (post correction value)
