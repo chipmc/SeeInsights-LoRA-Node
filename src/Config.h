@@ -45,9 +45,9 @@
 /*******************************************/
 
 /**  TOF Debugging Flags  **/
-#define TOF_PRINT_SENSOR_MEASUREMENTS 1             // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
-#define TOF_PRINT_STACK_VISUALIZATION 1             // Actively prints a visual representation of the occupancyState stack and the line number (Ex. SEQUENCE [SIZE = 2]: [0, 2] <--- 2)
-#define TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY 1    // Prints currentData.occupancyNet using ASCII characters to produce a large number that can be read at a distance.
+#define TOF_PRINT_SENSOR_MEASUREMENTS 0             // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
+#define TOF_PRINT_STACK_VISUALIZATION 0             // Actively prints a visual representation of the occupancyState stack and the line number (Ex. SEQUENCE [SIZE = 2]: [0, 2] <--- 2)
+#define TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY 0    // Prints currentData.occupancyNet using ASCII characters to produce a large number that can be read at a distance.
 #define TOF_PRINT_OCCUPANCY_STATE_TENFOOTDISPLAY 0  // Prints the occupancy state using ASCII characters to produce a large number that can be read at a distance.
 #define TOF_PRINT_ROI_DETAILS 0                     // Prints details about the ROI for each zone
 
@@ -70,7 +70,7 @@
 #define TOF_DEFAULT_OCCUPANCY_CALIBRATION_LOOPS 30          // How many sets of samples to take during occupancy calibration (2 samples each). Increasing this may reduce noise.
 #define TOF_DEFAULT_FLOOR_INTERFERENCE_BUFFER 500           // Flat value (in mm) to subtract from  the measured distance in order to rule out variations that occur in measurements taken of the floor.
 #define TOF_DEFAULT_DETECTIONS_PER_SECOND 10                // Number of detections to make per second when in detection mode on the TOF sensor module (this rate is slower than that of measure mode).
-#define TOF_DEFAULT_DISTANCE_MODE 2                         // Default distance mode for the sensor (0 = short, 1 = medium, 2 = long)
+#define TOF_DEFAULT_DISTANCE_MODE 1                         // Default distance mode for the sensor (0 = short, 1 = medium, 2 = long)
 #define TOF_CALIBRATION_RETRY_DELAY 200                     // Length of time (in ms) to delay if, during calibration, we detect a person and need to try again.
 
                     /**  Table of Optical Centers   ***
