@@ -160,7 +160,7 @@ int TofSensor::detect(){
   }
 
   #if TOF_PRINT_SENSOR_MEASUREMENTS                             // Logs the detection distance.
-    Log.infoln("[DETECTING]                    {detection zone = %dmm}                  ", detectionDistance);
+    Log.infoln("[DETECTING]                   {detection zone = %dmm}                  ", detectionDistance);
   #endif
   
   #if TOF_PRINT_ROI_DETAILS
@@ -241,7 +241,7 @@ int TofSensor::measure(){
     }
 
     #if TOF_PRINT_SENSOR_MEASUREMENTS                               // Logs both zones' distances for this loop.
-      zone == 0 ? Log.infoln("[MEASURING]  {zone1 = %dmm}", measurementDistances[zone]) : Log.infoln("[MEASURING]                                      (zone2 = %dmm)", measurementDistances[zone]);
+      zone == 0 ? Log.infoln("[MEASURING]  {zone1 = %dmm}", measurementDistances[zone]) : Log.infoln("[MEASURING]                                             {zone2 = %dmm}", measurementDistances[zone]);
     #endif
 
     #if TOF_PRINT_ROI_DETAILS
