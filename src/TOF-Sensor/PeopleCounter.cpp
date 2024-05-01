@@ -104,6 +104,7 @@ bool PeopleCounter::loop(){
   }
   
   if(stateStack.count() == 5){              // If the stack is finished ...
+    LED.on();
     char states[56];                        // ... turn it into a string by popping all values off the stack...
     #if TOF_PRINT_STACK_VISUALIZATION 
       Log.infoln("[Line 109]: SEQUENCE [SIZE = %i]: [%i, %i, %i, %i, %i] <--- %i", stateStack.count(), stateStack.peekIndex(0), stateStack.peekIndex(1), stateStack.peekIndex(2), stateStack.peekIndex(3), stateStack.peekIndex(4), newOccupancyState);
@@ -124,7 +125,8 @@ bool PeopleCounter::loop(){
       }
       #if TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
           printBigNumbers(current.occupancyNet);
-      #endif       
+      #endif  
+      LED.off();     
       return true;                    
     } else if(strcmp(states, "01320") == 0) {    // If the sequence backwards(because of stack) matches the decrement sequence then decrement the count ...
       if(sysStatus.placement) {                    // ... but reverse the count (increment) if we are mounted inside.               
@@ -144,6 +146,7 @@ bool PeopleCounter::loop(){
       #if TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY
           printBigNumbers(current.occupancyNet);
       #endif
+      LED.off();
       return true;
     } else {
       Log.infoln("ERROR: Algorithm somehow produced states: %s, resetting stack", states);     // ... if the sequence does not match the decrement or increment sequence, do nothing.

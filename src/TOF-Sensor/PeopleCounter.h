@@ -14,6 +14,7 @@
 #include "Config.h"
 #include "ErrorCodes.h"
 #include "TofSensor.h"
+#include "stsLED.h"
 
 /**
  * This class is a singleton; you do not create one as a global, on the stack, or with new.
