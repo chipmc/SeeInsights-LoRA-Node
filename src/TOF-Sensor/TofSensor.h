@@ -49,12 +49,20 @@ public:
     int loop();
 
     /**
-     * @brief Takes 2 consecutive and alternating measurements of signal strength for both SPAD optical zones and
+     * @brief Takes 2 consecutive and alternating measurements of distance for both SPAD optical zones and
      * stores them in a 2D array.
      * 
      * You typically use TofSensor::instance().measure();
      */
     int measure();
+
+     /**
+     * @brief Takes 1 measurement of distance using the entire 16x16 array of SPADS, at a lower polling
+     * rate, to see if a person is underneath and we need to begin measuring normally.
+     * 
+     * You typically use TofSensor::instance().detect();
+     */
+    int detect();
 
     /**
      * @brief These functions will return the last signal distance measurement in mm for each of the zones.
@@ -81,7 +89,7 @@ public:
     /**
      * @brief This function is called as part of the startup process to ensure the sensor does not see any obstructions
      * 
-     * @details Stores the maximum and minimum signal strengths, designated as the "baseline" range, for each spad.
+     * @details Stores the maximum and minimum distances, designated as the "baseline" range, for each spad.
      * Protected as this should only be called from the TofSensor setup process.
      * 
     */
@@ -92,6 +100,18 @@ public:
      * 
     */
     bool recalibrate();
+
+private:
+
+    /**
+     * @brief Configures the distanceMode and the minimum timing budget on the sensor, given sysStatus.distanceMode
+     * 
+     * @param distanceMode the distanceMode in the sysStatus struct
+     * @param zoneDepth the SPAD depth (through the door)
+     * @param zoneWidth the SPAD width (across the door)
+     * @param zoneOpticalCenter the numbered SPAD to use as the center of the zone being configured (see Config.h)
+    */
+    void configureSensor(uint8_t distanceMode, uint8_t zoneDepth, uint8_t zoneWidth, uint8_t zoneOpticalCenter);
 
 protected:
     /**

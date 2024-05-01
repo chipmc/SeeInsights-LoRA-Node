@@ -32,6 +32,16 @@
 // v11.3 - Added Alert Code 12 - Gateway can manually set the occupancyNet value
 // v11.4 - Breaking change - Gateway v17.5 or later - changed size of alertContext in data payload to uint16_t, expanded range of interferenceBuffer and occupancyCalibrationLoops
 // v11.5 - fixed bug with space, where we were checking the wrong index in buffer in Lora_Functions.cpp
+// v11.6 - Added a feature to put the device to sleep when the battery charge gets below 10%
+// v11.7 - Fixed issue with Battery Interrupt - need to use an internal pull-up
+// v11.8 - Now using the !SHUTDOWN pin on the MAX17048 for sleep mode (note no shutdown pin for the PIR sensor)
+// v11.9 - Potnential fix for device locking up when going to sleep - added a delay after turning off the I2C bus
+// v11.6 - Added a feature to put the device to sleep when the battery charge gets below 10%
+// v11.7 - Fixed issue with Battery Interrupt - need to use an internal pull-up
+// v11.8 - Now using the !SHUTDOWN pin on the MAX17048 for sleep mode (note no shutdown pin for the PIR sensor)
+// v12 - TOF Sensor now has a 'detection' mode, where it will detect people using a 16x16 array of SPADS with a configurable intermeasurement period before measuring at the max rate
+// 		... Gateway can now configure TOF detections per second through particle command (see README of gateway)
+//		... Requires Gateway v21.5 or later for particle function to be available
 
 /*
 Wish List:
@@ -59,8 +69,8 @@ const uint8_t firmwareRelease = 11;
 // Instandaitate the classes
 
 // State Machine Variables
-enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, SLEEPING_STATE, ACTIVE_PING, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
-char stateNames[8][16] = {"Initialize", "Error", "Idle", "Sleeping", "Active Ping","LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
+enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, SLEEPING_STATE, LOW_BATTERY, ACTIVE_PING, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
+char stateNames[9][16] = {"Initialize", "Error", "Idle", "Sleeping", "Low Battery", "Active Ping","LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
 volatile State state = INITIALIZATION_STATE;
 State oldState = INITIALIZATION_STATE;
 
@@ -82,7 +92,7 @@ volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO
 // Device Setup
 void setup() 
 {
-	Wire.begin(); 									// Establish Wire.begin for I2C communication
+	Wire.begin(); 										// Establish Wire.begin for I2C communication
 	Serial.begin(115200);								//Establish Serial connection if connected for debugging
 	delay(2000);
 
@@ -92,15 +102,16 @@ void setup()
 
 	//Initialize each class used in this program
 	pinout::instance().setup();							// Pins and their modes
-	gpio.setup();											// GPIO pins
+	gpio.setup();										// GPIO pins
 	LED.setup(gpio.STATUS);								// Led used for status
 	LED.on();
-	sysData.setup();										// System state persistent store
+	sysData.setup();									// System state persistent store
 	delay(100);											// Reduce initialization errors - to be tested
 	timeFunctions.setup();
 	currentData.setup();
 	sysStatus.firmwareRelease = firmwareRelease;
 	measure.setup();
+	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
 	// Need to set up the User Button pressed action here
 	LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
@@ -153,13 +164,15 @@ void loop()
 				keepAwake = millis();
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
-			if ((currentStatusData::instance().currentDataChanged == true) && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
+
+			if (current.batteryState == 0) state = LOW_BATTERY;					// Battery level is very low - going to sleep until we get some charge
+			else if ((currentStatusData::instance().currentDataChanged == true) && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
 			    state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
 				Log.infoln("Current data changed - going to transmit");
 			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
-			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;	    // If nothing else, go back to sleep - keep awake for 1 second 
+			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;		// If nothing else, go back to sleep - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {
@@ -170,8 +183,10 @@ void loop()
 			if (digitalRead(gpio.I2C_INT)){Log.infoln("Sensor pin(line2) still high - delaying sleep"); break;}
 
 			publishStateTransition();              								// Publish state transition
-			// How long to sleep
-			time_t currentTime = timeFunctions.getTime();
+
+			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
+
+			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 			unsigned long sleepTime = (sysStatus.nextConnection - currentTime > 0) ? sysStatus.nextConnection - currentTime : 60UL;
 
 			if (timeFunctions.isRTCSet()) {
@@ -191,9 +206,12 @@ void loop()
 
 			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
 			timeFunctions.interruptAtTime(time, 0);                 			// Set the interrupt for the next event
-			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
-			LowPower.deepSleep(timeFunctions.WDT_MaxSleepDuration);												// Go to sleep
+			digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
+			delay(50);
+			LowPower.deepSleep(timeFunctions.WDT_MaxSleepDuration);				// Go to sleep
 			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+			digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
+			Log.infoln("Woke up from sleep and turning sensor on");
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
 				state = IDLE_STATE;
@@ -219,7 +237,36 @@ void loop()
 				state = IDLE_STATE;
 			}
 
-			// sensorControl(sysStatus.get_sensorType(),true);					   // Enable the sensor
+			// sensorControl(sysStatus.get_sensorType(),true);					// Enable the sensor
+
+		} break;
+
+		case LOW_BATTERY: {														// This is our low power state - ignoring all else
+
+			if (state != oldState) {
+				publishStateTransition();													
+				Log.infoln("Transition to Low Battery operations");
+				LoRA.sleepLoRaRadio();											// Make sure the radio is off
+				LED.off();														// Turn off the led in case it was on
+			}
+
+			// How long to sleep
+			time_t time = timeFunctions.getTime() + 3600UL;						// We will sleep for one hour and then check to see if the battery had recovered
+			unsigned long time_millis = time * 1000UL;
+
+			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
+			digitalWrite(gpio.I2C_EN, LOW);									// Turn off the I2C bus (pre-production module)
+			Log.infoln("Going to sleep for one hour with sensor off");
+
+			timeFunctions.interruptAtTime(time + 1, 0);                 		// Set the interrupt for the next event - this is the backup alarm - like a snooze button
+			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
+			LowPower.deepSleep(time_millis);									// Go to sleep
+			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+			digitalWrite(gpio.I2C_EN, HIGH);									// Turn off the I2C bus (pre-production module)
+			Log.infoln("Waking up the sensor");
+
+			measure.takeMeasurements();											// Check to see if the battery is charged
+			state = IDLE_STATE;
 
 		} break;
 
@@ -401,6 +448,12 @@ void loop()
 			case 12: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
 				current.occupancyNet = sysStatus.alertContextNode;
 				Log.infoln("Alert code 12 - Gateway has overwritten occupancyNet. New occupancyNet: %d", current.occupancyNet);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 13: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
+				sysStatus.tofDetectionsPerSecond = sysStatus.tofDetectionsPerSecond;
+				Log.infoln("Alert code 13 - TOF Sensor Polling Rate now set to %dms", sysStatus.tofDetectionsPerSecond);
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;

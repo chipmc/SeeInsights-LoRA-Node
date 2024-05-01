@@ -31,6 +31,27 @@ void take_measurements::setup() {
   if (!maxlipo.begin()) {
     Log.infoln("MAX17048 initialization failed!");
   }
+  else {                                                          // Iniitalization was successful - now we need to configure the device
+    // TODO:: test to see if this can be shorter
+    delay (100);                                                  // Give the MAX17048 time to initialize (it takes 1 second) - does not work without this 
+    maxlipo.setAlertVoltages(3.7 , 4.2);                          // Set the alert voltages to 3.6V and 4.2V - https://blog.ampow.com/lipo-voltage-chart/
+
+    // Next we need to check to see if the battery alert flag needs to be cleared
+    if (digitalRead(gpio.BATTINT) == LOW) {                       // If the interrupt is active low there is an alert (need to determine what the alert is for)
+      if (maxlipo.cellVoltage() > 3.7) {
+        maxlipo.clearAlertFlag(0x00);                             // If the voltage is above 3.7V then we can clear the alert flag
+        current.batteryState = 1;                                 // This is the state where the battery is 10% or more
+      }
+      else {
+        current.batteryState = 0;                                 // This is the state where the battery is less than 10%
+      }
+    }
+
+    byte activeAlert = maxlipo.getAlertStatus();                  // Get the alert status
+
+    Log.infoln("Battery alert value of %d which is %s and battery interrupt is %s battery voltage at %FV and charge at %F%%", activeAlert, (activeAlert | 0b00000010)? "active" : "not active", (digitalRead(gpio.BATTINT)) ? "HIGH" : "LOW", maxlipo.cellVoltage(), maxlipo.cellPercent());
+
+  }
 
   if (TofSensor::instance().setup()) {
     Log.infoln("VL53L1X initialized");
@@ -38,12 +59,10 @@ void take_measurements::setup() {
 
   PeopleCounter::instance().setup();
 
-  delay (1000);         // Give the MAX17048 time to initialize (it takes 1 second) - does not work without this 
-  // TODO:: test to see if this can be shorter
 }
 
 bool take_measurements::loop() {
-    if (TofSensor::instance().loop()) {             // If there is new data from the sensor ...
+    if (TofSensor::instance().loop()) {                        // If there is new data from the sensor ...
       return PeopleCounter::instance().loop();                 // ... then check to see if we need to update the counts.
     }
     return false;
@@ -58,17 +77,16 @@ bool take_measurements::recalibrate() {
 
 bool take_measurements::takeMeasurements() { 
     bool returnResult = false;
-      
-      if (!take_measurements::getTemperatureHumidity()) returnResult = false;  // Temperature and humidity inside the enclosure
-      if (!take_measurements::batteryState()) returnResult = false;// Using the Fuel guage
-      if (!take_measurements::isItSafeToCharge()) returnResult = false; // This will be a safety check - Thermister on charge controller should manage
-      currentStatusData::instance().currentDataChanged = true; // This is a flag that will be used to indicate that the data has changed and needs to be saved
+    if (!take_measurements::getTemperatureHumidity()) returnResult = false;  // Temperature and humidity inside the enclosure
+    if (!take_measurements::batteryState()) returnResult = false;// Using the Fuel guage
+    if (!take_measurements::isItSafeToCharge()) returnResult = false; // This will be a safety check - Thermister on charge controller should manage
+    currentStatusData::instance().currentDataChanged = true; // This is a flag that will be used to indicate that the data has changed and needs to be saved
     return returnResult;
-
 }
 
 
 bool take_measurements::getTemperatureHumidity() { 
+
   float t = sht31.readTemperature();
   float h = sht31.readHumidity();
 
@@ -90,26 +108,43 @@ bool take_measurements::getTemperatureHumidity() {
 }
 
 
-bool take_measurements::batteryState() {
-  float voltage = maxlipo.cellVoltage();
-  float percent = maxlipo.cellPercent();
+bool take_measurements::batteryState() {                              // This function returns false if it cannot get valid readings
 
-  if (isnan(voltage)) {
-    Log.infoln("Failed to get battery voltage");
+  if (current.batteryState == 0) {                                    // In this state, the battery has been measured as less than 10%
+    maxlipo.quickStart();
+    delay(2000);                                                      // We will give ourselves a couple seconds to let the fuel guage wake fully
+  }
+
+  if (digitalRead(gpio.BATTINT) == LOW) {                             // If the interrupt is active low there is an alert (need to determine what the alert is for)
+    byte activeAlert = maxlipo.getAlertStatus();                  // Get the alert status
+    Log.infoln("Battery alert value of %d which is %s and battery interrupt is %s battery voltage at %FV and charge at %F%%", activeAlert, (activeAlert | 0b00000010)? "active" : "not active", (digitalRead(gpio.BATTINT)) ? "HIGH" : "LOW", maxlipo.cellVoltage(), maxlipo.cellPercent());
+    if (maxlipo.cellVoltage() < 3.7) current.batteryState = 0;                                   // This is the state where the battery is less than 10%
+  }
+  else {                                                              // If the interrupt high then we are above 3.7V 
+    if (maxlipo.cellVoltage() >=3.7) {
+      maxlipo.clearAlertFlag(0x00);                                   // Clear all the alert flags
+      current.batteryState = 1;                                       // This is the state where the battery is 10% or more
+    }
+  }
+
+  float voltage = maxlipo.cellVoltage();
+  if (voltage > 4.2) {
+    Log.infoln("Failed to get valid battery voltage");
     return false;
   }
 
-  if ((isnan(percent))) {
-    Log.infoln("Failed to get battery percent charge");
+  float percent = maxlipo.cellPercent();                               // There is no error checking in the Adafruit lib - so, +100% is an invalid result
+  if (percent < 0.00 || percent > 101.0) {
+    current.batteryState = 2;                                          // This indicates that we did not get a valid state of charge measurement
+    Log.infoln("Failed to get battery percent charge - %F%%", percent);
+    return false;
   }
 
-  current.batteryState = 0;  // TODO:: Need to get this from the battery controller somehow
-  current.stateOfCharge = percent;
+  current.stateOfCharge = percent;                                     // This stores the value in 8bits (we don't need the float)
   Log.infoln("Batt Voltage: %FV and %F%% charged ", voltage, percent);
   return true;
-
-
 }
+
 
 
 bool take_measurements::isItSafeToCharge()                             // Returns a true or false if the battery is in a safe charging range.

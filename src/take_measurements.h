@@ -25,6 +25,7 @@
 #include "timing.h"
 #include "TOF-Sensor/ErrorCodes.h"
 #include "TOF-Sensor/PeopleCounter.h"
+#include "pinout.h"
 
 #define measure take_measurements::instance()
 
