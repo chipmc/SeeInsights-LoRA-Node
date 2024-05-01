@@ -21,16 +21,17 @@ SerialConnection &SerialConnection::instance() {
 
 bool SerialConnection::initialize() {
     Serial1.begin(115200);                              // Open serial port to communicate with Serial1 device
-    Log.info("Initializing Serial Connection - SerialConnection::initialize()");
+    Log.infoln("Started up Serial1 - SerialConnection::initialize()");
     return true;
 }
 
 bool SerialConnection::sendMessage(const char *message) {       // This function will send a message to the serial asset                         
     if (Serial1.available()) {
         Serial1.println(message);
+        Log.infoln("Sent message \"%s\" over Serial1.");
         return true;
     }
-    Log.info("Could not send message, Serial1 is not available - SerialConnection::sendMessage()");
+    Log.infoln("Could not send message, Serial1 is not available - SerialConnection::sendMessage()");
     return false;
 }
 
@@ -39,23 +40,28 @@ bool SerialConnection::receiveMessage(char *response, int responseSize) {       
     unsigned long readStart = millis();   // Safely wait here until there is data available to read - takes the device a beat to respond.
     while(millis() - readStart < 4000){}; // Give plenty of time for the device to output.
 
-    while(Serial1.available()) {                                             // Check if there is data available to read                 
-        int numBytes = Serial1.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
-        if (numBytes > 0) {
-            buffer[numBytes] = 0;
-            strncpy(response, buffer, responseSize);                         // Copy the response to the response buffer
-            buffer[0] = 0;                                                   // Clear the buffer
-            // Clear any remaining data in the Serial1 output buffer
-            while (Serial1.available()) {
-                delay(10);
-                Serial1.read();
+    if(Serial1.available()){
+        while(Serial1.available()) {                                             // Check if there is data available to read                 
+            int numBytes = Serial1.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
+            if (numBytes > 0) {
+                buffer[numBytes] = 0;
+                strncpy(response, buffer, responseSize);                         // Copy the response to the response buffer
+                buffer[0] = 0;                                                   // Clear the buffer
+                // Clear any remaining data in the Serial1 output buffer
+                while (Serial1.available()) {
+                    delay(10);
+                    Serial1.read();
+                }
+                Log.infoln("Response received from Serial1: %s - SerialConnection::receiveMessage()", response);
+                return true;                                                     // Return true to indicate that there was a response
             }
-            return true;                                                     // Return true to indicate that there was a response
+            else {
+                Log.infoln("SerialConnection received no bytes - SerialConnection::receiveMessage()");
+                return false;
+            }
         }
-        else {
-            Log.info("SerialConnection received no bytes - SerialConnection::receiveMessage()");
-            return false;
-        }
+    } else {
+        Log.infoln("Could not receive message, Serial1 is not available - SerialConnection::receiveMessage()");
     }
     return false;
 }
