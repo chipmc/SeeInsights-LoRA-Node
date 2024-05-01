@@ -28,8 +28,9 @@ bool MachineVisionCamera::setup(int sensorType) {
     
     // Instantiate the appropriate CameraInterface instance based on sensorType
     switch (sensorType) {
-        case 0: // TODO:: Create sensorTypes for machine vision cameras
+        case 99: // TODO:: Create sensorTypes for machine vision cameras
             _camera = &OpenMVH7Plus::instance(); // Get reference to singleton instance
+            Log.infoln("MachineVisionCamera initialized as OpenMVH7Plus - MachineVisionCamera::setup()");
             break;
         // Create other CameraInterface implementors here
         default:
