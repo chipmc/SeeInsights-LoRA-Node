@@ -59,7 +59,7 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 14                           // Version of the data structures (system and data)
+#define STRUCTURES_VERSION 17                           // Version of the data structures (system and data)
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
@@ -155,13 +155,16 @@ public:
 		uint8_t alertCodeNode;                            // Alert code from node
         uint16_t alertContextNode;                        // Alert context from node
         uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
+        uint16_t alertContextNode;                        // Alert context from node
+        uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
         uint8_t space;                                    // Assciates the node with a space - this value is changed by the Gateway
         uint8_t placement;                                // 0 for outside, 1 for inside - determines whether we count up or down - this value is changed by the Gateway
         uint8_t multi;                                    // 1 if this device is taking occupancy of a room with more than one entrance, prevents negative counts - this value is changed by the Gateway
         uint8_t zoneMode;                                 // The predefined SPAD configuration of a ToF Sensor. See Config.h for a description of the zone modes.
         uint16_t interferenceBuffer;                      // The floor interference buffer of a ToF Sensor.
         uint16_t occupancyCalibrationLoops;               // The number of calibration loops to execute for a ToF Sensor during calibration.
-        uint8_t distanceMode;                             // The distance mode for the TOF sensor. 0 = short (up to 1.3m), 1 = medium (up to 3m), 2 = long (up to 4m)
+        uint8_t distanceMode;                             // The distance mode for a TOF sensor asset. 0 = short (up to 1.3m), 1 = medium (up to 3m), 2 = long (up to 4m)
+        uint8_t tofDetectionsPerSecond;                   // The number of detections to make per second when in detection mode on the TOF sensor
     };
 	SystemDataStructure sysStatusStruct;
 

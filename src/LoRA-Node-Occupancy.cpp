@@ -36,6 +36,12 @@
 // v11.7 - Fixed issue with Battery Interrupt - need to use an internal pull-up
 // v11.8 - Now using the !SHUTDOWN pin on the MAX17048 for sleep mode (note no shutdown pin for the PIR sensor)
 // v11.9 - Potnential fix for device locking up when going to sleep - added a delay after turning off the I2C bus
+// v11.6 - Added a feature to put the device to sleep when the battery charge gets below 10%
+// v11.7 - Fixed issue with Battery Interrupt - need to use an internal pull-up
+// v11.8 - Now using the !SHUTDOWN pin on the MAX17048 for sleep mode (note no shutdown pin for the PIR sensor)
+// v12 - TOF Sensor now has a 'detection' mode, where it will detect people using a 16x16 array of SPADS with a configurable intermeasurement period before measuring at the max rate
+// 		... Gateway can now configure TOF detections per second through particle command (see README of gateway)
+//		... Requires Gateway v21.5 or later for particle function to be available
 
 /*
 Wish List:
@@ -442,6 +448,12 @@ void loop()
 			case 12: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
 				current.occupancyNet = sysStatus.alertContextNode;
 				Log.infoln("Alert code 12 - Gateway has overwritten occupancyNet. New occupancyNet: %d", current.occupancyNet);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 13: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
+				sysStatus.tofDetectionsPerSecond = sysStatus.tofDetectionsPerSecond;
+				Log.infoln("Alert code 13 - TOF Sensor Polling Rate now set to %dms", sysStatus.tofDetectionsPerSecond);
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
