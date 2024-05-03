@@ -186,12 +186,15 @@ void loop()
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 
 			if ((currentStatusData::instance().currentDataChanged == true)) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
+				Log.infoln("Current data has changed - going to transmit");
 				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
 				currentStatusData::instance().currentDataChanged = false; // Set currentDataChanged to false so that, if another count comes in within TRANSMIT_LATENCY seconds, we refresh the wait time
 			}
 
 			if (sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
+				Log.infoln("Report is overdue - going to transmit");
 				state = LoRA_TRANSMISSION_STATE;	// transmit now
+				break;
 			} else {		// otherwise, go to sleep 
 				unsigned long sleepTime = sysStatus.nextConnection - currentTime;	
 				Log.infoln("Going to sleep for %u seconds", sleepTime);

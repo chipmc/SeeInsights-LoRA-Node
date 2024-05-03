@@ -137,7 +137,8 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 		uint16_t secondsTillNextReport = (buf[9] << 8 | buf[10]);			// Frequency of reporting set by Gateway
 		if (secondsTillNextReport < 60) secondsTillNextReport = 60;		// Minimum of 60 seconds
 		sysStatus.nextConnection = timeFunctions.getTime() + secondsTillNextReport;
-		Log.infoln("Set clock to %u and next report is in %u seconds", timeFunctions.getTime(), secondsTillNextReport);
+
+		Log.infoln("Next report is in %u seconds", secondsTillNextReport);
 
 		// Process Alert Codes
 		sysStatus.alertCodeNode = buf[11];			// The gateway may set an alert code for the node

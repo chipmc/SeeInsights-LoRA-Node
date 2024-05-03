@@ -46,6 +46,6 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp"
     },
-    "cmake.sourceDirectory": "C:/Users/alexb/OneDrive/Desktop/Orbit/SeeInsights-LoRA-Node/.pio/libdeps/adafruit_feather_m0/Adafruit BusIO",
+    "cmake.sourceDirectory": "/Users/chipmc/Documents/Maker/PlatformIO/SeeInsights-LoRA-Node/.pio/libdeps/adafruit_feather_m0/Adafruit BusIO",
     "C_Cpp.default.compilerPath": "C:/Users/alexb/chipmc/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc"
 }
