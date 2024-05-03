@@ -89,6 +89,7 @@ void wakeUp_Timer();
 // Program Variables
 volatile bool userSwitchDetected = false;		
 volatile bool sensorDetect = false;
+volatile bool pendingReport = false;
 volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor
 
 // Device Setup
@@ -185,10 +186,10 @@ void loop()
 			
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 
-			if ((currentStatusData::instance().currentDataChanged == true)) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
+			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
 				Log.infoln("Current data has changed - going to transmit");
 				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
-				currentStatusData::instance().currentDataChanged = false; // Set currentDataChanged to false so that, if another count comes in within TRANSMIT_LATENCY seconds, we refresh the wait time
+				pendingReport = false;
 			}
 
 			if (sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
@@ -274,7 +275,13 @@ void loop()
 				Log.infoln("Active Ping with occupancyNet of %d. occupancyGross of %d and occupancyState of %d", current.occupancyNet, current.occupancyGross, current.occupancyState);
 			}
 
+			int16_t occupancyBeforeMeasure = current.occupancyNet;
+			
 			measure.loop();	
+
+			int16_t occupancyAfterMeasure = current.occupancyNet;
+
+			pendingReport = (occupancyBeforeMeasure == occupancyAfterMeasure) ? false : true;
 
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
 				state = IDLE_STATE;																// ... and go back to IDLE_STATE

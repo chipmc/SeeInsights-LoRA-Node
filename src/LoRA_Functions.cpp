@@ -91,7 +91,7 @@ void LoRA_Functions::sleepLoRaRadio() {
 }
 
 bool  LoRA_Functions::initializeRadio() {  			// Set up the Radio Module
-	digitalWrite(gpio.RFM95_RST,LOW);					// Reset the radio module before setup
+	digitalWrite(gpio.RFM95_RST,LOW);				// Reset the radio module before setup
 	delay(10);
 	digitalWrite(gpio.RFM95_RST,HIGH);
 	delay(10);
