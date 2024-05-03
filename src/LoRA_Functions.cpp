@@ -131,13 +131,18 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 		lora_state = (LoRA_State)messageFlag;
 		Log.infoln("Received from node %d with RSSI / SNR of %d / %d - a %s message with %d hops", from, driver.lastRssi(), rf95.lastSNR(), loraStateNames[lora_state], hops);
 
-		sysStatus.token = (buf[3] << 8 | buf[4]);						// Set the token for validation - good for the day
+		sysStatus.token = (buf[3] << 8 | buf[4]);									// Set the token for validation - good for the day
 		sysStatus.lastConnection = ((buf[5] << 24) | (buf[6] << 16) | (buf[7] << 8) | buf[8]);	// Correct time from gateway
-		timeFunctions.setTime(sysStatus.lastConnection,0);  // Set time based on response from gateway
-		uint16_t secondsTillNextReport = (buf[9] << 8 | buf[10]);			// Frequency of reporting set by Gateway
-		if (secondsTillNextReport < 60) secondsTillNextReport = 60;		// Minimum of 60 seconds
+		timeFunctions.setTime(sysStatus.lastConnection,0);  						// Set time based on response from gateway
+		unsigned long secondsTillNextReport = (buf[9] << 8 | buf[10]);					// Frequency of reporting set by Gateway
+
+		if (secondsTillNextReport < 60) {
+			Log.infoln("Gateway set a frequency of %u seconds - setting to 60 seconds", secondsTillNextReport);
+			secondsTillNextReport = 60;					// Minimum of 60 seconds
+		}
+
+		Log.infoln("Next report in %u seconds",secondsTillNextReport);
 		sysStatus.nextConnection = timeFunctions.getTime() + secondsTillNextReport;
-		Log.infoln("Set clock to %u and next report is in %u seconds", timeFunctions.getTime(), secondsTillNextReport);
 
 		// Process Alert Codes
 		sysStatus.alertCodeNode = buf[11];			// The gateway may set an alert code for the node
