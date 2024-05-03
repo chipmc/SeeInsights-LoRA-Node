@@ -42,6 +42,7 @@
 // v12 - TOF Sensor now has a 'detection' mode, where it will detect people using a 16x16 array of SPADS with a configurable intermeasurement period before measuring at the max rate
 // 		... Gateway can now configure TOF detections per second through particle command (see README of gateway)
 //		... Requires Gateway v21.5 or later for particle function to be available
+// v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
 
 /*
 Wish List:
@@ -64,7 +65,7 @@ Wish List:
 #include "LoRA_Functions.h"
 #include "Config.h"
 
-const uint8_t firmwareRelease = 11;
+const uint8_t firmwareRelease = 13;
 
 // Instandaitate the classes
 
@@ -176,7 +177,6 @@ void loop()
 		} break;
 
 		case SLEEPING_STATE: {
-			time_t time;
 			IRQ_Reason = IRQ_Invalid;
 
 			if (digitalRead(gpio.INT)) {Log.infoln("Sensor pin(line1) still high - delaying sleep"); break;}									// If the sensor is still high, we need to stay awake
@@ -188,33 +188,18 @@ void loop()
 
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 			unsigned long sleepTime = (sysStatus.nextConnection - currentTime > 0) ? sysStatus.nextConnection - currentTime : 60UL;
-
-			if (timeFunctions.isRTCSet()) {
-				if (sysStatus.nextConnection < currentTime) {
-					time = timeFunctions.getTime() + 60UL;
-				}
-				else time = sysStatus.nextConnection - currentTime;
-				Log.infoln("Time is valid, set to wake by %s in %u seconds", (sleepTime > timeFunctions.WDT_MaxSleepDuration - 1) ? "watchdog" : "alarm", (sleepTime > timeFunctions.WDT_MaxSleepDuration -1) ? timeFunctions.WDT_MaxSleepDuration -1: sleepTime);
-			}
-			else {
-				time = timeFunctions.getTime() + 60UL;
-				Log.infoln("Time not valid, sleeping for 60 seconds");
-			}
-			// Turn things off to save power
-			// if (!sysStatus.openHours) if (sysStatus.openHours) sensorControl(sysStatus.get_sensorType(),false);
-			// Configure Sleep
+			Log.infoln("Going to sleep for %u seconds", sleepTime);
 
 			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
-			timeFunctions.interruptAtTime(time, 0);                 			// Set the interrupt for the next event
+			timeFunctions.interruptAtTime(currentTime + sleepTime, 0);          // Set the interrupt for the next event
 			digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
 			delay(50);
-			LowPower.deepSleep(timeFunctions.WDT_MaxSleepDuration);				// Go to sleep
+			LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
 			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
 			digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
-			Log.infoln("Woke up from sleep and turning sensor on");
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
-				state = IDLE_STATE;
+				state = LoRA_TRANSMISSION_STATE;								// A full period has passed - time to report
 			}
 			else if (IRQ_Reason == IRQ_RF95_DIO0) {
 				Log.infoln("Woke up for DIO0");
