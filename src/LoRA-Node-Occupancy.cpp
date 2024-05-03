@@ -89,7 +89,6 @@ void wakeUp_Timer();
 // Program Variables
 volatile bool userSwitchDetected = false;		
 volatile bool sensorDetect = false;
-volatile bool reportPending = false;
 volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor
 
 // Device Setup
