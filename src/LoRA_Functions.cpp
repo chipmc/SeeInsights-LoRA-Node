@@ -149,7 +149,7 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 
 		if (lora_state == DATA_ACK) { if(LoRA_Functions::instance().receiveAcknowledmentDataReportNode()) return true;}
 		else if (lora_state == JOIN_ACK) { if(LoRA_Functions::instance().receiveAcknowledmentJoinRequestNode()) return true;}
-		else {Log.infoln("Invaled LoRA message flag"); return false;}
+		else {Log.infoln("Invalid LoRA message flag"); return false;}
 
 	}
 	else LoRA_Functions::clearBuffer();

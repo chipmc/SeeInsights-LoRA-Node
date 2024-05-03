@@ -43,6 +43,7 @@
 // 		... Gateway can now configure TOF detections per second through particle command (see README of gateway)
 //		... Requires Gateway v21.5 or later for particle function to be available
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
+// v13.1 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
 
 /*
 Wish List:
@@ -86,8 +87,9 @@ void wakeUp_RFM95_IRQ();
 void wakeUp_Timer();
 
 // Program Variables
-volatile bool userSwitchDectected = false;		
+volatile bool userSwitchDetected = false;		
 volatile bool sensorDetect = false;
+volatile bool reportPending = false;
 volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor
 
 // Device Setup
@@ -167,10 +169,6 @@ void loop()
 			}
 
 			if (current.batteryState == 0) state = LOW_BATTERY;					// Battery level is very low - going to sleep until we get some charge
-			else if ((currentStatusData::instance().currentDataChanged == true) && timeFunctions.getTime() - sysStatus.lastConnection > TRANSMIT_LATENCY) {	// If the current data has changed and we have not connected in the last minute
-			    state = LoRA_TRANSMISSION_STATE;								// Go to transmit state
-				Log.infoln("Current data changed - going to transmit");
-			}
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
 			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;		// If nothing else, go back to sleep - keep awake for 1 second 
@@ -185,18 +183,29 @@ void loop()
 			publishStateTransition();              								// Publish state transition
 
 			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
-
+			
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
-			unsigned long sleepTime = (sysStatus.nextConnection - currentTime > 0) ? sysStatus.nextConnection - currentTime : 60UL;
-			Log.infoln("Going to sleep for %u seconds", sleepTime);
 
-			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
-			timeFunctions.interruptAtTime(currentTime + sleepTime, 0);          // Set the interrupt for the next event
-			digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
-			delay(50);
-			LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
-			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
-			digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
+			if ((currentStatusData::instance().currentDataChanged == true)) {	// If the current data has changed, set the next wake/report to 1 minute from now
+				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
+				currentStatusData::instance().currentDataChanged = false; // Set currentDataChanged to false so that, if another count comes in within TRANSMIT_LATENCY seconds, we refresh the wait time
+			}
+
+			if (sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
+				state = LoRA_TRANSMISSION_STATE;	// transmit now
+			} else {		// otherwise, go to sleep 
+				unsigned long sleepTime = sysStatus.nextConnection - currentTime;	
+				Log.infoln("Going to sleep for %u seconds", sleepTime);
+
+				timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
+				timeFunctions.interruptAtTime(currentTime + sleepTime, 0);          // Set the interrupt for the next event
+				digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
+				delay(50);
+				LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
+				timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+				digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
+			}
+			
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
 				state = LoRA_TRANSMISSION_STATE;								// A full period has passed - time to report
@@ -302,7 +311,6 @@ void loop()
 			publishStateTransition();                   						// Let everyone know we are changing state
 			sysStatus.lastConnection = timeFunctions.getTime();					// Prevents cyclical Transmits
 			measure.takeMeasurements();											// Taking measurements now should allow for accurate battery measurements
-			currentStatusData::instance().currentDataChanged = false;			// We have new data to send - clear so we don't get stuck in a loop
 			LoRA_Functions::instance().clearBuffer();
 			// Based on Alert code, determine what message to send
 			if (sysStatus.alertCodeNode == 0) result = LoRA_Functions::instance().composeDataReportNode();
@@ -456,9 +464,9 @@ void loop()
 	}
 
 	// Housekeeping
-	if (userSwitchDectected) {
+	if (userSwitchDetected) {
 		delay(100);																// Debounce the button press
-		userSwitchDectected = false;											// Clear the interrupt flag
+		userSwitchDetected = false;											// Clear the interrupt flag
 		// if (!listeningDurationTimer.isEnabled()) listeningDurationTimer.enableIfNot();		// Don't reset timer if it is already running
 		Log.infoln("Detected button press");
 		state = LoRA_TRANSMISSION_STATE;
@@ -510,7 +518,7 @@ void wakeUp_Timer() {
 }
 
 void userSwitchISR() {
-	userSwitchDectected = true;
+	userSwitchDetected = true;
   	IRQ_Reason = IRQ_UserSwitch;
 }
 
