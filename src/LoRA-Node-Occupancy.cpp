@@ -185,7 +185,7 @@ void loop()
 			
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 
-			if ((currentStatusData::instance().currentDataChanged == true)) {	// If the current data has changed, set the next wake/report to 1 minute from now
+			if ((currentStatusData::instance().currentDataChanged == true)) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
 				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
 				currentStatusData::instance().currentDataChanged = false; // Set currentDataChanged to false so that, if another count comes in within TRANSMIT_LATENCY seconds, we refresh the wait time
 			}
