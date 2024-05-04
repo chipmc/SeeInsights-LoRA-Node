@@ -281,7 +281,7 @@ void loop()
 
 			int16_t occupancyAfterMeasure = current.occupancyNet;
 
-			pendingReport = (occupancyBeforeMeasure == occupancyAfterMeasure) ? false : true;
+			if(occupancyBeforeMeasure != occupancyAfterMeasure) {pendingReport = true;}
 
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
 				state = IDLE_STATE;																// ... and go back to IDLE_STATE
