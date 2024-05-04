@@ -91,7 +91,7 @@ void LoRA_Functions::sleepLoRaRadio() {
 }
 
 bool  LoRA_Functions::initializeRadio() {  			// Set up the Radio Module
-	digitalWrite(gpio.RFM95_RST,LOW);					// Reset the radio module before setup
+	digitalWrite(gpio.RFM95_RST,LOW);				// Reset the radio module before setup
 	delay(10);
 	digitalWrite(gpio.RFM95_RST,HIGH);
 	delay(10);
@@ -135,8 +135,10 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 		sysStatus.lastConnection = ((buf[5] << 24) | (buf[6] << 16) | (buf[7] << 8) | buf[8]);	// Correct time from gateway
 		timeFunctions.setTime(sysStatus.lastConnection,0);  // Set time based on response from gateway
 		uint16_t secondsTillNextReport = (buf[9] << 8 | buf[10]);			// Frequency of reporting set by Gateway
-		sysStatus.nextConnection = sysStatus.lastConnection + secondsTillNextReport;
-		Log.infoln("Set clock to %i and next report is in %i seconds", timeFunctions.getTime(), secondsTillNextReport);
+		if (secondsTillNextReport < 60) secondsTillNextReport = 60;		// Minimum of 60 seconds
+		sysStatus.nextConnection = timeFunctions.getTime() + secondsTillNextReport;
+
+		Log.infoln("Next report is in %u seconds", secondsTillNextReport);
 
 		// Process Alert Codes
 		sysStatus.alertCodeNode = buf[11];			// The gateway may set an alert code for the node
@@ -148,7 +150,7 @@ bool LoRA_Functions::listenForLoRAMessageNode() {
 
 		if (lora_state == DATA_ACK) { if(LoRA_Functions::instance().receiveAcknowledmentDataReportNode()) return true;}
 		else if (lora_state == JOIN_ACK) { if(LoRA_Functions::instance().receiveAcknowledmentJoinRequestNode()) return true;}
-		else {Log.infoln("Invaled LoRA message flag"); return false;}
+		else {Log.infoln("Invalid LoRA message flag"); return false;}
 
 	}
 	else LoRA_Functions::clearBuffer();

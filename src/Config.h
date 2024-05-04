@@ -25,7 +25,7 @@
 
 /**  Timing Settings  **/
 #define TIME_HIGH_BEFORE_DETECTING 100UL        // Only initiate a detection if the sensor pin is high for TIME_HIGH_BEFORE_DETECTING ms
-#define TRANSMIT_LATENCY 5UL						        // How long do we wait after the last time we sent a message to send another=
+#define TRANSMIT_LATENCY 5UL						        // How many seconds do we wait to send a message after the count has changed
 
 /******************************************************************************************************/
 /**                                                                                                  **/
@@ -46,8 +46,8 @@
 
 /**  TOF Debugging Flags  **/
 #define TOF_PRINT_SENSOR_MEASUREMENTS 0             // Prints the 2-dimensional array of readings from each loop and visualizes the front and back zones. Works well with PropleCounterConfig's OCCUPANCYSTATE_DEBUG.
-#define TOF_PRINT_STACK_VISUALIZATION 0             // Actively prints a visual representation of the occupancyState stack and the line number (Ex. SEQUENCE [SIZE = 2]: [0, 2] <--- 2)
-#define TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY 0    // Prints currentData.occupancyNet using ASCII characters to produce a large number that can be read at a distance.
+#define TOF_PRINT_STACK_VISUALIZATION 1             // Actively prints a visual representation of the occupancyState stack and the line number (Ex. SEQUENCE [SIZE = 2]: [0, 2] <--- 2)
+#define TOF_PRINT_OCCUPANCY_NET_TENFOOTDISPLAY 1    // Prints currentData.occupancyNet using ASCII characters to produce a large number that can be read at a distance.
 #define TOF_PRINT_OCCUPANCY_STATE_TENFOOTDISPLAY 0  // Prints the occupancy state using ASCII characters to produce a large number that can be read at a distance.
 #define TOF_PRINT_ROI_DETAILS 0                     // Prints details about the ROI for each zone
 

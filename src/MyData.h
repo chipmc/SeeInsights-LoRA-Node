@@ -151,7 +151,7 @@ public:
         uint32_t uniqueID;                                // uniqueID - unique to each device
 		uint8_t resetCount;                               // reset count of device (0-256)
 		time_t lastConnection;                     		  // Last time we successfully connected to Particle
-		time_t nextConnection;                            // When we are reporing at minute increments - what are they - for Gateways
+		time_t nextConnection;                            // When is the next connection
 		uint8_t alertCodeNode;                            // Alert code from node
         uint16_t alertContextNode;                        // Alert context from node
         uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
