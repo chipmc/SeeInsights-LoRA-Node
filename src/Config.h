@@ -25,7 +25,7 @@
 
 /**  Timing Settings  **/
 #define TIME_HIGH_BEFORE_DETECTING 100UL        // Only initiate a detection if the sensor pin is high for TIME_HIGH_BEFORE_DETECTING ms
-#define TRANSMIT_LATENCY 5UL						        // How many seconds do we wait to send a message after the count has changed
+#define TRANSMIT_LATENCY 60UL						        // How many seconds do we wait to send a message after the count has changed
 
 /******************************************************************************************************/
 /**                                                                                                  **/
@@ -69,7 +69,7 @@
 /**  Calibration Settings  **/
 #define TOF_DEFAULT_OCCUPANCY_CALIBRATION_LOOPS 30          // How many sets of samples to take during occupancy calibration (2 samples each). Increasing this may reduce noise.
 #define TOF_DEFAULT_FLOOR_INTERFERENCE_BUFFER 500           // Flat value (in mm) to subtract from  the measured distance in order to rule out variations that occur in measurements taken of the floor.
-#define TOF_DEFAULT_DETECTIONS_PER_SECOND 10                // Number of detections to make per second when in detection mode on the TOF sensor module (this rate is slower than that of measure mode).
+#define TOF_DEFAULT_DETECTIONS_PER_SECOND 15                // Number of detections to make per second when in detection mode on the TOF sensor module (this rate is slower than that of measure mode).
 #define TOF_DEFAULT_DISTANCE_MODE 1                         // Default distance mode for the sensor (0 = short, 1 = medium, 2 = long)
 #define TOF_CALIBRATION_RETRY_DELAY 200                     // Length of time (in ms) to delay if, during calibration, we detect a person and need to try again.
 
