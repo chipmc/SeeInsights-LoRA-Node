@@ -23,9 +23,19 @@ bool OpenMVH7Plus::setup() {
 }
 
 bool OpenMVH7Plus::readData() {
-    char response[32];
-    if (SerialConnection::instance().receiveMessage(response, sizeof(response))){
-        return true;
+    char response[32] = {0};  // Initialize the array with zeros for safety.
+    if (SerialConnection::instance().receiveMessage(response, sizeof(response) - 1)) {
+        response[sizeof(response) - 1] = '\0'; // Ensure null termination
+        String str = response;
+        long value = str.toInt();  // Check if within range
+        if (value >= INT16_MIN && value <= INT16_MAX) {
+            current.occupancyNet = static_cast<int16_t>(value);
+            return true;
+        } else {
+            // Handle out-of-range values
+            Serial.println("Value out of range for occupancyNet - something is wrong with camera");
+            return false;
+        }
     } 
-    return false; 
+    return false;
 }

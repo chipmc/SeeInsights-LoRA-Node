@@ -2,6 +2,7 @@
 #define ASSET_INTERFACE_H
 
 #include <ArduinoLog.h>     // https://github.com/thijse/Arduino-Log
+#include "../MyData.h"
 
 /**
  * Defines default behavior that all asset types must implement
