@@ -59,7 +59,7 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 17                           // Version of the data structures (system and data)
+#define STRUCTURES_VERSION 18                           // Version of the data structures (system and data)
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
@@ -151,7 +151,7 @@ public:
         uint32_t uniqueID;                                // uniqueID - unique to each device
 		uint8_t resetCount;                               // reset count of device (0-256)
 		time_t lastConnection;                     		  // Last time we successfully connected to Particle
-		time_t nextConnection;                            // When we are reporing at minute increments - what are they - for Gateways
+		time_t nextConnection;                            // When is the next connection
 		uint8_t alertCodeNode;                            // Alert code from node
         uint16_t alertContextNode;                        // Alert context from node
         uint8_t sensorType;                               // PIR sensor, car counter, others - this value is changed by the Gateway
@@ -163,6 +163,8 @@ public:
         uint16_t occupancyCalibrationLoops;               // The number of calibration loops to execute for a ToF Sensor during calibration.
         uint8_t distanceMode;                             // The distance mode for a TOF sensor asset. 0 = short (up to 1.3m), 1 = medium (up to 3m), 2 = long (up to 4m)
         uint8_t tofDetectionsPerSecond;                   // The number of detections to make per second when in detection mode on the TOF sensor
+        uint8_t transmitLatencySeconds;                   // The number of seconds to wait (after a count) before sending a message to the gateway
+
     };
 	SystemDataStructure sysStatusStruct;
 

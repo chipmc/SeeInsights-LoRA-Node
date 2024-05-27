@@ -119,6 +119,7 @@ void sysStatusData::initialize() {
     sysStatus.occupancyCalibrationLoops = TOF_DEFAULT_OCCUPANCY_CALIBRATION_LOOPS;
     sysStatus.distanceMode = TOF_DEFAULT_DISTANCE_MODE;                       
     sysStatus.tofDetectionsPerSecond = TOF_DEFAULT_DETECTIONS_PER_SECOND;   
+    sysStatus.transmitLatencySeconds = TRANSMIT_LATENCY;   
 
     Log.infoln("Saving new system values, node number %i, uniqueID %u and magic number %i", sysStatus.nodeNumber, sysStatus.uniqueID, sysStatus.magicNumber);
     myMem.put(0,sysStatus.structuresVersion);
