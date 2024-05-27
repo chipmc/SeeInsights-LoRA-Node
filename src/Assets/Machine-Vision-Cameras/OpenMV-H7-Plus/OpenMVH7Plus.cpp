@@ -24,7 +24,6 @@ bool OpenMVH7Plus::setup() {
 
 bool OpenMVH7Plus::readData() {
     char response[32];
-    SerialConnection::instance().sendMessage("*IDN? \n"); // for test with magnetometer
     if (SerialConnection::instance().receiveMessage(response, sizeof(response))){
         return true;
     } 

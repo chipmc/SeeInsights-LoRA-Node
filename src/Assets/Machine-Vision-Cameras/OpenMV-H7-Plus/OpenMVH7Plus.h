@@ -1,13 +1,13 @@
 #ifndef __OPENMV_H7_PLUS_H
 #define __OPENMV_H7_PLUS_H
 
-#include "Machine-Vision-Cameras/CameraInterface.h"
+#include "Assets/AssetInterface.h"
 #include "Utils/Assets/Serial/SerialConnection.h"
 
 /**
  * OpenMV H7 Plus camera - Singleton that implements CameraInterface
  */
-class OpenMVH7Plus : public CameraInterface {
+class OpenMVH7Plus : public AssetInterface {
 public:
 
     /**

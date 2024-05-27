@@ -65,6 +65,7 @@ Wish List:
 #include "MyData.h"
 #include "LoRA_Functions.h"
 #include "Config.h"
+#include "Assets/Asset.h"
 
 const uint8_t firmwareRelease = 13;
 
@@ -114,6 +115,7 @@ void setup()
 	currentData.setup();
 	sysStatus.firmwareRelease = firmwareRelease;
 	measure.setup();
+	asset.setup(sysStatus.sensorType);
 	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
 	// Need to set up the User Button pressed action here
@@ -186,9 +188,9 @@ void loop()
 			
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 
-			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
+			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to transmitLatencySeconds from now
 				Log.infoln("Current data has changed - going to transmit");
-				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
+				sysStatus.nextConnection = currentTime + sysStatus.transmitLatencySeconds;	// Set nextConnection to transmitLatencySeconds from now
 				pendingReport = false;
 			}
 
@@ -320,6 +322,7 @@ void loop()
 			publishStateTransition();                   						// Let everyone know we are changing state
 			sysStatus.lastConnection = timeFunctions.getTime();					// Prevents cyclical Transmits
 			measure.takeMeasurements();											// Taking measurements now should allow for accurate battery measurements
+			asset.readData();													// Read data from any attached assets before reporting
 			LoRA_Functions::instance().clearBuffer();
 			// Based on Alert code, determine what message to send
 			if (sysStatus.alertCodeNode == 0) result = LoRA_Functions::instance().composeDataReportNode();
