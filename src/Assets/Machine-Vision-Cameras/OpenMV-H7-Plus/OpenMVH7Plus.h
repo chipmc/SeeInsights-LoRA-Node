@@ -21,7 +21,7 @@ public:
      * @brief Performs setup operations for the OpenMV H7 Plus camera.
      */
     bool setup() override;
-
+ 
     /**
      * @brief Reads data from an OpenMV H7 Plus, using a SerialConnection
      */
