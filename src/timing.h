@@ -124,9 +124,14 @@ public:
     bool isRTCSet();
 
     /**
-     * @brief deep Sleep the processor using the AB1805 for ultra low power
+     * @brief deep Sleep the processor using the AB1805 for ultra low power - limited 0-255 seconds
      */
-    void deepPowerDown(uint16_t seconds=30);
+    bool deepPowerDown(uint16_t seconds=30);
+
+    /**
+     * @brief Power off Sleep the processor using the AB1805 for ultra low power - Any time in future
+     */
+    bool deepPowerDownTime(time_t UnixTime, uint8_t hundredths);
 
 
 

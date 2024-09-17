@@ -44,6 +44,7 @@
 //		... Requires Gateway v21.5 or later for particle function to be available
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
 // v13.1 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
+// v14.0 - Added a new sleep library for power off sleep mode - requires the upgraded AB1805 library with powerOffTime() function
 
 /*
 Wish List:
@@ -66,7 +67,7 @@ Wish List:
 #include "LoRA_Functions.h"
 #include "Config.h"
 
-const uint8_t firmwareRelease = 13;
+const uint8_t firmwareRelease = 14;
 
 // Instandaitate the classes
 
@@ -198,13 +199,18 @@ void loop()
 				break;
 			} else {		// otherwise, go to sleep 
 				unsigned long sleepTime = sysStatus.nextConnection - currentTime;	
-				Log.infoln("Going to sleep for %u seconds", sleepTime);
+				Log.infoln("Going to %s sleep for %u seconds", (sleepTime>=3600) ? "Power Off":"Normal", sleepTime);
 
 				timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
-				timeFunctions.interruptAtTime(currentTime + sleepTime, 0);          // Set the interrupt for the next event
-				digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
-				delay(50);
-				LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
+				if (sleepTime >= 3600) {
+					timeFunctions.deepPowerDown(sleepTime);		// If we are going to sleep for more than an hour, use the AB1805 power off sleep mode
+				}
+				else {
+					timeFunctions.interruptAtTime(currentTime + sleepTime, 0);          // Set the interrupt for the next event
+					digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
+					delay(50);
+					LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
+				}
 				timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
 				digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
 			}

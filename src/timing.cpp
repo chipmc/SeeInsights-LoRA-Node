@@ -111,6 +111,10 @@ bool timing::isRTCSet(){
   return ab1805.isRTCSet();
 }
 
-void timing::deepPowerDown(uint16_t seconds){
-  ab1805.deepPowerDown(seconds);
+bool timing::deepPowerDown(uint16_t seconds){
+  return ab1805.deepPowerDown(seconds);
+}
+
+bool timing::deepPowerDownTime(time_t UnixTime, uint8_t hundredths){
+  return ab1805.deepPowerDownTime(UnixTime,hundredths);
 }
