@@ -11,6 +11,14 @@
 		{
 			"name": "LoRA-Connected-Counter",
 			"path": "../LoRA-Connected-Counter"
+		},
+		{
+			"name": "Accelerometer Test",
+			"path": "../../../PlatformIO/Projects/Accelerometer Test"
+		},
+		{
+			"name": "Accelerometer Test",
+			"path": "../Accelerometer Test"
 		}
 	],
 	"settings": {

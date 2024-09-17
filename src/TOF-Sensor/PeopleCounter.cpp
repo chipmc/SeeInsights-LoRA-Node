@@ -6,7 +6,7 @@
 // Note, this code is limited to a single sensor with two zones
 // Note, this code assumes that Zone 1 is the inner (relative to room we are measureing occupancy for) and Zone 2 is outer
 
-#include "Config.h"
+// #include "Config.h"
 #include "PeopleCounter.h"
 #include "utils/StackArray.h"
 

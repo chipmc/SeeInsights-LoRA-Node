@@ -104,7 +104,7 @@ void setup()
 	Log.infoln("PROGRAM: See Insights LoRa Node!" CR);
 
 	//Initialize each class used in this program
-	pinout::instance().setup();							// Pins and their modes
+	// pinout::instance().setup();						// Pins and their modes
 	gpio.setup();										// GPIO pins
 	LED.setup(gpio.STATUS);								// Led used for status
 	LED.on();
@@ -206,7 +206,7 @@ void loop()
 				delay(50);
 				LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
 				timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
-				digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
+				digitalWrite(gpio.I2C_EN, HIGH);									// Turn on the I2C bus (pre-production module)
 			}
 			
 			if (IRQ_Reason == IRQ_AB1805) {
