@@ -17,7 +17,8 @@
 #define IRQ_RF95_DIO0 2                         // ... value set when woken up by RF95_DIO0
 #define IRQ_RF95_IRQ 3                          // ... value set when woken up by RF95_IRQ
 #define IRQ_UserSwitch 4                        // ... value set when woken up by User Switch
-#define IRQ_Sensor  5                           // ... value set when woken upby sensor asset
+#define IRQ_PIR 5                               // ... value set when woken up by sensor asset
+#define IRQ_Accelerometer  6                    // ... value set when woken up by Accelerometer asset
 
 /*******************************************/
 /**           Node Configuration          **/

@@ -71,6 +71,11 @@ bool take_measurements::loop() {
     if (TofSensor::instance().loop()) {                        // If there is new data from the sensor ...
       return PeopleCounter::instance().loop();                 // ... then check to see if we need to update the counts.
     }
+    
+    if(sysStatus.sensorType == 13)                             // If we are an Accelerometer sensor...
+      if(Asset::instance().readData()) {                        
+        return true;
+      }
     return false;
 }
 

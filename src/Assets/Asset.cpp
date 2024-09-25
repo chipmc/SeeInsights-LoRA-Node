@@ -32,6 +32,10 @@ bool Asset::setup(int sensorType) {
             _asset = &OpenMVH7Plus::instance(); // Get reference to singleton instance
             Log.infoln("Asset initialized as OpenMVH7Plus - Asset::setup()");
             break;
+        case 13:    // Accelerometer Asset
+            _asset = &Accelerometer::instance(); // Get reference to singleton instance
+            Log.infoln("Asset initialized as Accelerometer - Asset::setup()");
+            break;
         // Create other AssetInterface implementors here
         default:
             return false; // Unsupported sensorType

@@ -10,8 +10,9 @@
 
 #include "AssetInterface.h"
 #include "./Machine-Vision-Cameras/OpenMV-H7-Plus/OpenMVH7Plus.h"
-// Add other asset types here if needed
+#include "./Accelerometer/Accelerometer.h"
 
+// Add other asset types here if needed
 
 /** 
  * Bridge Pattern - decouples this abstraction from CameraInterface implementations.

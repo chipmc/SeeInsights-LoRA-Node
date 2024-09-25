@@ -91,7 +91,7 @@ void wakeUp_Timer();
 volatile bool userSwitchDetected = false;		
 volatile bool sensorDetect = false;
 volatile bool pendingReport = false;
-volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor
+volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor 6 - Accelerometer
 
 // Device Setup
 void setup() 
@@ -114,8 +114,8 @@ void setup()
 	timeFunctions.setup();
 	currentData.setup();
 	sysStatus.firmwareRelease = firmwareRelease;
-	measure.setup();
-	asset.setup(sysStatus.sensorType);
+	sysStatus.sensorType == 13;
+	measure.setup(sysStatus.sensorType);
 	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
 	// Need to set up the User Button pressed action here
@@ -173,7 +173,7 @@ void loop()
 			if (current.batteryState == 0) state = LOW_BATTERY;					// Battery level is very low - going to sleep until we get some charge
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
-			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;		// If nothing else, go back to sleep - keep awake for 1 second 
+			// else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;		// If nothing else, go back to sleep - keep awake for 1 second 
 		} break;
 
 		case SLEEPING_STATE: {
@@ -223,8 +223,12 @@ void loop()
 				Log.infoln("Woke up for RF95 IRQ");
 				state = LoRA_LISTENING_STATE;
 			}
-			else if (IRQ_Reason == IRQ_Sensor) {
+			else if (IRQ_Reason == IRQ_PIR) {
 				Log.infoln("Woke up for Sensor"); 								// Interrupt from the PIR Sensor
+				state = IDLE_STATE;
+			}
+			else if (IRQ_Reason == IRQ_Accelerometer) {
+				Log.infoln("Woke up for Sensor"); 								// Interrupt from the Accelerometer Sensor
 				state = IDLE_STATE;
 			}
 			else if (IRQ_Reason == IRQ_UserSwitch) {
@@ -283,12 +287,31 @@ void loop()
 
 			int16_t occupancyAfterMeasure = current.occupancyNet;
 
-			if(occupancyBeforeMeasure != occupancyAfterMeasure) {pendingReport = true;}
+			if(occupancyBeforeMeasure != occupancyAfterMeasure) {	// if our occupancy has changed...
+				switch (sysStatus.sensorType){
+					case 10: {	// handle occupancy change for TOF Sensor
+						pendingReport = true;
+					} break;
+					case 11: {	// handle occupancy change for Accelerometer Sensor
+						if (occupancyBeforeMeasure == 0 && occupancyAfterMeasure == 1) { // transmit presence really quickly when detected, then we'll come back to active ping
+							state = LoRA_TRANSMISSION_STATE;
+							sensorDetect = true;	// keep sensorDetect true so we can come back to active ping from idle state
+						}
+						else if (occupancyBeforeMeasure == 1 && occupancyAfterMeasure == 0) { // when we no longer have any presence, pendingReport = true
+							pendingReport = true;
+						}
+					} break;
+					default: {          		
+						Log.info("Unknown sensor type in Active Ping %d", sysStatus.sensorType);
+						//TODO:: error here
+					} break;
+				}
+			}
 
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
 				state = IDLE_STATE;																// ... and go back to IDLE_STATE
 			}
-		}  break;
+		} break;
 
 		case LoRA_LISTENING_STATE: {															// Timers will take us to transmit and back to sleep
 			static unsigned long listeningStarted = 0;
@@ -322,7 +345,11 @@ void loop()
 			publishStateTransition();                   						// Let everyone know we are changing state
 			sysStatus.lastConnection = timeFunctions.getTime();					// Prevents cyclical Transmits
 			measure.takeMeasurements();											// Taking measurements now should allow for accurate battery measurements
-			asset.readData();													// Read data from any attached assets before reporting
+
+			if(sysStatus.sensorType == 12 /** add || for any other assets reading serial data here */) {
+				asset.readData();												// Read data from the asset before reporting
+			}
+
 			LoRA_Functions::instance().clearBuffer();
 			// Based on Alert code, determine what message to send
 			if (sysStatus.alertCodeNode == 0) result = LoRA_Functions::instance().composeDataReportNode();
@@ -331,7 +358,7 @@ void loop()
 				Log.infoln("Alert code = %d",sysStatus.alertCodeNode);
 				state = ERROR_STATE;
 				break;															// Resolve the alert code in ERROR_STATE
-			}		
+			}	
 
 			if (result) {
 				retryCount = 0;													// Successful transmission - go listen for response
@@ -542,5 +569,16 @@ void userSwitchISR() {
 
 void sensorISR() {	
 	sensorDetect = true;	      // flag that the sensor has detected something
-	IRQ_Reason = IRQ_Sensor;      // and write to IRQ_Reason in order to wake the device up
+	switch (sysStatus.sensorType) {
+		case 10: {   					// TOF Sensor
+			IRQ_Reason = IRQ_PIR;
+		} break;
+		case 13: {   					// Accelerometer
+			IRQ_Reason = IRQ_Accelerometer;
+		} break;
+		default: {          		
+			Log.info("Unknown sensor type in sensorISR %d", sysStatus.sensorType);
+			//TODO:: error here
+		} break;
+	}
 }

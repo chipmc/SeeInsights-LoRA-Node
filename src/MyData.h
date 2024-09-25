@@ -164,7 +164,8 @@ public:
         uint8_t distanceMode;                             // The distance mode for a TOF sensor asset. 0 = short (up to 1.3m), 1 = medium (up to 3m), 2 = long (up to 4m)
         uint8_t tofDetectionsPerSecond;                   // The number of detections to make per second when in detection mode on the TOF sensor
         uint8_t transmitLatencySeconds;                   // The number of seconds to wait (after a count) before sending a message to the gateway
-
+        uint8_t sensitivity;                              // For Tap sensor / Presence - sensitivty of the detector
+        uint8_t debounceMin;                              // For Tap sensor / Presence - many minutes after a tap before we declare no presence
     };
 	SystemDataStructure sysStatusStruct;
 
