@@ -1,5 +1,5 @@
 // Time of Flight Sensor Class
-// Author: Chip McClelland
+// Author: Chip McClelland, Alex Bowen
 // Date: May 2023
 // License: GPL3
 // This is the class for the ST Micro VL53L1X Time of Flight Sensor

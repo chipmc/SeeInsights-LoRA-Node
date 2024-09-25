@@ -1,4 +1,5 @@
 #include "LoRA_Functions.h"
+#include "Assets/Asset.h"
 
 RH_RF95 rf95(gpio.RFM95_CS, gpio.RFM95_INT);  	// Class instance for the RFM95 radio driver
 Speck myCipher;                             	// Class instance for Speck block ciphering
@@ -289,6 +290,7 @@ bool LoRA_Functions::receiveAcknowledmentJoinRequestNode() {
 
 	if(sysStatus.sensorType != buf[13]) {
 		sysStatus.sensorType = buf[13];
+		asset.setup(sysStatus.sensorType);
 		Log.infoln("Node %d Join request acknowledged and sensorType updated to %d", sysStatus.nodeNumber, sysStatus.sensorType);
 	} else {
 		Log.infoln("Node %d Join request acknowledged - sensorType up to date.", sysStatus.nodeNumber);

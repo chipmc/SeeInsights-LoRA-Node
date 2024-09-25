@@ -47,7 +47,7 @@ public:
      * 
      * You typically use pinout::instance().setup();
      */
-    void setup();
+    void setup(uint8_t sensorType);
 
     /**
      * @brief Perform application loop operations; call this from global application loop()

@@ -51,7 +51,7 @@ bool TofSensor::setup(){
     if(numberOfRetries == 3){                      // if 3 retries, return false
       sysStatus.alertCodeNode = 3;  
       return false;
-    }else {
+    } else {
       sysStatus.alertCodeNode = 3;
     }
     Log.infoln("Sensor did not initialize - retry in 10 seconds");
@@ -59,21 +59,21 @@ bool TofSensor::setup(){
     numberOfRetries++;
   } else {
     Log.infoln("Sensor init successfully");
-  }
-  
-  Log.infoln("Calibrating TOF Sensor");
+    Log.infoln("Calibrating TOF Sensor");
 
-  while (TofSensor::instance().measure() == SENSOR_BUFFRER_NOT_FULL) {delay(10);}; // Wait for the buffer to fill up
-  
-  if (TofSensor::instance().performOccupancyCalibration()) Log.infoln("Calibration Complete");
-  else {
-    Log.infoln("Initial calibration failed - waiting 10 seconds and resetting");
-    delay(10000);
-    sysStatus.alertCodeNode = 3;                    // Set a reset alert code and return false
-    return false;
-  }
+    while (TofSensor::instance().measure() == SENSOR_BUFFRER_NOT_FULL) {delay(10);}; // Wait for the buffer to fill up
+    
+    if (TofSensor::instance().performOccupancyCalibration()) Log.infoln("Calibration Complete");
+    else {
+      Log.infoln("Initial calibration failed - waiting 10 seconds and resetting");
+      delay(10000);
+      sysStatus.alertCodeNode = 3;                    // Set a reset alert code and return false
+      return false;
+    }
 
-  return true;
+    return true;
+  }
+  return false;
 }
 
 bool TofSensor::performOccupancyCalibration() {
@@ -160,7 +160,7 @@ int TofSensor::detect(){
   }
 
   #if TOF_PRINT_SENSOR_MEASUREMENTS                             // Logs the detection distance.
-    Log.infoln("[DETECTING]                    {detection zone = %dmm}                  ", detectionDistance);
+    Log.infoln("[DETECTING]                   {detection zone = %dmm}                  ", detectionDistance);
   #endif
   
   #if TOF_PRINT_ROI_DETAILS
@@ -241,7 +241,7 @@ int TofSensor::measure(){
     }
 
     #if TOF_PRINT_SENSOR_MEASUREMENTS                               // Logs both zones' distances for this loop.
-      zone == 0 ? Log.infoln("[MEASURING]  {zone1 = %dmm}", measurementDistances[zone]) : Log.infoln("[MEASURING]                                      (zone2 = %dmm)", measurementDistances[zone]);
+      zone == 0 ? Log.infoln("[MEASURING]  {zone1 = %dmm}", measurementDistances[zone]) : Log.infoln("[MEASURING]                                             {zone2 = %dmm}", measurementDistances[zone]);
     #endif
 
     #if TOF_PRINT_ROI_DETAILS

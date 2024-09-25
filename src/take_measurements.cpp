@@ -1,4 +1,5 @@
 #include "take_measurements.h"
+#include "Assets/Asset.h"
 
 Adafruit_MAX17048 maxlipo;                  // Class instance for MAX17048 battery fuel gauge
 Adafruit_SHT31 sht31 = Adafruit_SHT31();    // And the SHT31-D temperature and humidity sensor
@@ -22,8 +23,9 @@ take_measurements::take_measurements() {
 take_measurements::~take_measurements() {
 }
 
-void take_measurements::setup() {
-  if (! sht31.begin(0x44)) {   // Set to 0x45 for alternate i2c addr
+void take_measurements::setup(uint8_t sensorType) {
+
+  if (!sht31.begin(0x44)) {   // Set to 0x45 for alternate i2c addr
     Log.infoln("SHT31 initialization failed");
     // Likely need to do some error handling here
   }
@@ -53,12 +55,16 @@ void take_measurements::setup() {
 
   }
 
-  if (TofSensor::instance().setup()) {
-    Log.infoln("VL53L1X initialized");
+  if(asset.setup(sensorType)){
+    Log.infoln("External asset initialized");
+
+  } else {
+    if (TofSensor::instance().setup()) {
+      Log.infoln("VL53L1X initialized");
+    }
   }
 
   PeopleCounter::instance().setup();
-
 }
 
 bool take_measurements::loop() {
