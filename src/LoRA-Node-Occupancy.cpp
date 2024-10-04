@@ -193,17 +193,16 @@ void loop()
 				pendingReport = false;
 			}
 
-			if (sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
+			if (sysStatus.nextConnection - currentTime <= 0){ 							// if a report is overdue
 				Log.infoln("Report is overdue - going to transmit");
-				state = LoRA_TRANSMISSION_STATE;	// transmit now
+				state = LoRA_TRANSMISSION_STATE;										// transmit now
 				break;
-			} else {		// otherwise, go to sleep 
+			} else {																	// otherwise, go to sleep 
 				unsigned long sleepTime = sysStatus.nextConnection - currentTime;	
 				Log.infoln("Going to %s sleep for %u seconds", (sleepTime>=3600) ? "Power Off":"Normal", sleepTime);
-
-				timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
+				timeFunctions.stopWDT();  												// No watchdogs interrupting our slumber
 				if (sleepTime >= 3600) {
-					timeFunctions.deepPowerDown(sleepTime);		// If we are going to sleep for more than an hour, use the AB1805 power off sleep mode
+					timeFunctions.deepPowerDown(sleepTime);								// If we are going to sleep for more than an hour, use the AB1805 power off sleep mode
 				}
 				else {
 					timeFunctions.interruptAtTime(currentTime + sleepTime, 0);          // Set the interrupt for the next event
@@ -211,7 +210,7 @@ void loop()
 					delay(50);
 					LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
 				}
-				timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+				timeFunctions.resumeWDT();                                          	// Wakey Wakey - WDT can resume
 				digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
 			}
 			
