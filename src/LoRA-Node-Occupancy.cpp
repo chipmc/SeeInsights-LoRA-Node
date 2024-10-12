@@ -45,6 +45,7 @@
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
 // v13.1 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
 // v14.0 - Added a new sleep library for power off sleep mode - requires the upgraded AB1805 library with powerOffTime() function
+// v14.1 - Fixed issue with implementation - device will now power off sleep when asked to sleep for longer than 3600 seconds
 
 /*
 Wish List:
@@ -187,9 +188,9 @@ void loop()
 			
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 
-			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
+			if (pendingReport == true) {										// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
 				Log.infoln("Current data has changed - going to transmit");
-				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
+				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;		// Set nextConnection to TRANSMIT_LATENCY from now
 				pendingReport = false;
 			}
 
@@ -197,11 +198,12 @@ void loop()
 				Log.infoln("Report is overdue - going to transmit");
 				state = LoRA_TRANSMISSION_STATE;										// transmit now
 				break;
-			} else {																	// otherwise, go to sleep 
-				unsigned long sleepTime = sysStatus.nextConnection - currentTime;	
-				Log.infoln("Going to %s sleep for %u seconds", (sleepTime>=3600) ? "Power Off":"Normal", sleepTime);
+			} 
+			else {																		// otherwise, go to sleep 
+				uint16_t sleepTime = sysStatus.nextConnection - currentTime;	
+				Log.infoln("Going to %s sleep for %u seconds", (sleepTime>3600) ? "Power Off":"Normal", sleepTime);
 				timeFunctions.stopWDT();  												// No watchdogs interrupting our slumber
-				if (sleepTime >= 3600) {
+				if (sleepTime > 3600) {
 					timeFunctions.deepPowerDown(sleepTime);								// If we are going to sleep for more than an hour, use the AB1805 power off sleep mode
 				}
 				else {
@@ -216,7 +218,7 @@ void loop()
 			
 			if (IRQ_Reason == IRQ_AB1805) {
 				Log.infoln("Time to wake up and report");
-				state = LoRA_TRANSMISSION_STATE;								// A full period has passed - time to report
+				state = LoRA_TRANSMISSION_STATE;										// A full period has passed - time to report
 			}
 			else if (IRQ_Reason == IRQ_RF95_DIO0) {
 				Log.infoln("Woke up for DIO0");

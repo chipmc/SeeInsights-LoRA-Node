@@ -112,9 +112,15 @@ bool timing::isRTCSet(){
 }
 
 bool timing::deepPowerDown(uint16_t seconds){
-  return ab1805.deepPowerDown(seconds);
-}
 
-bool timing::deepPowerDownTime(time_t UnixTime, uint8_t hundredths){
-  return ab1805.deepPowerDownTime(UnixTime,hundredths);
+  // Instead of using the deepPowerDown method from the AB1805 library that limits it to 255 seconds, we will use the deepPowerDownTime method to put the device to sleep until a speciifc time in the future. 
+  // Care must be taken to ensure the time is set correctly on the AB1805 before calling this method and that the time is always in the future. Otherwise, you risk going to sleep and never waking up. 
+  if (!ab1805.isRTCSet()) {
+    ab1805.setRtcFromTime((time_t)1, 0);
+  }
+  ab1805.getRtcAsTime(time_cv,hundrths_cv);
+  return ab1805.deepPowerDownTime((uint32_t)time_cv + seconds, hundrths_cv);
+
+  // This is the old method which is limited to 255 seconds
+  // return ab1805.deepPowerDown(seconds);
 }

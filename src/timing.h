@@ -128,13 +128,6 @@ public:
      */
     bool deepPowerDown(uint16_t seconds=30);
 
-    /**
-     * @brief Power off Sleep the processor using the AB1805 for ultra low power - Any time in future
-     */
-    bool deepPowerDownTime(time_t UnixTime, uint8_t hundredths);
-
-
-
     uint16_t    nxtRptStrt_sec      = 60;   // Number of seconds to the next reporting start period
     uint16_t    prevRptStrt_sec     = 0;    // Number of seconds since the start of the last reporting start 
     uint16_t    RxTimeComp_ms;              // Total time compensation due to transmission delays (retransmissions, hops, transmit time, timeouts, etc.)
