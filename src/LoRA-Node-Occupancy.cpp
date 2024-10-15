@@ -200,10 +200,12 @@ void loop()
 				break;
 			} 
 			else {																		// otherwise, go to sleep 
-				uint16_t sleepTime = sysStatus.nextConnection - currentTime;	
+				uint16_t sleepTime = (uint16_t)(sysStatus.nextConnection - currentTime);	
 				Log.infoln("Going to %s sleep for %u seconds", (sleepTime>3600) ? "Power Off":"Normal", sleepTime);
 				timeFunctions.stopWDT();  												// No watchdogs interrupting our slumber
 				if (sleepTime > 3600) {
+					Log.infoln("Going to deep power down sleep for %u seconds", sleepTime);
+					delay(2000);															// Delay to allow the I2C bus to settle
 					timeFunctions.deepPowerDown(sleepTime);								// If we are going to sleep for more than an hour, use the AB1805 power off sleep mode
 				}
 				else {

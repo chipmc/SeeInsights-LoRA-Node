@@ -104,7 +104,7 @@ public:
     void interruptAtTime(time_t UnixTime, uint8_t hundredths);
 
     /**
-     * @brief set the time based on the value we recieved from the LoRa Gateway
+     * @brief Stop the watchdog timer so we can sleep
      */
     void stopWDT();
 
