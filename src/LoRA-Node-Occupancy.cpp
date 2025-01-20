@@ -171,14 +171,14 @@ void loop()
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR go to active ping
 
-			time_t currentTime = timeFunctions.getTime();						// How long to sleep
+			time_t currentTime = timeFunctions.getTime();						// Starting time
 
 			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
 				Log.infoln("Current data has changed - going to transmit");
 				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
 				pendingReport = false;
 			}
-
+			// todo - make sure that 
 			if (sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
 				Log.infoln("Report is overdue - going to transmit");
 				state = LoRA_TRANSMISSION_STATE;	// transmit now
