@@ -71,8 +71,8 @@ const uint8_t firmwareRelease = 13;
 // Instandaitate the classes
 
 // State Machine Variables
-enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, SLEEPING_STATE, LOW_BATTERY, ACTIVE_PING, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
-char stateNames[9][16] = {"Initialize", "Error", "Idle", "Sleeping", "Low Battery", "Active Ping","LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
+enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, ACTIVE_PING, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
+char stateNames[9][16] = {"Initialize", "Error", "Idle", "Active Ping","LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
 volatile State state = INITIALIZATION_STATE;
 State oldState = INITIALIZATION_STATE;
 
@@ -168,22 +168,9 @@ void loop()
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
 
-			if (current.batteryState == 0) state = LOW_BATTERY;					// Battery level is very low - going to sleep until we get some charge
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
-			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
-			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;		// If nothing else, go back to sleep - keep awake for 1 second 
-		} break;
+			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR go to active ping
 
-		case SLEEPING_STATE: {
-			IRQ_Reason = IRQ_Invalid;
-
-			if (digitalRead(gpio.INT)) {Log.infoln("Sensor pin(line1) still high - delaying sleep"); break;}									// If the sensor is still high, we need to stay awake
-			if (digitalRead(gpio.I2C_INT)){Log.infoln("Sensor pin(line2) still high - delaying sleep"); break;}
-
-			publishStateTransition();              								// Publish state transition
-
-			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
-			
 			time_t currentTime = timeFunctions.getTime();						// How long to sleep
 
 			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
@@ -196,99 +183,10 @@ void loop()
 				Log.infoln("Report is overdue - going to transmit");
 				state = LoRA_TRANSMISSION_STATE;	// transmit now
 				break;
-			} else {		// otherwise, go to sleep 
-				unsigned long sleepTime = sysStatus.nextConnection - currentTime;	
-				Log.infoln("Going to sleep for %u seconds", sleepTime);
-
-				timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
-				timeFunctions.interruptAtTime(currentTime + sleepTime, 0);          // Set the interrupt for the next event
-				digitalWrite(gpio.I2C_EN, LOW);										// Turn off the I2C bus (pre-production module)
-				delay(50);
-				LowPower.deepSleep((sleepTime + 1) * 1000UL);						// Go to sleep
-				timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
-				digitalWrite(gpio.I2C_EN, HIGH);										// Turn on the I2C bus (pre-production module)
-			}
-			
-			if (IRQ_Reason == IRQ_AB1805) {
-				Log.infoln("Time to wake up and report");
-				state = LoRA_TRANSMISSION_STATE;								// A full period has passed - time to report
-			}
-			else if (IRQ_Reason == IRQ_RF95_DIO0) {
-				Log.infoln("Woke up for DIO0");
-				state = LoRA_LISTENING_STATE;
-			}
-			else if (IRQ_Reason == IRQ_RF95_IRQ) {
-				Log.infoln("Woke up for RF95 IRQ");
-				state = LoRA_LISTENING_STATE;
-			}
-			else if (IRQ_Reason == IRQ_Sensor) {
-				Log.infoln("Woke up for Sensor"); 								// Interrupt from the PIR Sensor
-				state = IDLE_STATE;
-			}
-			else if (IRQ_Reason == IRQ_UserSwitch) {
-				Log.infoln("Woke up for User Switch");
-				state = IDLE_STATE;
-			}
-			else {
-				Log.infoln("Woke up without an interrupt - going to IDLE");
-				state = IDLE_STATE;
-			}
-
-			// sensorControl(sysStatus.get_sensorType(),true);					// Enable the sensor
-
+			} 
 		} break;
 
-		case LOW_BATTERY: {														// This is our low power state - ignoring all else
-
-			if (state != oldState) {
-				publishStateTransition();													
-				Log.infoln("Transition to Low Battery operations");
-				LoRA.sleepLoRaRadio();											// Make sure the radio is off
-				LED.off();														// Turn off the led in case it was on
-			}
-
-			// How long to sleep
-			time_t time = timeFunctions.getTime() + 3600UL;						// We will sleep for one hour and then check to see if the battery had recovered
-			unsigned long time_millis = time * 1000UL;
-
-			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
-			digitalWrite(gpio.I2C_EN, LOW);									// Turn off the I2C bus (pre-production module)
-			Log.infoln("Going to sleep for one hour with sensor off");
-
-			timeFunctions.interruptAtTime(time + 1, 0);                 		// Set the interrupt for the next event - this is the backup alarm - like a snooze button
-			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
-			LowPower.deepSleep(time_millis);									// Go to sleep
-			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
-			digitalWrite(gpio.I2C_EN, HIGH);									// Turn off the I2C bus (pre-production module)
-			Log.infoln("Waking up the sensor");
-
-			measure.takeMeasurements();											// Check to see if the battery is charged
-			state = IDLE_STATE;
-
-		} break;
-
-		case ACTIVE_PING: {														// Defined as a state so we could get max sampling rate
-			sensorDetect = false;
-
-			if (state != oldState) {
-				publishStateTransition();													
-				Log.infoln("Active Ping with occupancyNet of %d. occupancyGross of %d and occupancyState of %d", current.occupancyNet, current.occupancyGross, current.occupancyState);
-			}
-
-			int16_t occupancyBeforeMeasure = current.occupancyNet;
-			
-			measure.loop();	
-
-			int16_t occupancyAfterMeasure = current.occupancyNet;
-
-			if(occupancyBeforeMeasure != occupancyAfterMeasure) {pendingReport = true;}
-
-			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
-				state = IDLE_STATE;																// ... and go back to IDLE_STATE
-			}
-		}  break;
-
-		case LoRA_LISTENING_STATE: {															// Timers will take us to transmit and back to sleep
+		case LoRA_LISTENING_STATE: {															// Timers will take us to transmit and back to idle
 			static unsigned long listeningStarted = 0;
 
 			if (state != oldState) {
@@ -307,7 +205,7 @@ void loop()
 				state = IDLE_STATE;
 			}
 			else if (millis() - listeningStarted > 5000L) {
-				Log.infoln("Listened for 5 seconds - going back to sleep");
+				Log.infoln("Listened for 5 seconds - going back to idle");
 				state = IDLE_STATE;																// Go back to IDLE state - no response
 			}
 
@@ -454,14 +352,8 @@ void loop()
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
 			case 13: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
-				sysStatus.tofDetectionsPerSecond = sysStatus.alertContextNode;
-				Log.infoln("Alert code 13 - TOF Sensor Detections Per Second now set to %d/sec", sysStatus.tofDetectionsPerSecond);
-				sysStatus.alertCodeNode = 0;
-				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
-			break;
-			case 14: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
-				sysStatus.transmitLatencySeconds = sysStatus.alertContextNode;
-				Log.infoln("Alert code 14 - Sensor Transmit Latency now set to %dsec", sysStatus.transmitLatencySeconds);
+				sysStatus.tofDetectionsPerSecond = sysStatus.tofDetectionsPerSecond;
+				Log.infoln("Alert code 13 - TOF Sensor Polling Rate now set to %dms", sysStatus.tofDetectionsPerSecond);
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
