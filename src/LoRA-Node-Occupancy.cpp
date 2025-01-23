@@ -79,12 +79,9 @@ State oldState = INITIALIZATION_STATE;
 // Initialize Functions
 void transmitDelayTimerISR();
 void listeningDurationTimerISR();
-void wakeUp_RFM95_IRQ();
 void userSwitchISR();
 void sensorISR();
 void publishStateTransition(void);
-void wakeUp_RFM95_IRQ();
-void wakeUp_Timer();
 
 // Program Variables
 volatile bool userSwitchDetected = false;		
@@ -117,10 +114,8 @@ void setup()
 	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
 	// Need to set up the User Button pressed action here
-	LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
 	LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
 	LowPower.attachInterruptWakeup(gpio.USER_SW, userSwitchISR, FALLING);
-	LowPower.attachInterruptWakeup(gpio.WAKE, wakeUp_Timer, FALLING); 
 	// LowPower.attachInterruptWakeup(gpio.RFM95_DIO0, wakeUp_RFM95_DIO0, RISING);	// DIO0 is an extra interrupt output from the radio. Could be used for LoRaWAN and/or CAD sleep in the future. 
 
 	// In this section we test for issues and set alert codes as needed
@@ -162,9 +157,7 @@ void loop()
 	switch (state) {
 
 		case IDLE_STATE: {														// Unlike most sketches - nodes spend most time in sleep and only transit IDLE once or twice each period
-			static unsigned long keepAwake = 0;
 			if (state != oldState) {
-				keepAwake = millis();
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
 
@@ -174,17 +167,39 @@ void loop()
 			time_t currentTime = timeFunctions.getTime();						// Starting time
 
 			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
-				Log.infoln("Current data has changed - going to transmit");
+				Log.infoln("Current data has changed - going to transmit in %d seconds", TRANSMIT_LATENCY);
 				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
 				pendingReport = false;
 			}
-			// todo - make sure that 
-			if (sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
-				Log.infoln("Report is overdue - going to transmit");
+
+			if (sysStatus.lastConnection < sysStatus.nextConnection && sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
+				Log.infoln("Report is overdue - transmitting");
 				state = LoRA_TRANSMISSION_STATE;	// transmit now
+				pendingReport = false;
 				break;
 			} 
 		} break;
+
+		case ACTIVE_PING: {														// Defined as a state so we could get max sampling rate
+			sensorDetect = false;
+
+			if (state != oldState) {
+				publishStateTransition();													
+				Log.infoln("Active Ping with occupancyNet of %d. occupancyGross of %d and occupancyState of %d", current.occupancyNet, current.occupancyGross, current.occupancyState);
+			}
+
+			int16_t occupancyBeforeMeasure = current.occupancyNet;
+			
+			measure.loop();	
+
+			int16_t occupancyAfterMeasure = current.occupancyNet;
+
+			if(occupancyBeforeMeasure != occupancyAfterMeasure) {pendingReport = true;}
+			
+			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
+				state = IDLE_STATE;																// ... and go back to IDLE_STATE
+			}
+		}  break;
 
 		case LoRA_LISTENING_STATE: {															// Timers will take us to transmit and back to idle
 			static unsigned long listeningStarted = 0;
@@ -407,21 +422,6 @@ void publishStateTransition(void)
 	else snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s", stateNames[oldState],stateNames[state]);
 	oldState = state;
 	if (publish) Log.infoln(stateTransitionString);
-}
-
-void wakeUp_RFM95_IRQ() {
-    IRQ_Reason = IRQ_RF95_IRQ;
-    // Something more here?
-}
-
-void wakeUp_DIO0_IRQ() {
-    IRQ_Reason = IRQ_RF95_DIO0;
-    // Something more here?
-}
-
-void wakeUp_Timer() {
-    IRQ_Reason = IRQ_AB1805;
-    // Something more here?
 }
 
 void userSwitchISR() {
