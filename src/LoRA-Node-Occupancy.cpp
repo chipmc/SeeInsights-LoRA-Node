@@ -161,6 +161,7 @@ void loop()
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
 
+			if (current.batteryState == 0) state = LOW_BATTERY;					// Battery level is very low - going to sleep until we get some charge
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR go to active ping
 
