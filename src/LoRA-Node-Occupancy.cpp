@@ -71,8 +71,8 @@ const uint8_t firmwareRelease = 13;
 // Instandaitate the classes
 
 // State Machine Variables
-enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, ACTIVE_PING, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
-char stateNames[9][16] = {"Initialize", "Error", "Idle", "Active Ping","LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
+enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, ACTIVE_PING, LOW_BATTERY, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
+char stateNames[8][16] = {"Initialize", "Error", "Idle", "Active Ping", "Low Battery", "LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
 volatile State state = INITIALIZATION_STATE;
 State oldState = INITIALIZATION_STATE;
 
@@ -200,6 +200,35 @@ void loop()
 				state = IDLE_STATE;																// ... and go back to IDLE_STATE
 			}
 		}  break;
+
+		case LOW_BATTERY: {														// This is our low power state - ignoring all else
+
+			if (state != oldState) {
+				publishStateTransition();													
+				Log.infoln("Transition to Low Battery operations");
+				LoRA.sleepLoRaRadio();											// Make sure the radio is off
+				LED.off();														// Turn off the led in case it was on
+			}
+
+			// How long to sleep
+			time_t time = timeFunctions.getTime() + 3600UL;						// We will sleep for one hour and then check to see if the battery had recovered
+			unsigned long time_millis = time * 1000UL;
+
+			timeFunctions.stopWDT();  											// No watchdogs interrupting our slumber
+			digitalWrite(gpio.I2C_EN, LOW);									// Turn off the I2C bus (pre-production module)
+			Log.infoln("Going to sleep for one hour with sensor off");
+
+			timeFunctions.interruptAtTime(time + 1, 0);                 		// Set the interrupt for the next event - this is the backup alarm - like a snooze button
+			LoRA.sleepLoRaRadio();												// Put the LoRA radio to sleep
+			LowPower.deepSleep(time_millis);									// Go to sleep
+			timeFunctions.resumeWDT();                                          // Wakey Wakey - WDT can resume
+			digitalWrite(gpio.I2C_EN, HIGH);									// Turn off the I2C bus (pre-production module)
+			Log.infoln("Waking up the sensor");
+
+			measure.takeMeasurements();											// Check to see if the battery is charged
+			state = IDLE_STATE;
+
+		} break;
 
 		case LoRA_LISTENING_STATE: {															// Timers will take us to transmit and back to idle
 			static unsigned long listeningStarted = 0;
