@@ -168,8 +168,8 @@ void loop()
 			time_t currentTime = timeFunctions.getTime();						// Starting time
 
 			if (pendingReport == true) {	// If the current data has changed, set the next wake/report to TRANSMIT_LATENCY seconds from now
-				Log.infoln("Current data has changed - going to transmit in %d seconds", TRANSMIT_LATENCY);
-				sysStatus.nextConnection = currentTime + TRANSMIT_LATENCY;	// Set nextConnection to TRANSMIT_LATENCY from now
+				Log.infoln("Current data has changed - going to transmit in %d seconds", sysStatus.transmitLatencySeconds);
+				sysStatus.nextConnection = currentTime + sysStatus.transmitLatencySeconds;	// Set nextConnection to TRANSMIT_LATENCY from now
 				pendingReport = false;
 			}
 
