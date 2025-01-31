@@ -38,7 +38,7 @@
 /*******************************************/
 
 /**  Firmware Thresholds  **/
-#define DEFAULT_PEOPLE_LIMIT 5                  // Values above this will generate an alert
+#define DEFAULT_PEOPLE_LIMIT 5                      // Values above this will generate an alert
 
 /*******************************************/
 /**            Debugging Tools            **/

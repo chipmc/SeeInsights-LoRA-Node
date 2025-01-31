@@ -116,7 +116,6 @@ void setup()
 	currentData.setup();
 	sysStatus.firmwareRelease = firmwareRelease;
 	measure.setup();
-	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
 	// Need to set up the User Button pressed action here
 	LowPower.attachInterruptWakeup(gpio.RFM95_INT, wakeUp_RFM95_IRQ, RISING);
@@ -170,7 +169,7 @@ void loop()
 				publishStateTransition();              							// We will apply the back-offs before sending to ERROR state - so if we are here we will take action
 			}
 
-			if (current.batteryState == 0) state = LOW_BATTERY;					// Battery level is very low - going to sleep until we get some charge
+			if (current.stateOfCharge < 10) state = LOW_BATTERY;				// Battery level is very low - going to sleep until we get some charge
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
 			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR ...
 			else if (millis() - keepAwake > 1000) state = SLEEPING_STATE;		// If nothing else, go back to sleep - keep awake for 1 second 

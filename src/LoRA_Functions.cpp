@@ -195,6 +195,8 @@ bool LoRA_Functions::composeDataReportNode() {
 	// Send a message to manager_server
   	// A route to the destination will be automatically discovered.
 	unsigned char result = manager.sendtoWait(buf, 28, GATEWAY_ADDRESS, DATA_RPT);
+
+	Log.infoln("Node %d Sending data report with magicNumer = %d, uniqueID = %u and sensorType = %d, and payload %d / %d/ %d",sysStatus.nodeNumber, sysStatus.magicNumber, sysStatus.uniqueID, sysStatus.sensorType, sysStatus.space,sysStatus.placement, sysStatus.multi);
 	
 	if ( result == RH_ROUTER_ERROR_NONE) {
 		// It has been reliably delivered to the next node.
