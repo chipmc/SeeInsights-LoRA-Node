@@ -140,11 +140,11 @@ public:
     // MOSI           = 23;
     // SCK            = 24;
     // ???            = 25;
-    static const uint8_t CE             = 26; // PB27
+    static const uint8_t CE             = 26; // PA27 - May need to test this
     static const uint8_t D14            = 27; // D14 / PA28 - Need to figure this one out
     // ???            = 28;
     // ???            = 29;
-    static const uint8_t Test1          = 30; // PB22 - Now connected to !CHG for charge detection
+    static const uint8_t CHG          = 30; // PB22 - Now connected to !CHG for charge detection
     static const uint8_t Test2          = 31; // PB23
 
 

@@ -28,9 +28,12 @@ void pinout::setup() {
   digitalWrite(I2C_EN, HIGH);                            // Turns on the production module - change to LOW if we are using a pre-production module
   // digitalWrite(I2C_EN, LOW);                                // Turns on the pre-production module - change to HIGH as we move to the production module 
   pinMode(BATTINT,INPUT_PULLUP);                            // Battery interrupt pin    
+  pinMode(CE, OUTPUT);                                      // Charge Enable pin for the BQ24074 - Active Low
+  digitalWrite(CE,LOW);                                     // Enable charging by default
+  pinMode(CHG, INPUT);                                      // Charge status pin for the BQ24074
   
   //Establish a random seed based on the tank level pin
-  randomSeed(analogRead(Test1));
+  randomSeed(analogRead(CHG));
 }
 
 void pinout::loop() {
