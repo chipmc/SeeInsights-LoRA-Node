@@ -98,7 +98,7 @@ void setup()
 
 	// Log.begin(LOG_LEVEL_SILENT, &Serial);
 	Log.begin(LOG_LEVEL_TRACE, &Serial);
-	Log.infoln("PROGRAM: See Insights LoRa Node!" CR);
+	Log.infoln("PROGRAM: See Insights LoRa Node" CR);
 
 	//Initialize each class used in this program
 	pinout::instance().setup();							// Pins and their modes
@@ -106,6 +106,11 @@ void setup()
 	LED.setup(gpio.STATUS);								// Led used for status
 	LED.on();
 	sysData.setup();									// System state persistent store
+
+	// This is a temporary fix to get the sensor types right
+	sysStatus.sensorType = 10;							// 10 is the ToF Occupancy Sensor
+	// Take this out when we fix the code to read the sensor type from the memory
+
 	delay(100);											// Reduce initialization errors - to be tested
 	timeFunctions.setup();
 	currentData.setup();
