@@ -4,8 +4,12 @@ Import("env")
 import os
 import shutil
 import time
+import platform
 
 print("\n[DEBUG] uf2_auto.py is running...")
+
+# Detect OS
+IS_WINDOWS = platform.system() == "Windows"
 
 # Define paths
 PROJECT_DIR = env.subst("$PROJECT_DIR")
@@ -14,8 +18,30 @@ BIN_FILE = os.path.join(BUILD_DIR, "firmware.bin")
 UF2_FILE = os.path.join(BUILD_DIR, "firmware.uf2")
 UF2_TOOL = os.path.join(PROJECT_DIR, "uf2conv.py")
 
+def find_featherboot():
+    """Find the Feather M0 UF2 bootloader mount point."""
+    if IS_WINDOWS:
+        # Windows: Look for a removable drive with "INFO_UF2.TXT"
+        try:
+            import win32api
+            drives = win32api.GetLogicalDriveStrings().split('\000')[:-1]
+            for drive in drives:
+                if os.path.exists(os.path.join(drive, "INFO_UF2.TXT")):
+                    return drive  # Return drive letter (e.g., "D:\")
+        except ImportError:
+            print("[ERROR] Missing 'pywin32' module. Install it with 'pip install pywin32'.")
+            return None
+    else:
+        # macOS/Linux: Look for "/Volumes/FEATHERBOOT"
+        volumes_path = "/Volumes"
+        if os.path.exists(volumes_path):
+            for item in os.listdir(volumes_path):
+                if "FEATHERBOOT" in item.upper():
+                    return os.path.join(volumes_path, item)
+    return None
+
 def create_uf2(source, target, env):
-    print("[DEBUG] Starting UF2 conversion...")
+    print("[DEBUG] Converting BIN to UF2...")
 
     if not os.path.exists(BIN_FILE):
         print(f"[ERROR] BIN file not found: {BIN_FILE}")
@@ -34,21 +60,14 @@ def create_uf2(source, target, env):
 def upload_uf2(uf2_path):
     print("\n[DEBUG] Searching for Feather M0 in BOOT mode...")
 
-    volumes_path = "/Volumes"
-    featherboot_path = None
-
-    if os.path.exists(volumes_path):
-        for item in os.listdir(volumes_path):
-            print(f"[DEBUG] Found volume: {item}")
-            if "FEATHERBOOT" in item.upper():
-                featherboot_path = os.path.join(volumes_path, item)
-                break
+    featherboot_path = find_featherboot()
 
     if featherboot_path:
         print(f"[INFO] Found FEATHERBOOT at {featherboot_path}. Uploading UF2...")
         try:
-            time.sleep(2)  # Ensure mount is stable
-            shutil.copy(uf2_path, os.path.join(featherboot_path, "NEW.UF2"))
+            time.sleep(2)  # Ensure USB drive is mounted
+            dest_file = os.path.join(featherboot_path, "NEW.UF2")
+            shutil.copy(uf2_path, dest_file)
             print("[SUCCESS] UF2 file uploaded! Board should reboot.")
         except Exception as e:
             print(f"[ERROR] Failed to copy UF2 file: {e}")
