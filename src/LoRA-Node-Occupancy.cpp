@@ -109,7 +109,7 @@ void setup()
 	sysData.setup();									// System state persistent store
 
 	// This is a temporary fix to get the sensor types right
-	sysStatus.sensorType = 10;							// 10 is the ToF Occupancy Sensor
+	sysStatus.sensorType = 13;							// 13 is the Accelerometer Sensor
 	// Take this out when we fix the code to read the sensor type from the memory
 
 	delay(100);											// Reduce initialization errors - to be tested
