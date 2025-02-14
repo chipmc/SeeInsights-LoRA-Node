@@ -118,7 +118,7 @@ void setup()
 	sysStatus.firmwareRelease = firmwareRelease;
 
 	// hard code the sensor type for now
-	sysStatus.sensorType == 13;
+	sysStatus.sensorType = 13;
 	// instantiate the Asset class that corresponds to our sensorType
 	asset.setup(sysStatus.sensorType);
 
