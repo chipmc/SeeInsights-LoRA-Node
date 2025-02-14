@@ -116,7 +116,12 @@ void setup()
 	timeFunctions.setup();
 	currentData.setup();
 	sysStatus.firmwareRelease = firmwareRelease;
+
+	// hard code the sensor type for now
 	sysStatus.sensorType == 13;
+	// instantiate the Asset class that corresponds to our sensorType
+	asset.setup(sysStatus.sensorType);
+
 	measure.setup(sysStatus.sensorType);
 	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
@@ -271,7 +276,7 @@ void loop()
 			sysStatus.lastConnection = timeFunctions.getTime();					// Prevents cyclical Transmits
 			measure.takeMeasurements();											// Taking measurements now should allow for accurate battery measurements
 
-			if(sysStatus.sensorType == 12 /** add || for any other assets reading serial data here */) {
+			if(sysStatus.sensorType == 12 || sysStatus.sensorType == 13 /** add || for any other assets reading serial data here */) {
 				asset.readData();												// Read data from the asset before reporting
 			}
 
