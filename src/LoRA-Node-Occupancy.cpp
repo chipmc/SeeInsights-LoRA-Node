@@ -44,6 +44,7 @@
 //		... Requires Gateway v21.5 or later for particle function to be available
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
 // v13.1 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
+// v13.2 - Testing new build with Accelerometer
 
 /*
 Wish List:
@@ -197,8 +198,10 @@ void loop()
 			sensorDetect = false;
 
 			if (state != oldState) {
-				publishStateTransition();													
-				Log.infoln("Active Ping with occupancyNet of %d. occupancyGross of %d and occupancyState of %d", current.occupancyNet, current.occupancyGross, current.occupancyState);
+				publishStateTransition();		
+				if (IRQ_PIR == IRQ_Reason) Log.infoln("Active Ping with occupancyNet of %d. occupancyGross of %d and occupancyState of %d", current.occupancyNet, current.occupancyGross, current.occupancyState);
+				else if (IRQ_Accelerometer == IRQ_Reason) Log.infoln("Detected Accelerometer sensor interrupt");
+				else Log.infoln("Detected unknown sensor interrupt");			
 			}
 
 			int16_t occupancyBeforeMeasure = current.occupancyNet;
@@ -210,7 +213,7 @@ void loop()
 			if(occupancyBeforeMeasure != occupancyAfterMeasure) {pendingReport = true;}
 			
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
-				state = IDLE_STATE;																// ... and go back to IDLE_STATE
+				state = IDLE_STATE;															// ... and go back to IDLE_STATE
 			}
 		}  break;
 

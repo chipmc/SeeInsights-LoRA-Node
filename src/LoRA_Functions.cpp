@@ -192,7 +192,6 @@ bool LoRA_Functions::composeDataReportNode() {
 	buf[26] = 0;		// These last two bytes are used by the radiohead library to track re-transmissions and re-transmission delays
 	buf[27] = 0;
 
-
 	// Send a message to manager_server
   	// A route to the destination will be automatically discovered.
 	unsigned char result = manager.sendtoWait(buf, 28, GATEWAY_ADDRESS, DATA_RPT);

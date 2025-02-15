@@ -67,16 +67,25 @@ void take_measurements::setup(uint8_t sensorType) {
   PeopleCounter::instance().setup();
 }
 
-bool take_measurements::loop() {
-    if (TofSensor::instance().loop()) {                        // If there is new data from the sensor ...
-      return PeopleCounter::instance().loop();                 // ... then check to see if we need to update the counts.
-    }
-    
-    if(sysStatus.sensorType == 13)                             // If we are an Accelerometer sensor...
-      if(Asset::instance().readData()) {                        
-        return true;
+bool take_measurements::loop() {                               // We come here from the ACTIVE_PING state in the main program
+
+  switch (sysStatus.sensorType) {
+    case 10:                                                  // In the case we have a TOF sensor
+      if (TofSensor::instance().loop()) {                      // If there is new data from the sensor ...
+        return PeopleCounter::instance().loop();               // ... then check to see if we need to update the counts.
       }
-    return false;
+      break;
+    case 12:                                                  // In the case we have an OpenMV Camera
+      return Asset::instance().readData();
+      break;      
+    case 13:                                                  // In the case we have an accelerometer
+      return Asset::instance().readData();
+      break;
+    default:                                                  // For a sensor that is not supported
+      Log.warningln("Sensor type %d not supported", sysStatus.sensorType);
+      break;  
+  }
+  return false;                                                // For the compiler
 }
 
 bool take_measurements::recalibrate() {

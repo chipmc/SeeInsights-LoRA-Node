@@ -55,6 +55,7 @@ bool Accelerometer::readData() {
         Log.infoln("Occupancy detected");
         accel.clearTapInts();
         current.occupancyNet = 1;
+        LED.on();                                               // Turn on the indicator LED - take out for low power operations
     }
 
     time_t now = timeFunctions.getTime();
@@ -63,17 +64,16 @@ bool Accelerometer::readData() {
             lastOccupancyState = true;                          // Set the last state to true  
             occupancyPeriodStart = timeFunctions.getTime();		// Begin a new period of occupancy  
             Log.infoln("Starting a new occupancy period at %d", occupancyPeriodStart);
-            LED.on();                                           // Turn on the indicator LED - take out for production
         }
         else {
             Log.infoln("Continue current occupancy period");
         }
     }
     else if (lastOccupancyState && ((now - occupancyPeriodStart) > sysStatus.debounceMin * 60UL)) {   // Occupancy is no longer detected
-        lastOccupancyState = false;                            // End the period of occupancy
-        current.occupancyNet = 0;          // State that we are occupied
+        lastOccupancyState = false;                             // End the period of occupancy
+        current.occupancyNet = 0;                               // State that we are occupied
         current.occupancyGross = timeFunctions.getTime() - occupancyPeriodStart;     // Gross occupancy is net occupancy time
-        currentData.currentDataChanged = true;                 // Set the flag to save the data
+        currentData.currentDataChanged = true;                  // Set the flag to save the data
         Log.infoln("Occupancy period has ended - total occupancy today is currently %d seconds", current.occupancyGross);
         LED.off();                                              // Turn off the LED now that occupancy is over
     }
