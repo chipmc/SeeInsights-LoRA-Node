@@ -202,7 +202,7 @@ void loop()
 				publishStateTransition();		
 				if (IRQ_PIR == IRQ_Reason) Log.infoln("Active Ping with occupancyNet of %d. occupancyGross of %d and occupancyState of %d", current.occupancyNet, current.occupancyGross, current.occupancyState);
 				// else if (IRQ_Accelerometer == IRQ_Reason) Log.infoln("Detected Accelerometer sensor interrupt");
-				else Log.infoln("Detected unknown sensor interrupt");			
+				// else Log.infoln("Detected unknown sensor interrupt");			
 			}
 
 			int16_t occupancyBeforeMeasure = current.occupancyNet;
