@@ -120,6 +120,7 @@ void setup()
 
 	// hard code the sensor type for now
 	sysStatus.sensorType = 13;
+	sysStatus.debounceMin = 1;							// This is the minimum time in minutes that we will consider a detection valid
 	// instantiate the Asset class that corresponds to our sensorType
 	asset.setup(sysStatus.sensorType);
 
@@ -444,7 +445,16 @@ void loop()
 		state = LoRA_TRANSMISSION_STATE;
 	}
 
-	// Update the vairous classes
+	if (sysStatus.sensorType == 13 && current.occupancyNet == 1) {				// Once we detect someone, we need to check back in 1 second to see if they are still there
+		static unsigned long lastCheckedForDebounce = 0;						// Rate limit to one second
+		if (millis() - lastCheckedForDebounce >= 1000) {
+			lastCheckedForDebounce = millis();
+			IRQ_Reason = IRQ_Accelerometer;
+			sensorDetect = true;												// Fake a sensor detection so we will check for timeout		
+		}
+	}
+
+	// Update the various classes
 	timeFunctions.loop();          											    // Pet the hardware watchdog
 	LED.loop();         														// Update the Status LED
 	sysData.loop();

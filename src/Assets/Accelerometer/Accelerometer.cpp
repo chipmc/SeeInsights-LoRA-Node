@@ -60,26 +60,23 @@ bool Accelerometer::readData() {
 
     time_t now = timeFunctions.getTime();
     if (current.occupancyNet == 1) {                            // Occupancy detected
+        LED.on();                                               // Turn on the LED - can get turned off in the LoRA class
         if (!lastOccupancyState) {                              // This is a new occupancy period
             lastOccupancyState = true;                          // Set the last state to true  
             occupancyPeriodStart = timeFunctions.getTime();		// Begin a new period of occupancy  
             Log.infoln("Starting a new occupancy period at %d", occupancyPeriodStart);
         }
+        else if (lastOccupancyState && ((now - occupancyPeriodStart) > sysStatus.debounceMin * 60UL)) {   // Occupancy is no longer detected
+            lastOccupancyState = false;                             // End the period of occupancy
+            current.occupancyNet = 0;                               // State that we are occupied
+            current.occupancyGross = timeFunctions.getTime() - occupancyPeriodStart;     // Gross occupancy is net occupancy time
+            currentData.currentDataChanged = true;                  // Set the flag to save the data
+            Log.infoln("Occupancy period has ended - total occupancy today is currently %d seconds", current.occupancyGross);
+            LED.off();                                              // Turn off the LED now that occupancy is over
+        }
         else {
-            Log.infoln("Continue current occupancy period");
+            Log.infoln("Continue current occupancy for %d more seconds", (sysStatus.debounceMin * 60UL) -(timeFunctions.getTime() - occupancyPeriodStart)); // This will run every loop if occupancy is detected
         }
     }
-    else if (lastOccupancyState && ((now - occupancyPeriodStart) > sysStatus.debounceMin * 60UL)) {   // Occupancy is no longer detected
-        lastOccupancyState = false;                             // End the period of occupancy
-        current.occupancyNet = 0;                               // State that we are occupied
-        current.occupancyGross = timeFunctions.getTime() - occupancyPeriodStart;     // Gross occupancy is net occupancy time
-        currentData.currentDataChanged = true;                  // Set the flag to save the data
-        Log.infoln("Occupancy period has ended - total occupancy today is currently %d seconds", current.occupancyGross);
-        LED.off();                                              // Turn off the LED now that occupancy is over
-    }
-    else {
-        // Log.infoln("No occupancy detected"); // This will run every loop if no occupancy is detected
-    }
-
     return true;
 }
