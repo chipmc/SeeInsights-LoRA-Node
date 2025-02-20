@@ -118,13 +118,21 @@ void setup()
 	currentData.setup();
 	sysStatus.firmwareRelease = firmwareRelease;
 
-	// hard code the sensor type for now
+	// ****************************** Hard code the Accelerometer Sensor *******************************
+	// *************************************************************************************************
 	sysStatus.sensorType = 13;
 	sysStatus.debounceMin = 1;							// This is the minimum time in minutes that we will consider a detection valid
+	sysStatus.sensitivity = 1;							// This is the sensitivity of the accelerometer - 1 is the least sensitive 10 the most
+	sysStatus.debounceMin = 1;							// This is the minimum time in minutes that we will consider a treadmill occupied after a detection
+	sysStatus.transmitLatencySeconds = 60;				// This is the time in seconds that we will wait after a detection to transmit
+	sysStatus.nextConnection = timeFunctions.getTime() + 60UL;	// This is the time in seconds that we will wait after a detection to transmit
+	// *************************************************************************************************
+	// *************************************************************************************************
+	
 	// instantiate the Asset class that corresponds to our sensorType
 	asset.setup(sysStatus.sensorType);
-
 	measure.setup(sysStatus.sensorType);
+
 	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
 	// Need to set up the User Button pressed action here
