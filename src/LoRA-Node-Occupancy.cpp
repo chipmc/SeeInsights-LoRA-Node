@@ -45,6 +45,7 @@
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
 // v13.1 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
 // v13.2 - Testing new build with Accelerometer
+// v13.3 - Accelermoeter code is working - but the occupancy Gross values needs to be updated and Particle functions on the grateway need to be implemented - hardcoded in node Setup for now
 
 /*
 Wish List:
@@ -108,10 +109,6 @@ void setup()
 	LED.setup(gpio.STATUS);								// Led used for status
 	LED.on();
 	sysData.setup();									// System state persistent store
-
-	// This is a temporary fix to get the sensor types right
-	sysStatus.sensorType = 13;							// 13 is the Accelerometer Sensor
-	// Take this out when we fix the code to read the sensor type from the memory
 
 	delay(100);											// Reduce initialization errors - to be tested
 	timeFunctions.setup();
