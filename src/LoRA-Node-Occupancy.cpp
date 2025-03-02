@@ -423,8 +423,20 @@ void loop()
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
 			case 13: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
-				sysStatus.tofDetectionsPerSecond = sysStatus.tofDetectionsPerSecond;
-				Log.infoln("Alert code 13 - TOF Sensor Polling Rate now set to %dms", sysStatus.tofDetectionsPerSecond);
+				sysStatus.tofDetectionsPerSecond = sysStatus.alertContextNode;
+				Log.infoln("Alert code 13 - TOF Sensor Polling Rate now set to %dms", sysStatus.alertContextNode);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 14: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
+				sysStatus.transmitLatencySeconds = sysStatus.alertContextNode;
+				Log.infoln("Alert code 14 - Sensor Transmit Latency now set to %dsec", sysStatus.transmitLatencySeconds);
+				sysStatus.alertCodeNode = 0;
+				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
+			break;
+			case 15: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
+				sysStatus.sensitivity = sysStatus.alertContextNode;
+				Log.infoln("Alert code 15 - accelerometer sensitivity set to %d", sysStatus.sensitivity);
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
