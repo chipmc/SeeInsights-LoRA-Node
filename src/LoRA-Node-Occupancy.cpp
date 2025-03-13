@@ -211,7 +211,7 @@ void loop()
 				break;
 			} 
 
-			if (sysStatus.pollForCountChange && pendingReportHasSent == true) { // if the asset needs to poll constantly to check for changes, go to active ping
+			if (sysStatus.pollForCountChange && lastPendingReportHasSent == true) { // if the asset needs to poll constantly to check for changes, go to active ping
 				state = ACTIVE_PING;
 				break;
 			}
