@@ -59,7 +59,7 @@ Current Data
 #include <ArduinoLog.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
-#define STRUCTURES_VERSION 22                           // Version of the data structures (system and data)
+#define STRUCTURES_VERSION 23                           // Version of the data structures (system and data)
 
 //Macros(#define) to swap out during pre-processing (use sparingly). This is typically used outside of this .H and .CPP file within the main .CPP file or other .CPP files that reference this header file. 
 // This way you can do "data.setup()" instead of "MyPersistentData::instance().setup()" as an example
@@ -166,6 +166,7 @@ public:
         uint8_t transmitLatencySeconds;                   // The number of seconds to wait (after a count) before sending a message to the gateway
         uint8_t sensitivity;                              // For Tap sensor / Presence - sensitivty of the detector
         uint8_t debounceMin;                              // For Tap sensor / Presence - many minutes after a tap before we declare no presence
+        bool pollForCountChange;                          // For Machine Vision Camera / other asset types that need to check for count changes periodically
     };
 	SystemDataStructure sysStatusStruct;
 

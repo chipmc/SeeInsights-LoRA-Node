@@ -90,6 +90,7 @@ void publishStateTransition(void);
 volatile bool userSwitchDetected = false;		
 volatile bool sensorDetect = false;
 volatile bool pendingReport = false;
+volatile bool lastPendingReportHasSent = false;
 volatile uint8_t IRQ_Reason = 0; 						// 0 - Invalid, 1 - AB1805, 2 - RFM95 DIO0, 3 - RFM95 IRQ, 4 - User Switch, 5 - Sensor 6 - Accelerometer
 
 // Device Setup
@@ -117,15 +118,24 @@ void setup()
 
 	// ****************************** Hard code the Accelerometer Sensor *******************************
 	// *************************************************************************************************
-	sysStatus.sensorType = 13;
-	sysStatus.debounceMin = 1;							// This is the minimum time in minutes that we will consider a detection valid
-	sysStatus.sensitivity = 1;							// This is the sensitivity of the accelerometer - 1 is the least sensitive 10 the most
-	sysStatus.debounceMin = 1;							// This is the minimum time in minutes that we will consider a treadmill occupied after a detection
-	sysStatus.transmitLatencySeconds = 60;				// This is the time in seconds that we will wait after a detection to transmit
-	sysStatus.nextConnection = timeFunctions.getTime() + 60UL;	// This is the time in seconds that we will wait after a detection to transmit
+	// sysStatus.sensorType = 13;
+	// sysStatus.debounceMin = 1;							// This is the minimum time in minutes that we will consider a detection valid
+	// sysStatus.sensitivity = 1;							// This is the sensitivity of the accelerometer - 1 is the least sensitive 10 the most
+	// sysStatus.debounceMin = 1;							// This is the minimum time in minutes that we will consider a treadmill occupied after a detection
+	// sysStatus.transmitLatencySeconds = 60;				// This is the time in seconds that we will wait after a detection to transmit
+	// sysStatus.nextConnection = timeFunctions.getTime() + 60UL;	// This is the time in seconds that we will wait after a detection to transmit
 	// *************************************************************************************************
 	// *************************************************************************************************
 	
+	// ****************************** Hard code the OpenMVH7Plus *******************************
+	// *************************************************************************************************
+	sysStatus.sensorType = 12;
+	sysStatus.pollForCountChange = true;
+	sysStatus.transmitLatencySeconds = 5;				// This is the time in seconds that we will wait after a detection to transmit
+	lastPendingReportHasSent = true;
+	// *************************************************************************************************
+	// *************************************************************************************************
+
 	// instantiate the Asset class that corresponds to our sensorType
 	asset.setup(sysStatus.sensorType);
 	measure.setup(sysStatus.sensorType);
@@ -190,14 +200,21 @@ void loop()
 				Log.infoln("Current data has changed - going to transmit in %d seconds", sysStatus.transmitLatencySeconds);
 				sysStatus.nextConnection = currentTime + sysStatus.transmitLatencySeconds;	// Set nextConnection to TRANSMIT_LATENCY from now
 				pendingReport = false;
+				lastPendingReportHasSent = false;
 			}
 
 			if (sysStatus.lastConnection < sysStatus.nextConnection && sysStatus.nextConnection - currentTime <= 0){ // if a report is overdue
 				Log.infoln("Report is overdue - transmitting");
 				state = LoRA_TRANSMISSION_STATE;	// transmit now
 				pendingReport = false;
+				lastPendingReportHasSent = false;
 				break;
 			} 
+
+			if (sysStatus.pollForCountChange && pendingReportHasSent == true) { // if the asset needs to poll constantly to check for changes, go to active ping
+				state = ACTIVE_PING;
+				break;
+			}
 		} break;
 
 		case ACTIVE_PING: {														// Defined as a state so we could get max sampling rate
@@ -220,6 +237,10 @@ void loop()
 			
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
 				state = IDLE_STATE;															// ... and go back to IDLE_STATE
+			}
+
+			if (sysStatus.pollForCountChange) { // if we were just here to check if the count changed (cameras), go back to idle.
+				state = IDLE_STATE;
 			}
 		}  break;
 
@@ -285,9 +306,9 @@ void loop()
 			sysStatus.lastConnection = timeFunctions.getTime();					// Prevents cyclical Transmits
 			measure.takeMeasurements();											// Taking measurements now should allow for accurate battery measurements
 
-			if(sysStatus.sensorType == 12 || sysStatus.sensorType == 13 /** add || for any other assets reading serial data here */) {
-				asset.readData();												// Read data from the asset before reporting
-			}
+			// if(sysStatus.sensorType == 12 || sysStatus.sensorType == 13 /** add || for any other assets reading serial data here */) {
+			// 	asset.readData();												// Read data from the asset before reporting
+			// }
 
 			LoRA_Functions::instance().clearBuffer();
 			// Based on Alert code, determine what message to send
@@ -300,6 +321,7 @@ void loop()
 			}	
 
 			if (result) {
+				lastPendingReportHasSent = true;
 				retryCount = 0;													// Successful transmission - go listen for response
 				state = LoRA_LISTENING_STATE;
 				sysStatusData::instance().sysDataChanged = true;
