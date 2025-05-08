@@ -316,6 +316,7 @@ void loop()
 			else if (sysStatus.alertCodeNode == 1 || sysStatus.alertCodeNode == 2) result = LoRA_Functions::instance().composeJoinRequesttNode();
 			else {
 				Log.infoln("Alert code = %d",sysStatus.alertCodeNode);
+				lastPendingReportHasSent = true;
 				state = ERROR_STATE;
 				break;															// Resolve the alert code in ERROR_STATE
 			}	
