@@ -20,49 +20,61 @@ SerialConnection &SerialConnection::instance() {
 }
 
 bool SerialConnection::initialize() {
-    Serial1.begin(115200);                              // Open serial port to communicate with Serial1 device
-    Log.infoln("Started up Serial1 - SerialConnection::initialize()");
+    Serial1.begin(9600);  // Match OpenMV UART3 baud rate
+    unsigned long startTime = millis();
+    Log.infoln("Initializing Serial1 connection...");
+
+    // Send PING and wait for ACK within 20 seconds
+    while (millis() - startTime < 10000) {
+        Serial1.println("PING");
+        delay(500);  // Give OpenMV time to respond
+
+        if (Serial1.available()) {
+            int numBytes = Serial1.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
+            if (numBytes > 0) {
+                buffer[numBytes] = '\0';  // Null-terminate
+
+                if (strcmp(buffer, "ACK") == 0) {
+                    Log.infoln("Serial1 connection established successfully!");
+                    return true;
+                }
+            }
+        }
+    }
+
+    Log.errorln("Failed to establish Serial1 connection - Timeout after 10 seconds");
+    return false;
+}
+
+bool SerialConnection::sendMessage(const char *message) {       
+    Serial1.println(message);
+    Log.infoln("Sent message \"%s\" over Serial1.", message);
     return true;
 }
 
-bool SerialConnection::sendMessage(const char *message) {       // This function will send a message to the serial asset                         
-    if (Serial1.available()) {
-        Serial1.println(message);
-        Log.infoln("Sent message \"%s\" over Serial1.");
-        return true;
-    }
-    Log.infoln("Could not send message, Serial1 is not available - SerialConnection::sendMessage()");
-    return false;
-}
+bool SerialConnection::receiveMessage(char *response, int responseSize) {      
+    unsigned long readStart = millis();
 
-bool SerialConnection::receiveMessage(char *response, int responseSize) {       // This function will return the response from the Serial1 device
-                                 
-    unsigned long readStart = millis();   // Safely wait here until there is data available to read - takes the device a beat to respond.
-    while(millis() - readStart < 4000){}; // Give plenty of time for the device to output.
-
-    if(Serial1.available()){
-        while(Serial1.available()) {                                             // Check if there is data available to read                 
+    while (millis() - readStart < 4000) {  // Wait up to 4 seconds for data
+        if (Serial1.available()) {
             int numBytes = Serial1.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
             if (numBytes > 0) {
-                buffer[numBytes] = 0;
-                strncpy(response, buffer, responseSize);                         // Copy the response to the response buffer
-                buffer[0] = 0;                                                   // Clear the buffer
-                // Clear any remaining data in the Serial1 output buffer
+                buffer[numBytes] = '\0';  // Null-terminate
+                strncpy(response, buffer, responseSize);
+                response[responseSize - 1] = '\0';  // Ensure null termination
+
+                // Clear any remaining data in the buffer
                 while (Serial1.available()) {
-                    delay(10);
                     Serial1.read();
+                    delay(10);
                 }
-                Log.infoln("Response received from Serial1: %s - SerialConnection::receiveMessage()", response);
-                return true;                                                     // Return true to indicate that there was a response
-            }
-            else {
-                Log.infoln("SerialConnection received no bytes - SerialConnection::receiveMessage()");
-                return false;
+
+                Log.infoln("Received object detection data: %s - SerialConnection::receiveMessage()", response);
+                return true;
             }
         }
-    } else {
-        Log.infoln("Could not receive message, Serial1 is not available - SerialConnection::receiveMessage()");
     }
+
+    Log.errorln("Timeout: No response received - SerialConnection::receiveMessage()");
     return false;
 }
-

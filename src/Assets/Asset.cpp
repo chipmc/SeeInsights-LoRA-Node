@@ -30,11 +30,11 @@ bool Asset::setup(int sensorType) {
     switch (sensorType) {
         case 12:    // OpenMV Machine Vision Asset
             _asset = &OpenMVH7Plus::instance(); // Get reference to singleton instance
-            Log.infoln("Asset initialized as OpenMVH7Plus - Asset::setup()");
+            Log.infoln("Initializing asset as OpenMVH7Plus - Asset::setup()");
             break;
         case 13:    // Accelerometer Asset
             _asset = &Accelerometer::instance(); // Get reference to singleton instance
-            Log.infoln("Asset initialized as Accelerometer - Asset::setup()");
+            Log.infoln("Initializing asset as Accelerometer - Asset::setup()");
             break;
         // Create other AssetInterface implementors here
         default:
@@ -42,13 +42,25 @@ bool Asset::setup(int sensorType) {
     }
     
     // Perform setup operations on the _asset instance referenced in this class
-    if (!_asset->setup()) {
+    const int maxRetries = 3;  // Maximum number of setup attempts
+    int retryCount = 0;
+
+    while (retryCount < maxRetries) {
+        if (_asset->setup()) {
+            // Setup successful
+            return true;
+        }
+
         // Setup failed
-        delete _asset;
-        _asset = nullptr;
-        Log.infoln("Failed to initialize AssetInterface instance - Asset::setup()");
-        return false;
+        Log.errorln("Asset setup failed (attempt %d/%d). Retrying...", retryCount + 1, maxRetries);
+        
+        retryCount++;
+        delay(2000);  // Wait before retrying
     }
+
+    // If setup still fails after maxRetries, return failure
+    Log.errorln("Failed to initialize AssetInterface instance after %d attempts - Asset::setup()", maxRetries);
+    return false;
     
     Log.infoln("Asset successfully initialized - Asset::setup()");
     return true;
