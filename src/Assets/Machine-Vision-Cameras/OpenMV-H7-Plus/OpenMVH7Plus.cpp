@@ -18,7 +18,9 @@ OpenMVH7Plus& OpenMVH7Plus::instance() {
 }
 
 bool OpenMVH7Plus::setup() {
-    SerialConnection::instance().initialize();
+    if(!SerialConnection::instance().initialize()){
+        return false;
+    };
     return true; 
 }
 
