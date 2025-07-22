@@ -107,10 +107,6 @@ void setup()
 	LED.on();
 	sysData.setup();									// System state persistent store
 
-	// This is a temporary fix to get the sensor types right
-	sysStatus.sensorType = 13;							// 10 is the ToF Occupancy Sensor an 13 is the accelerometer
-	// Take this out when we fix the code to read the sensor type from the memory
-
 	delay(100);											// Reduce initialization errors - to be tested
 	timeFunctions.setup();
 	currentData.setup();
