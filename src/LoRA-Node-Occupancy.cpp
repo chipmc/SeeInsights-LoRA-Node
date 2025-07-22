@@ -402,7 +402,6 @@ void loop()
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
 			break;
 			case 13: 															// This state sets the value of the current net count to the value sent in the alert context on the gateway data acknowledgement
-				sysStatus.tofDetectionsPerSecond = sysStatus.tofDetectionsPerSecond;
 				Log.infoln("Alert code 13 - TOF Sensor Polling Rate now set to %dms", sysStatus.tofDetectionsPerSecond);
 				sysStatus.alertCodeNode = 0;
 				state = LoRA_TRANSMISSION_STATE;								// Sends the alert and clears alert code
