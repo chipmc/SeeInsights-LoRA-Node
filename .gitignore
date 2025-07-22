@@ -4,5 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 .travis.yml
-platformio.ini
+# platformio.ini
 .vscode/extensions.json
