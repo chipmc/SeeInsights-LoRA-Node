@@ -55,7 +55,7 @@ void take_measurements::setup() {
 
 
   // Added logic to look at the sensor type for initialization
-  // This code may not beneeded.
+  // This code may not be needed.
   if (sysStatus.sensorType == 10) {               // ToF Sensor
     if (TofSensor::instance().setup()) {
       Log.infoln("VL53L1X initialized");
