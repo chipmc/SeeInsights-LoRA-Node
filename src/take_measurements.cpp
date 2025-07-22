@@ -53,8 +53,19 @@ void take_measurements::setup() {
 
   }
 
-  if (TofSensor::instance().setup()) {
-    Log.infoln("VL53L1X initialized");
+
+  // Added logic to look at the sensor type for initialization
+  // This code may not be needed.
+  if (sysStatus.sensorType == 10) {               // ToF Sensor
+    if (TofSensor::instance().setup()) {
+      Log.infoln("VL53L1X initialized");
+    }
+    else {
+      Log.infoln("VL53L1X initialization failed");
+    }
+  }
+  else if (sysStatus.sensorType == 13) {         // Accelerometer
+    // accelSensor::instance().setup();
   }
 
   PeopleCounter::instance().setup();
@@ -116,9 +127,9 @@ bool take_measurements::batteryState() {                              // This fu
   }
 
   if (digitalRead(gpio.BATTINT) == LOW) {                             // If the interrupt is active low there is an alert (need to determine what the alert is for)
-    byte activeAlert = maxlipo.getAlertStatus();                  // Get the alert status
+    byte activeAlert = maxlipo.getAlertStatus();                      // Get the alert status
     Log.infoln("Battery alert value of %d which is %s and battery interrupt is %s battery voltage at %FV and charge at %F%%", activeAlert, (activeAlert | 0b00000010)? "active" : "not active", (digitalRead(gpio.BATTINT)) ? "HIGH" : "LOW", maxlipo.cellVoltage(), maxlipo.cellPercent());
-    if (maxlipo.cellVoltage() < 3.7) current.batteryState = 0;                                   // This is the state where the battery is less than 10%
+    if (maxlipo.cellVoltage() < 3.7) current.batteryState = 0;        // This is the state where the battery is less than 10%
   }
   else {                                                              // If the interrupt high then we are above 3.7V 
     if (maxlipo.cellVoltage() >=3.7) {
