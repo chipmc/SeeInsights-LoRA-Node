@@ -54,7 +54,7 @@ void take_measurements::setup() {
   }
 
 
-  // Added logie to look at the sensor type for initialization
+  // Added logic to look at the sensor type for initialization
   // This code may not beneeded.
   if (sysStatus.sensorType == 10) {               // ToF Sensor
     if (TofSensor::instance().setup()) {
