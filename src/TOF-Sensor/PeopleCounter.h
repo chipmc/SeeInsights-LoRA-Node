@@ -48,9 +48,30 @@ public:
      */
     bool loop();
 
+    /**
+     * @brief Get the current occupancy count
+     */
     int getCount();
+
+    /**
+     * @brief Get the current occupancy limt
+     * 
+     */
     int getLimit();
+
+
+    /**
+     * @brief Set the current occupancy count   
+     * 
+     * @param value The new occupancy count
+     */
     void setCount(int value);
+
+    /**
+     * @brief Set the current occupancy limit
+     * 
+     * @param value The new occupancy limit
+     */
     void setLimit(int value);
 
 protected:

@@ -182,7 +182,7 @@ void currentStatusData::setup() {
 
 void currentStatusData::loop() {
     static unsigned long lastChecked = 0;
-    if (millis() - lastChecked > 1000) {                // Check for data changes every ten seconds while awake - remember millis are only when awake
+    if (millis() - lastChecked > 1000) {                // Check for data changes every second while awake - remember millis are only when awake
         lastChecked = millis();
 
        if (currentStatusData::currentDataChanged) {

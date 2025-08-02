@@ -44,6 +44,7 @@
 //		... Requires Gateway v21.5 or later for particle function to be available
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
 // v13.1 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
+// v13.2 - Removing the PIR sensor as a gate to ToF measurement - can add back in the future by incorporating it into measure.loop()
 
 /*
 Wish List:
@@ -71,8 +72,8 @@ const uint8_t firmwareRelease = 13;
 // Instandaitate the classes
 
 // State Machine Variables
-enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, ACTIVE_PING, LOW_BATTERY, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
-char stateNames[8][16] = {"Initialize", "Error", "Idle", "Active Ping", "Low Battery", "LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
+enum State { INITIALIZATION_STATE, ERROR_STATE, IDLE_STATE, LOW_BATTERY, LoRA_TRANSMISSION_STATE, LoRA_LISTENING_STATE, LoRA_RETRY_WAIT_STATE};
+char stateNames[8][16] = {"Initialize", "Error", "Idle", "Low Battery", "LoRA Transmit", "LoRA Listening", "LoRA Retry Wait"};
 volatile State state = INITIALIZATION_STATE;
 State oldState = INITIALIZATION_STATE;
 
@@ -115,7 +116,7 @@ void setup()
 	current.batteryState = 1;							// The prevents us from being in a deep sleep loop - need to measure on each reset
 
 	// Need to set up the User Button pressed action here
-	LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
+	// LowPower.attachInterruptWakeup(gpio.I2C_INT, sensorISR, RISING);
 	LowPower.attachInterruptWakeup(gpio.USER_SW, userSwitchISR, FALLING);
 	// LowPower.attachInterruptWakeup(gpio.RFM95_DIO0, wakeUp_RFM95_DIO0, RISING);	// DIO0 is an extra interrupt output from the radio. Could be used for LoRaWAN and/or CAD sleep in the future. 
 
@@ -164,7 +165,6 @@ void loop()
 
 			if (current.batteryState == 0) state = LOW_BATTERY;					// Battery level is very low - going to sleep until we get some charge
 			else if (sysStatus.alertCodeNode != 0) state = ERROR_STATE;			// If there is an alert code, we need to resolve it
-			else if (sensorDetect) state = ACTIVE_PING;							// If someone is detected by PIR go to active ping
 
 			time_t currentTime = timeFunctions.getTime();						// Starting time
 
@@ -182,6 +182,7 @@ void loop()
 			} 
 		} break;
 
+		/*
 		case ACTIVE_PING: {														// Defined as a state so we could get max sampling rate
 			sensorDetect = false;
 
@@ -199,10 +200,10 @@ void loop()
 			if(occupancyBeforeMeasure != occupancyAfterMeasure) {pendingReport = true;}
 			
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
-				state = IDLE_STATE;																// ... and go back to IDLE_STATE
+				state = IDLE_STATE;															// ... and go back to IDLE_STATE
 			}
 		}  break;
-
+		*/
 		case LOW_BATTERY: {														// This is our low power state - ignoring all else
 
 			if (state != oldState) {
@@ -430,6 +431,7 @@ void loop()
 	sysData.loop();
 	currentData.loop();
 	LoRA.loop();
+	if (measure.loop()) pendingReport = true;									// We have new data to report
 }
 
 /**
@@ -444,10 +446,8 @@ void publishStateTransition(void)
 
 	if (state == IDLE_STATE) {
 		if (!timeFunctions.isRTCSet()) snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s with invalid time", stateNames[oldState],stateNames[state]);
-		else if (oldState == ACTIVE_PING) publish = false;			// Don't log this transition - too many times
 		else snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s", stateNames[oldState],stateNames[state]);
 	}
-	else if (state == ACTIVE_PING && oldState == IDLE_STATE) publish = false;		// Don't log this transition - too many times
 	else if (sysStatus.alertCodeNode != 0) snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s with alert code %d", stateNames[oldState],stateNames[state], sysStatus.alertCodeNode);
 	else snprintf(stateTransitionString, sizeof(stateTransitionString), "From %s to %s", stateNames[oldState],stateNames[state]);
 	oldState = state;
@@ -459,7 +459,8 @@ void userSwitchISR() {
   	IRQ_Reason = IRQ_UserSwitch;
 }
 
+/*														// We are taking this out for testing
 void sensorISR() {	
 	sensorDetect = true;	      // flag that the sensor has detected something
 	IRQ_Reason = IRQ_Sensor;      // and write to IRQ_Reason in order to wake the device up
-}
+}*/
