@@ -43,7 +43,10 @@
 // 		... Gateway can now configure TOF detections per second through particle command (see README of gateway)
 //		... Requires Gateway v21.5 or later for particle function to be available
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
-// v13.1 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
+// v13 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
+
+
+#define CURRENT_FIRMWARE_RELEASE 13
 
 /*
 Wish List:
@@ -98,7 +101,7 @@ void setup()
 
 	// Log.begin(LOG_LEVEL_SILENT, &Serial);
 	Log.begin(LOG_LEVEL_TRACE, &Serial);
-	Log.infoln("PROGRAM: See Insights LoRa Node" CR);
+	Log.infoln("PROGRAM: See Insights LoRa Node running Firmware Version %d", CURRENT_FIRMWARE_RELEASE);
 
 	//Initialize each class used in this program
 	pinout::instance().setup();							// Pins and their modes
