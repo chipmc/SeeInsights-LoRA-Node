@@ -44,9 +44,10 @@
 //		... Requires Gateway v21.5 or later for particle function to be available
 // v13 - Node now reports at a frequency set by the gateway - Requires Gateway v22 or later
 // v13 - Node now reports TRNASMIT_LATENCY seconds after the last count change, instead of immediately with a rate limit
+// v14 - Fixed an issue where the node would not reset the occupancy count if it got stuck in state 3 
 
 
-#define CURRENT_FIRMWARE_RELEASE 13
+#define CURRENT_FIRMWARE_RELEASE 14
 
 /*
 Wish List:
@@ -199,7 +200,10 @@ void loop()
 
 			int16_t occupancyAfterMeasure = current.occupancyNet;
 
-			if(occupancyBeforeMeasure != occupancyAfterMeasure) {pendingReport = true;}
+			if(occupancyBeforeMeasure != occupancyAfterMeasure) {
+				pendingReport = true;
+				Log.infoln("Occupancy changed from %d to %d - setting pending report - state %d", occupancyBeforeMeasure, occupancyAfterMeasure, current.occupancyState);
+			}
 			
 			if (!digitalRead(gpio.I2C_INT) && current.occupancyState != 3) {				// If the pin is LOW, and the occupancyState is not 3 send back to IDLE
 				state = IDLE_STATE;																// ... and go back to IDLE_STATE

@@ -41,7 +41,10 @@ void PeopleCounter::setup() {
 
 bool PeopleCounter::loop(){
   int newOccupancyState = TofSensor::instance().getOccupancyState();
+  static unsigned long lastOccupancyChange = millis();
+
   if(newOccupancyState != stateStack.peek()){
+    lastOccupancyChange = millis();         // update the last time we saw a change in occupancy state
     switch(stateStack.count()){
       case 0:                         
         stateStack.push(0);                            // First value MUST be a 0
@@ -102,6 +105,12 @@ bool PeopleCounter::loop(){
         break;
     }
   }
+  else if ((millis() - lastOccupancyChange > 10000L) && newOccupancyState == 3){   // If we have not seen a change from state 3 for 10 seconds, reset the stack
+    Log.infoln("Occupancy state stuck at 3, resetting stack");
+    while(!stateStack.isEmpty()){
+      stateStack.pop();
+    }
+  }
   
   if(stateStack.count() == 5){              // If the stack is finished ...
     LED.on();
@@ -158,6 +167,7 @@ bool PeopleCounter::loop(){
       return false;   
     }
   }
+
   #if TOF_PRINT_OCCUPANCY_STATE_TENFOOTDISPLAY
       if (current.occupancyState != stateStack.peek() && current.occupancyState != 255) printBigNumbers(current.occupancyState);
   #endif
